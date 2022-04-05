@@ -4,8 +4,20 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.prompt
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.h0tk3y.betterParse.combinators.map
+import com.github.h0tk3y.betterParse.combinators.or
+import com.github.h0tk3y.betterParse.combinators.separatedTerms
+import com.github.h0tk3y.betterParse.combinators.use
+import com.github.h0tk3y.betterParse.grammar.Grammar
+import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import com.github.h0tk3y.betterParse.lexer.DefaultTokenizer
+import com.github.h0tk3y.betterParse.lexer.TokenMatch
+import com.github.h0tk3y.betterParse.lexer.literalToken
+import com.github.h0tk3y.betterParse.lexer.regexToken
+import com.github.h0tk3y.betterParse.parser.toParsedOrThrow
 
 fun praktikumMain(args: Array<String>) {
     PcfgTool().subcommands(Induce(),Parse(), Binarise(), Debinarise(), unk(), Smooth(), Outside()).main(args)
@@ -17,8 +29,11 @@ class PcfgTool : CliktCommand() {
 
 class Induce : CliktCommand() {
     val grammar by argument().optional()
+    val expression by option().prompt()
     override fun run() {
-        echo("Induce $grammar")
+        if (grammar == null) echo(parseExpressionToPcfg(expression))
+        else parseExpressionToPcfg(expression, grammar!!)
+
     }
 }
 
