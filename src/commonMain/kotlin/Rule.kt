@@ -1,6 +1,6 @@
 class Rule(val lexical: Boolean, val lhs: String, val rhs: String) {
     override fun toString(): String {
-        return "$lhs --> $rhs"
+        return "$lhs -> $rhs"
     }
 
     override fun equals(other: Any?): Boolean {

@@ -5,34 +5,14 @@ import okio.Path.Companion.toPath
 val expressionEvaluator = ExpressionEvaluator()
 val trainingPath = "src/commonMain/resources/training.mrg".toPath()
 
-fun writeToFiles(grammar: PcfgGrammar, grammarFileName: String){
+fun writeToFiles(grammar: Grammar, grammarFileName: String){
     write("$grammarFileName.rules".toPath(),grammar.getRules().joinToString("\n") )
     write("$grammarFileName.lexicon".toPath(), grammar.getLexicon().joinToString("\n") )
     write("$grammarFileName.words".toPath(), grammar.getTerminals().joinToString("\n") )
 }
 
 
-fun createGrammar(rules : ArrayList<Rule>): PcfgGrammar {
-    val absoluteRules = rules.groupingBy { it }.eachCount()
-    val lhsCount = rules.groupingBy { it.lhs }.eachCount()
-    val pcfgRules = absoluteRules.mapValues { (rule, count) -> (count.toFloat()/(lhsCount.getOrElse(rule.lhs) { 0 }) )}
-
-    return PcfgGrammar(pRules =  pcfgRules)
-}
-
-fun createGrammarWithTraining(rules: ArrayList<Rule>): PcfgGrammar {
-
-    val trainingGrammar = getGrammarFromTrainingFile()
-
-    val absoluteRules = rules.groupingBy { it }.eachCount()
-    val lhsCount = rules.groupingBy { it.lhs }.eachCount()
-    val pcfgRules = absoluteRules.mapValues { (rule, count) -> (count.toFloat()/(lhsCount.getOrElse(rule.lhs) { 0 }) )}
-
-    return PcfgGrammar(pRules =  pcfgRules)
-}
-
-
-fun getGrammarFromTrainingFile(): PcfgGrammar {
+fun getGrammarFromTrainingFile(): Grammar {
     val rulesArray = ArrayList<Rule>()
     fileSystem.source(trainingPath).use { fileSource ->
         fileSource.buffer().use { bufferedFileSource ->
@@ -42,7 +22,7 @@ fun getGrammarFromTrainingFile(): PcfgGrammar {
             }
         }
     }
-    return createGrammar(rulesArray)
+    return Grammar(rulesArray)
 }
 
 @Throws(IOException::class)

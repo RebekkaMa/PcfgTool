@@ -1,4 +1,13 @@
-class PcfgGrammar(val initial: String = "ROOT", val pRules: Map<Rule, Float>) {
+class Grammar(rules: ArrayList<Rule>) {
+    val initial = "ROOT"
+    val pRules : Map<Rule,Float>
+
+    init {
+        val absoluteRules = rules.groupingBy { it }.eachCount()
+        val lhsCount = rules.groupingBy { it.lhs }.eachCount()
+        val pcfgRules = absoluteRules.mapValues { (rule, count) -> (count.toFloat()/(lhsCount.getOrElse(rule.lhs) { 1 }) )}
+        pRules = pcfgRules
+    }
 
     fun getTerminals(): List<String> {
         return pRules.keys.filter { it.lexical }.map { it.rhs }
@@ -13,9 +22,8 @@ class PcfgGrammar(val initial: String = "ROOT", val pRules: Map<Rule, Float>) {
     }
 
     override fun toString(): String {
-        return "Initial: " + initial + "\n" + "Rules: \n" + pRules.map { (rule, p) -> "$rule    $p \n" }.toString()
+        return "Initial: " + initial + "\n" + "Rules: \n" + pRules.map { (rule, p) -> "$rule    $p" }.joinToString("\n")
     }
-
 
     private fun getWholeNumberOrNull(float: Float): Int? {
         val intValue = float.toInt()

@@ -4,10 +4,11 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.prompt
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 fun praktikumMain(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), unk(), Smooth(), Outside()).main(args)
@@ -20,16 +21,21 @@ class PcfgTool : CliktCommand() {
 class Induce : CliktCommand() {
     val grammar by argument().optional()
 
-    val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
 
+    @OptIn(ExperimentalTime::class)
     override fun run() {
-        val rules = generateSequence(readNotEmptyLnOrNull).map{ expressionEvaluator.parseToEnd(it) }.flatMap { it.parseToRules() }.toList()
-        if (grammar == null) {
-            echo(createGrammar(ArrayList(rules)).toString())
-        } else {
-            writeToFiles(createGrammar(ArrayList(rules)), grammar.toString())
-            echo("Done")
+        val time = measureTime {
+
+            val rules = generateSequence(readNotEmptyLnOrNull).map {expressionEvaluator.parseToEnd(it)}
+                .flatMap { it.parseToRules() }.toList()
+            if (grammar == null) {
+                echo(Grammar(ArrayList(rules)).toString())
+            } else {
+                writeToFiles(Grammar(ArrayList(rules)), grammar.toString())
+            }
         }
+        echo(time.inWholeSeconds)
     }
 }
 
@@ -90,6 +96,3 @@ class Outside : CliktCommand() {
     }
 }
 
-fun testDummy(dummy: Boolean): Boolean {
-    return !dummy
-}
