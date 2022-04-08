@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import com.github.h0tk3y.betterParse.parser.ParseException
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -37,12 +38,17 @@ class Induce : CliktCommand() {
     override fun run() {
         val time = measureTime {
 
-            val rules = generateSequence(readNotEmptyLnOrNull).map { expressionEvaluator.parseToEnd(it) }
-                .flatMap { it.parseToRules() }.toList()
-            if (grammar == null) {
-                echo(Grammar(ArrayList(rules)).toString())
-            } else {
-                writeToFiles(Grammar(ArrayList(rules)), grammar.toString())
+            try {
+                val rules = generateSequence(readNotEmptyLnOrNull).map { expressionEvaluator.parseToEnd(it) }
+                    .flatMap { it.parseToRules() }.toList()
+                if (grammar == null) {
+                    echo(Grammar(ArrayList(rules)).toString())
+                } else {
+                    writeToFiles(Grammar(ArrayList(rules)), grammar.toString())
+                }
+            }catch (e: ParseException){
+                echo("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+                throw ProgramResult(5)
             }
         }
         echo(time.inWholeSeconds)

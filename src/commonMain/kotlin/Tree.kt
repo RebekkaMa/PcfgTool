@@ -4,7 +4,7 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
     }
 
     //Tiefensuche
-    fun printExpressionTree(expression: Tree = this): String {
+    fun printExpressionTree(): String {
         var treeString = ""
         fun printTree(tree: Tree){
             treeString += tree.atom
@@ -15,7 +15,7 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
             tree.children.map { printTree(it) }
             treeString = "$treeString)"
         }
-        printTree(expression)
+        printTree(this)
         return treeString
     }
 

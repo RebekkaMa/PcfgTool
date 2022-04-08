@@ -2,7 +2,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-class PcfgGrammarTest {
+class GrammarTest {
 
     @Test
     fun init_shouldReturnASimpleGrammar() = runTest {
