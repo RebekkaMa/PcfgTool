@@ -1,4 +1,5 @@
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
@@ -15,11 +16,20 @@ fun praktikumMain(args: Array<String>) {
 }
 
 class PcfgTool : CliktCommand() {
+    override val commandHelp = """
+        Tools zum PCFG-basierten Parsing natürlichsprachiger Sätze
+    """
+
     override fun run() = Unit
 }
 
+
 class Induce : CliktCommand() {
-    val grammar by argument().optional()
+    override val commandHelp = """
+        Liest eine Sequenz Konstituentenbäume von der Standardeingabe und gibt eine aus diesen Bäumen induzierte PCFG auf der Standardausgabe aus. 
+    """
+
+    val grammar by argument(help ="PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
 
@@ -27,7 +37,7 @@ class Induce : CliktCommand() {
     override fun run() {
         val time = measureTime {
 
-            val rules = generateSequence(readNotEmptyLnOrNull).map {expressionEvaluator.parseToEnd(it)}
+            val rules = generateSequence(readNotEmptyLnOrNull).map { expressionEvaluator.parseToEnd(it) }
                 .flatMap { it.parseToRules() }.toList()
             if (grammar == null) {
                 echo(Grammar(ArrayList(rules)).toString())
@@ -53,7 +63,7 @@ class Parse : CliktCommand() {
     val astar by option("-a", "--astar")
 
     override fun run() {
-        echo(22)
+        throw ProgramResult(22)
     }
 }
 
@@ -62,13 +72,13 @@ class Binarise : CliktCommand() {
     val vertical by option("-v", "--vertical").int().default(1)
 
     override fun run() {
-        echo(22)
+        throw ProgramResult(22)
     }
 }
 
 class Debinarise : CliktCommand() {
     override fun run() {
-        echo(22)
+        throw ProgramResult(22)
     }
 }
 
@@ -76,7 +86,7 @@ class unk : CliktCommand() {
     val threshold by option("-t", "--threshold")
 
     override fun run() {
-        echo(22)
+        throw ProgramResult(22)
     }
 }
 
@@ -84,7 +94,7 @@ class Smooth : CliktCommand() {
     val threshold by option("-t", "--threshold")
 
     override fun run() {
-        echo(22)
+        throw ProgramResult(22)
     }
 }
 
@@ -92,7 +102,7 @@ class Outside : CliktCommand() {
     val initial by option("-i", "--initial-nonterminal").default("ROOT")
 
     override fun run() {
-        echo(22)
+        throw ProgramResult(22)
     }
 }
 
