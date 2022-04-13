@@ -13,7 +13,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 fun praktikumMain(args: Array<String>) {
-    PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), unk(), Smooth(), Outside()).main(args)
+    PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
 }
 
 class PcfgTool : CliktCommand() {
@@ -88,7 +88,7 @@ class Debinarise : CliktCommand() {
     }
 }
 
-class unk : CliktCommand() {
+class Unk : CliktCommand() {
     val threshold by option("-t", "--threshold")
 
     override fun run() {
