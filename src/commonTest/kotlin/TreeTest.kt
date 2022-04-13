@@ -13,7 +13,7 @@ class TreeTest {
         val child3 = Tree(atom = "OP", arrayListOf())
         val child4 = Tree(atom = "VP", arrayListOf(child3))
         val tree = Tree(atom = "NP",  arrayListOf(child1, child2, child4))
-        tree.parseToRule() shouldBe Rule(false, lhs = "NP", rhs = "ART-NK NP-SB VP")
+        tree.parseToRule() shouldBe Rule(false, lhs = "NP", rhs = listOf("ART-NK", "NP-SB", "VP"))
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -21,7 +21,7 @@ class TreeTest {
     fun shouldReturnALexicalRule() = runTest {
         val child1 = Tree(atom = "ART-NK", arrayListOf() )
         val tree = Tree(atom = "NP",  arrayListOf(child1))
-        tree.parseToRule() shouldBe Rule(true, lhs = "NP", rhs = "ART-NK")
+        tree.parseToRule() shouldBe Rule(true, lhs = "NP", rhs = listOf("ART-NK"))
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -47,12 +47,12 @@ class TreeTest {
         val tree = Tree(atom = "NP",  arrayListOf(child1, child2, child4))
 
 
-        val treeRule = Rule(false, lhs = "NP", rhs="ART-NK NP-SB VP")
-        val child4Rule = Rule(true, lhs = "VP", rhs="OP")
-        val child5Rule = Rule(false, lhs = "IN", rhs="ID FD")
+        val treeRule = Rule(false, lhs = "NP", rhs= listOf("ART-NK", "NP-SB", "VP"))
+        val child4Rule = Rule(true, lhs = "VP", rhs= listOf("OP"))
+        val child5Rule = Rule(false, lhs = "IN", rhs= listOf("ID", "FD"))
 
 
-        tree.parseToRule() shouldBe Rule(false, lhs = "NP", rhs = "ART-NK NP-SB VP")
+        tree.parseToRule() shouldBe Rule(false, lhs = "NP", rhs = listOf("ART-NK", "NP-SB", "VP"))
     }
 
 

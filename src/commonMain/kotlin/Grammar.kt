@@ -14,15 +14,15 @@ class Grammar(rules: ArrayList<Rule>) {
     }
 
     fun getTerminals(): List<String> {
-        return pRules.keys.filter { it.lexical }.map { it.rhs }.distinct()
+        return pRules.keys.filter { it.lexical }.map { it.rhs.first() }.distinct()
     }
 
     fun getLexicon(): List<String> {
-        return pRules.filterKeys { it.lexical }.map { (rule, p) -> rule.lhs + " " + rule.rhs + " " + (p.getRoundetNumber(22)) }
+        return pRules.filterKeys { it.lexical }.map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " + (p.getRoundetNumber()) }
     }
 
     fun getRules(): List<String> {
-        return pRules.filterKeys { !it.lexical }.map { (rule, p) -> rule.lhs + " -> " + rule.rhs + " " + (p.getRoundetNumber(22) )}
+        return pRules.filterKeys { !it.lexical }.map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + (p.getRoundetNumber() )}
     }
 
     override fun toString(): String {
@@ -36,7 +36,8 @@ class Grammar(rules: ArrayList<Rule>) {
 //    }
 }
 
-fun Double.getRoundetNumber(backNumber: Int): String {
+//TODO Ab 15 Nummern ungenau --> Warum dann gleich?
+fun Double.getRoundetNumber(backNumber: Int = 15): String {
     val beforeDecimalPointRange = this.toInt()
     var afterDecimalPointDouble = this - beforeDecimalPointRange
     var afterDecimalPointRange = ""

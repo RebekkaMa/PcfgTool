@@ -21,7 +21,7 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
 
     fun parseToRule(expression: Tree = this): Rule{
         val childrenString = expression.children.joinToString(separator = " ") { it.atom }
-        return Rule(expression.children.first().children.isEmpty() , expression.atom, childrenString)
+        return Rule(expression.children.first().children.isEmpty() , expression.atom, childrenString.split(" "))
     }
 
     fun parseToRules(): ArrayList<Rule> {
