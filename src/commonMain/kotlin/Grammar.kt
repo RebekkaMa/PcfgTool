@@ -1,5 +1,3 @@
-import kotlin.math.absoluteValue
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class Grammar(rules: ArrayList<Rule>) {
@@ -36,17 +34,17 @@ class Grammar(rules: ArrayList<Rule>) {
 //    }
 }
 
-//TODO Ab 15 Nummern ungenau --> Warum dann gleich?
 fun Double.getRoundetNumber(backNumber: Int = 15): String {
-    val beforeDecimalPointRange = this.toInt()
-    var afterDecimalPointDouble = this - beforeDecimalPointRange
-    var afterDecimalPointRange = ""
+    val beforeDecimalPointNumbers = this.toInt()
+    var afterDecimalPointNumbers = this - beforeDecimalPointNumbers
+    var afterDecimalPointNumbersString = ""
     for (i in 1 until backNumber){
-        afterDecimalPointDouble = afterDecimalPointDouble.times(10)
-        afterDecimalPointRange += afterDecimalPointDouble.toInt().toString()
-        afterDecimalPointDouble -= afterDecimalPointDouble.toInt()
-    }
-    afterDecimalPointRange += afterDecimalPointDouble.times(10).roundToInt().toString()
 
-    return "$beforeDecimalPointRange.$afterDecimalPointRange".replace("\\.?(0+)$".toRegex(), "")
+        afterDecimalPointNumbers = afterDecimalPointNumbers.times(10)
+        afterDecimalPointNumbersString += afterDecimalPointNumbers.toInt().toString()
+        afterDecimalPointNumbers -= afterDecimalPointNumbers.toInt()
+    }
+    afterDecimalPointNumbersString += afterDecimalPointNumbers.times(10).roundToInt().toString()
+
+    return "$beforeDecimalPointNumbers.$afterDecimalPointNumbersString".replace("\\.?(0+)$".toRegex(), "")
 }
