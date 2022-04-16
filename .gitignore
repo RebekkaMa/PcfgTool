@@ -2,3 +2,6 @@ build/
 .idea/
 .gradle/
 pcfg_tool
+tests
+TESTS.org
+tests.mk

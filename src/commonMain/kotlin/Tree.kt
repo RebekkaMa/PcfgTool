@@ -3,7 +3,6 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
         children.add(expression)
     }
 
-    //Tiefensuche
     fun printExpressionTree(): String {
         var treeString = ""
         fun printTree(tree: Tree){
@@ -26,12 +25,10 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
 
     fun parseToRules(): ArrayList<Rule> {
         val rules: ArrayList<Rule> = ArrayList()
-
         fun parse(expression: Tree) {
             if (expression.children.isEmpty()) return
             rules.add(parseToRule(expression))
-            expression.children.map { parse(it) }
-            return
+            expression.children.map { parse(it) } //TODO tailrec
         }
         parse(this)
         return rules

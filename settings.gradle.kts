@@ -1,3 +1,3 @@
 
-rootProject.name = "Praktikum"
+rootProject.name = "PcfgTool"
 

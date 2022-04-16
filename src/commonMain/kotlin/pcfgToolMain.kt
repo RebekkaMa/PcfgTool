@@ -30,7 +30,7 @@ class Induce : CliktCommand() {
         Liest eine Sequenz Konstituentenbäume von der Standardeingabe und gibt eine aus diesen Bäumen induzierte PCFG auf der Standardausgabe aus. 
     """
 
-    val grammar by argument(help ="PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
+    val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
 
@@ -44,9 +44,12 @@ class Induce : CliktCommand() {
                 if (grammar == null) {
                     echo(Grammar(ArrayList(rules)).toString())
                 } else {
-                    writeToFiles(Grammar(ArrayList(rules)), grammar.toString())
+                    measureTime {
+                        writeToFiles(Grammar(ArrayList(rules)), grammar.toString())
+                    }.also { println(it) }
+
                 }
-            }catch (e: ParseException){
+            } catch (e: ParseException) {
                 echo("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
                 throw ProgramResult(5)
             }

@@ -24,14 +24,8 @@ class Grammar(rules: ArrayList<Rule>) {
     }
 
     override fun toString(): String {
-        return "Initial: " + initial + "\n" + "Rules: \n" + pRules.map { (rule, p) -> "$rule    $p" }.joinToString("\n")
+        return pRules.map { (rule, p) -> rule.toString() + " " + p.getRoundetNumber() }.joinToString("\n")
     }
-
-//    private fun getWholeNumberOrNull(double: Double): Int? {
-//        val intValue = double.toInt()
-//        if (double.rem(intValue) == 0.0) return intValue
-//        return null
-//    }
 }
 
 fun Double.getRoundetNumber(backNumber: Int = 15): String {

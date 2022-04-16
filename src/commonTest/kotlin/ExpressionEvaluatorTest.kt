@@ -63,17 +63,6 @@ class ExpressionEvaluatorTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun shouldReturnAnExeptionDueDoubleSpace() = runTest {
-
-        val expression2 = "(ROOT  (SBQR (WH-NP (W6P Who)) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
-
-        shouldThrowAny {
-            expressionEvaluator.parseToEnd(expression2)
-        }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
     fun shouldReturnAnExeptionDueNoRoot() = runTest {
 
         val expression3 = "((ROOT Who) (. ?))"
@@ -105,6 +94,3 @@ class ExpressionEvaluatorTest {
         }
     }
 }
-
-
-
