@@ -1,5 +1,6 @@
 plugins {
-    kotlin("multiplatform") version "1.6.10"
+    kotlin("jvm") version "1.6.20"
+    application
 }
 
 group = "me.rebekka"
@@ -9,45 +10,34 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("com.github.ajalt.clikt:clikt:3.4.0")
+    implementation("com.github.h0tk3y.betterParse:better-parse:0.4.3")
+    implementation("com.squareup.okio:okio:3.0.0")
+
+    testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.2.1")
+    testImplementation("com.squareup.okio:okio-fakefilesystem:3.0.0")
+}
+
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-        withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(11))
     }
-    linuxX64("native"){
-        binaries{
-            executable {  }
-        }
-    }
+}
 
+tasks.test {
+    useJUnitPlatform()
+}
 
-    
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-                implementation("com.github.ajalt.clikt:clikt:3.4.0")
-                implementation("com.github.h0tk3y.betterParse:better-parse:0.4.3")
-                implementation("com.squareup.okio:okio:3.0.0")
-            }
-        }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
-                implementation("io.kotest:kotest-assertions-core:5.2.1")
-                implementation("com.squareup.okio:okio-fakefilesystem:3.0.0")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+}
 
-            }
-        }
-        val jvmMain by getting
-        val jvmTest by getting
-        val nativeMain by getting
-        val nativeTest by getting
-    }
+application {
+    mainClass.set("PcfgToolMainKt")
+    applicationDefaultJvmArgs = setOf("-Dkotlinx.coroutines.debug")
+    executableDir = ""
 }

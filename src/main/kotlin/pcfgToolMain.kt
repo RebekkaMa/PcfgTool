@@ -12,7 +12,7 @@ import com.github.h0tk3y.betterParse.parser.ParseException
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-fun praktikumMain(args: Array<String>) {
+fun main(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
 }
 

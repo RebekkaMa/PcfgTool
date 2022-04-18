@@ -1,3 +1,5 @@
-pcfg_tool:  ./src/commonMain/kotlin
-	./gradlew nativeBinaries
-	cp ./build/bin/native/releaseExecutable/PcfgTool.kexe ./pcfg_tool
+pcfg_tool:  ./src/main/*
+	./gradlew installDist
+	cp -r ./build/install/PcfgTool/* ./
+	mv PcfgTool pcfg_tool
+	rm PcfgTool.bat

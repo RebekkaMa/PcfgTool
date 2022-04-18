@@ -12,7 +12,7 @@ fun writeToFiles(grammar: Grammar, grammarFileName: String){
 
 @Throws(IOException::class)
 fun write(path: Path, text: String) {
-    fileSystem.write(path) {
+    FileSystem.SYSTEM.write(path) {
             writeUtf8(text)
     }
 }
