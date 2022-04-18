@@ -14,7 +14,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("com.github.ajalt.clikt:clikt:3.4.0")
     implementation("com.github.h0tk3y.betterParse:better-parse:0.4.3")
-    implementation("com.squareup.okio:okio:3.0.0")
 
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")

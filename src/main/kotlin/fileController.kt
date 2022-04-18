@@ -1,18 +1,9 @@
-import com.github.h0tk3y.betterParse.grammar.parseToEnd
-import okio.*
-import okio.Path.Companion.toPath
+import java.io.File
 
 val expressionEvaluator = ExpressionEvaluator()
 
 fun writeToFiles(grammar: Grammar, grammarFileName: String){
-    write("$grammarFileName.rules".toPath(),grammar.getRules().joinToString("\n") )
-    write("$grammarFileName.lexicon".toPath(), grammar.getLexicon().joinToString("\n") )
-    write("$grammarFileName.words".toPath(), grammar.getTerminals().joinToString("\n") )
-}
-
-@Throws(IOException::class)
-fun write(path: Path, text: String) {
-    FileSystem.SYSTEM.write(path) {
-            writeUtf8(text)
-    }
+    File("$grammarFileName.rules").writeText(grammar.getRules().joinToString("\n"))
+    File("$grammarFileName.lexicon").writeText(grammar.getLexicon().joinToString("\n"))
+    File("$grammarFileName.words").writeText(grammar.getTerminals().joinToString("\n"))
 }

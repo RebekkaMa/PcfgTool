@@ -20,7 +20,6 @@ class PcfgTool : CliktCommand() {
     override val commandHelp = """
         Tools zum PCFG-basierten Parsing natürlichsprachiger Sätze
     """
-
     override fun run() = Unit
 }
 
@@ -37,7 +36,6 @@ class Induce : CliktCommand() {
     @OptIn(ExperimentalTime::class)
     override fun run() {
         val time = measureTime {
-
             try {
                 val rules = generateSequence(readNotEmptyLnOrNull).map { expressionEvaluator.parseToEnd(it) }
                     .flatMap { it.parseToRules() }.toList()
