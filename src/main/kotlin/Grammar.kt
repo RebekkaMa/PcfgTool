@@ -1,16 +1,19 @@
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.*
 
-class Grammar(rules: List<Rule>) {
+class Grammar(val pRules : Map<Rule,Double>) {
     val initial = "ROOT"
-    val pRules : Map<Rule,Double>
 
-    init {
-        val absoluteRules = rules.groupingBy { it }.eachCount()
-        val lhsCount = rules.groupingBy { it.lhs }.eachCount()
-        val pcfgRules = absoluteRules.mapValues { (rule, count) -> (count.toDouble()/(lhsCount.getOrElse(rule.lhs) { 1 }) )}
-        pRules = pcfgRules
+    companion object{
+        suspend fun fromRules(rules: List<Rule>):Grammar = coroutineScope {
+            val absoluteRules = async{rules.groupingBy { it }.eachCount()}
+            val lhsCount = async{ rules.groupingBy { it.lhs }.eachCount()}
+            val pcfgRules = absoluteRules.await().mapValues{  (rule, count) -> (count.toDouble()/(lhsCount.await().getOrElse(rule.lhs) { 1 }) )}
+            Grammar(pcfgRules)
+        }
     }
 
     fun getTerminals(): List<String> {

@@ -28,8 +28,6 @@ class PcfgTool : CliktCommand() {
 
     override fun run() = Unit
 }
-
-
 //class Induce : CliktCommand() {
 //    override val commandHelp = """
 //        Liest eine Sequenz Konstituentenbäume von der Standardeingabe und gibt eine aus diesen Bäumen induzierte PCFG auf der Standardausgabe aus.
@@ -121,15 +119,15 @@ class Induce : CliktCommand() {
         }
     }
 
+
     @OptIn(ExperimentalTime::class)
     override fun run() = runBlocking(Dispatchers.Default) {
         val time = measureTime {
-
             val producer = produceString()
 
             launch {
                 coroutineScope {
-                    repeat(16) {
+                    repeat(8) {
                         launchProcessor(producer)
                     }
                 }
@@ -141,11 +139,9 @@ class Induce : CliktCommand() {
 
             try {
                 if (grammar == null) {
-                    echo(Grammar(rules).toString())
+                    echo(Grammar.fromRules(rules).toString())
                 } else {
-                    measureTime {
-                        writeToFiles(Grammar(rules), grammar.toString())
-                    }.also { println(it) }
+                    writeToFiles(Grammar.fromRules(rules), grammar.toString())
 
                 }
             } catch (e: ParseException) {
@@ -154,6 +150,7 @@ class Induce : CliktCommand() {
             }
         }
         echo(time.inWholeMilliseconds)
+
     }
 }
 

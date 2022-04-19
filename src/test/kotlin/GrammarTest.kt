@@ -16,11 +16,23 @@ class GrammarTest {
     val rule10 = Rule(true, "N", listOf("ground"))
     val rule11 = Rule(true, "LD", listOf("hit"))
 
-    val grammar = Grammar(arrayListOf(rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9, rule10, rule11))
-
-
     @Test
     fun init_shouldReturnASimpleGrammar() = runTest {
+        val grammar = Grammar.fromRules(
+            arrayListOf(
+                rule1,
+                rule2,
+                rule3,
+                rule4,
+                rule5,
+                rule6,
+                rule7,
+                rule8,
+                rule9,
+                rule10,
+                rule11
+            )
+        )
         grammar.pRules shouldBe mapOf(
             (Rule(false, "S", listOf("NP", "VP")) to 1.0),
             (Rule(true, "NP", listOf("John")) to 1 / 3.toDouble()),
@@ -50,7 +62,6 @@ class GrammarTest {
     @Test
     fun getRoundedNumber_shouldReturnTheRoundedNumberEndlessNumberString() = runTest {
         val double = 1.toDouble() / 3.toDouble()
-        println(double)
         double.format(15) shouldBe "0.333333333333333"
     }
 
@@ -61,7 +72,22 @@ class GrammarTest {
     }
 
     @Test
-    fun getLexicon_shouldReturnLexicon() {
+    fun getLexicon_shouldReturnLexicon() = runTest {
+        val grammar = Grammar.fromRules(
+            arrayListOf(
+                rule1,
+                rule2,
+                rule3,
+                rule4,
+                rule5,
+                rule6,
+                rule7,
+                rule8,
+                rule9,
+                rule10,
+                rule11
+            )
+        )
         grammar.getLexicon() shouldBe listOf(
             "NP John 0.333333333333333",
             "V hit 1",
@@ -73,12 +99,43 @@ class GrammarTest {
     }
 
     @Test
-    fun getTerminals_shouldReturnTerminals() {
+    fun getTerminals_shouldReturnTerminals() = runTest {
+        val grammar = Grammar.fromRules(
+            arrayListOf(
+                rule1,
+                rule2,
+                rule3,
+                rule4,
+                rule5,
+                rule6,
+                rule7,
+                rule8,
+                rule9,
+                rule10,
+                rule11
+            )
+        )
         grammar.getTerminals() shouldBe listOf("John", "hit", "the", "ball", "ground")
     }
 
     @Test
-    fun getRules_shouldReturnRules() {
+    fun getRules_shouldReturnRules() = runTest {
+        val grammar = Grammar.fromRules(
+            arrayListOf(
+                rule1,
+                rule2,
+                rule3,
+                rule4,
+                rule5,
+                rule6,
+                rule7,
+                rule8,
+                rule9,
+                rule10,
+                rule11
+            )
+        )
+
         grammar.getRules() shouldBe listOf("S -> NP VP 1", "VP -> V NP 1", "NP -> DET N 0.666666666666667")
     }
 
