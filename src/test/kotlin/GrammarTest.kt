@@ -35,6 +35,32 @@ class GrammarTest {
     }
 
     @Test
+    fun getRoundedNumber_shouldReturnTheSameNumberString() = runTest {
+        val double = 0.04
+        double.format(10) shouldBe "0.04"
+    }
+
+    @Test
+    fun getRoundedNumber_shouldReturnTheRoundedNumberString() = runTest {
+        0.00123456789191.format(10) shouldBe "0.0012345679"
+        0.00123456784191.format(10) shouldBe "0.0012345678"
+
+    }
+
+    @Test
+    fun getRoundedNumber_shouldReturnTheRoundedNumberEndlessNumberString() = runTest {
+        val double = 1.toDouble() / 3.toDouble()
+        println(double)
+        double.format(15) shouldBe "0.333333333333333"
+    }
+
+    @Test
+    fun getRoundedNumber_shouldReturnTheNumberWithoutPointString() = runTest {
+        0.0.format(10) shouldBe "0"
+        1.0.format(10) shouldBe "1"
+    }
+
+    @Test
     fun getLexicon_shouldReturnLexicon() {
         grammar.getLexicon() shouldBe listOf(
             "NP John 0.333333333333333",

@@ -1,4 +1,8 @@
-class Grammar(rules: ArrayList<Rule>) {
+import java.text.DecimalFormat
+import java.text.NumberFormat
+import java.util.*
+
+class Grammar(rules: List<Rule>) {
     val initial = "ROOT"
     val pRules : Map<Rule,Double>
 
@@ -14,14 +18,22 @@ class Grammar(rules: ArrayList<Rule>) {
     }
 
     fun getLexicon(): List<String> {
-        return pRules.filterKeys { it.lexical }.map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " + String.format("%.15f", p)}
+        return pRules.filterKeys { it.lexical }.map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " +  p.format(15)}
     }
+    //String.format("%.15f", p)
 
     fun getRules(): List<String> {
-        return pRules.filterKeys { !it.lexical }.map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + String.format("%.15f", p )}
+        return pRules.filterKeys { !it.lexical }.map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15)}
     }
 
     override fun toString(): String {
-        return pRules.map { (rule, p) -> rule.toString() + " " + String.format("%.15f", p ) }.joinToString("\n")
+        return pRules.map { (rule, p) -> rule.toString() + " " + p.format(15) }.joinToString("\n")
     }
+}
+
+fun Double.format(fracDigits: Int): String {
+    val nf = NumberFormat.getNumberInstance(Locale.UK)
+    val df = nf as DecimalFormat
+    df.maximumFractionDigits = fracDigits
+    return df.format(this)
 }
