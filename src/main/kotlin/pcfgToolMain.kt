@@ -14,6 +14,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
+import java.io.ByteArrayInputStream
+import java.io.EOFException
+import java.io.InputStream
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -28,85 +31,22 @@ class PcfgTool : CliktCommand() {
 
     override fun run() = Unit
 }
-//class Induce : CliktCommand() {
-//    override val commandHelp = """
-//        Liest eine Sequenz Konstituentenbäume von der Standardeingabe und gibt eine aus diesen Bäumen induzierte PCFG auf der Standardausgabe aus.
-//    """
-//
-//    val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
-//
-//    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-
-//    @OptIn(ExperimentalTime::class)
-//    override fun run() {
-//        val time = measureTime {
-//            try {
-//                val rules = generateSequence(readNotEmptyLnOrNull).map { expressionEvaluator.parseToEnd(it) }
-//                    .flatMap { it.parseToRules() }.toList()
-//                if (grammar == null) {
-//                    echo(Grammar(rules).toString())
-//                } else {
-//                    measureTime {
-//                        writeToFiles(Grammar(rules), grammar.toString())
-//                    }.also { println(it) }
-//                }
-//            } catch (e: ParseException) {
-//                echo("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-//                throw ProgramResult(5)
-//            }
-//        }
-//        echo(time.inWholeMilliseconds)
-//    }
-//}
-
-//class Induce : CliktCommand() {
-//    override val commandHelp = """
-//        Liest eine Sequenz Konstituentenbäume von der Standardeingabe und gibt eine aus diesen Bäumen induzierte PCFG auf der Standardausgabe aus.
-//    """
-//
-//    val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
-//
-//    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-//
-//    @OptIn(ExperimentalTime::class)
-//    override fun run() {
-//        val time = measureTime {
-//            try {
-//                val rules = generateSequence(readNotEmptyLnOrNull).map { expressionEvaluator.parseToEnd(it) }
-//                    .flatMap { it.parseToRules() }.toList()
-//                if (grammar == null) {
-//                    echo(Grammar(ArrayList(rules)).toString())
-//                } else {
-//                    measureTime {
-//                        writeToFiles(Grammar(ArrayList(rules)), grammar.toString())
-//                    }.also { println(it) }
-//
-//                }
-//            } catch (e: ParseException) {
-//                echo("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-//                throw ProgramResult(5)
-//            }
-//        }
-//        echo(time.inWholeMilliseconds)
-//    }
-//}
-
 
 class Induce : CliktCommand() {
     override val commandHelp = """
         Liest eine Sequenz Konstituentenbäume von der Standardeingabe und gibt eine aus diesen Bäumen induzierte PCFG auf der Standardausgabe aus.
     """
 
-    val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
+    private val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-    val rulesChannel = Channel<ArrayList<Rule>>(capacity = Channel.UNLIMITED)
+    private val rulesChannel = Channel<ArrayList<Rule>>(capacity = Channel.UNLIMITED)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 10) {
 
         var line = readNotEmptyLnOrNull.invoke()
-        while (line != null) {
+        while (line != null && isActive) {
             send(line)
             line = readNotEmptyLnOrNull.invoke()
         }
@@ -119,38 +59,41 @@ class Induce : CliktCommand() {
         }
     }
 
+    @OptIn(ExperimentalTime::class, FlowPreview::class)
+    override fun run() {
+        try {
+            runBlocking(Dispatchers.Default) {
+                val time = measureTime {
+                    val producer = produceString()
 
-    @OptIn(ExperimentalTime::class)
-    override fun run() = runBlocking(Dispatchers.Default) {
-        val time = measureTime {
-            val producer = produceString()
+                    launch {
+                        coroutineScope {
+                            repeat(8) {
+                                launchProcessor(producer)
+                            }
+                        }
+                        rulesChannel.close()
+                    }
 
-            launch {
-                coroutineScope {
-                    repeat(8) {
-                        launchProcessor(producer)
+
+                    val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
+                        .toList()
+
+
+                    if (grammar == null) {
+                        echo(Grammar.fromRules(rules).toString())
+                    } else {
+                        writeToFiles(Grammar.fromRules(rules), grammar.toString())
                     }
                 }
-                rulesChannel.close()
+                echo(time.inWholeMilliseconds)
             }
-
-            val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
-                .toList() // .reduce{accumulator, value ->  accumulator.addAll(value); accumulator}
-
-            try {
-                if (grammar == null) {
-                    echo(Grammar.fromRules(rules).toString())
-                } else {
-                    writeToFiles(Grammar.fromRules(rules), grammar.toString())
-
-                }
-            } catch (e: ParseException) {
-                echo("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-                throw ProgramResult(5)
+        } catch (e: Exception) {
+            if (e is ParseException) {
+               println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+               throw ProgramResult(5)
             }
         }
-        echo(time.inWholeMilliseconds)
-
     }
 }
 

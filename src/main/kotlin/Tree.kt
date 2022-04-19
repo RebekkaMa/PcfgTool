@@ -49,26 +49,16 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
 
     }
 
-//    @OptIn(ExperimentalStdlibApi::class)
 //    fun parseToRules(): ArrayList<Rule> {
-//            val rules: ArrayList<Rule> = ArrayList()
+//        val rules: ArrayList<Rule> = ArrayList()
 //
-//            val mutualRecursion = object {
-//                val even: DeepRecursiveFunction<Tree, Unit> = DeepRecursiveFunction {
-//                    if (it.children.isEmpty()) return@DeepRecursiveFunction
-//                    rules.add(parseToRule(it))
-//                    it.children.map { child -> odd.callRecursive(child) }
-//                }
-//                val odd: DeepRecursiveFunction<Tree, Unit> = DeepRecursiveFunction {
-//                    if (it.children.isEmpty()) return@DeepRecursiveFunction
-//                    rules.add(parseToRule(it))
-//                    it.children.map { child -> even.callRecursive(child) }
-//                }
-//            }
-//
-//            mutualRecursion.even.invoke(this)
-//
+//        fun parse(expression: Tree) {
+//            if (expression.children.isEmpty()) return
+//            rules.add(parseToRule(expression))
+//            expression.children.map { parse(it) }
+//            return
+//        }
+//        parse(this)
 //        return rules
-//
 //    }
 }
