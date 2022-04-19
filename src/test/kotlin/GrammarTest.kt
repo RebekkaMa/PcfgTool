@@ -1,4 +1,5 @@
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
@@ -16,6 +17,7 @@ class GrammarTest {
     val rule10 = Rule(true, "N", listOf("ground"))
     val rule11 = Rule(true, "LD", listOf("hit"))
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun init_shouldReturnASimpleGrammar() = runTest {
         val grammar = Grammar.fromRules(
@@ -46,31 +48,36 @@ class GrammarTest {
         )
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun getRoundedNumber_shouldReturnTheSameNumberString() = runTest {
+    fun format_shouldReturnTheSameNumberString() = runTest {
         val double = 0.04
         double.format(10) shouldBe "0.04"
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun getRoundedNumber_shouldReturnTheRoundedNumberString() = runTest {
+    fun format_shouldReturnTheRoundedNumberString() = runTest {
         0.00123456789191.format(10) shouldBe "0.0012345679"
         0.00123456784191.format(10) shouldBe "0.0012345678"
 
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun getRoundedNumber_shouldReturnTheRoundedNumberEndlessNumberString() = runTest {
+    fun format_shouldReturnTheRoundedNumberEndlessNumberString() = runTest {
         val double = 1.toDouble() / 3.toDouble()
         double.format(15) shouldBe "0.333333333333333"
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun getRoundedNumber_shouldReturnTheNumberWithoutPointString() = runTest {
+    fun format_shouldReturnTheNumberWithoutPointString() = runTest {
         0.0.format(10) shouldBe "0"
         1.0.format(10) shouldBe "1"
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun getLexicon_shouldReturnLexicon() = runTest {
         val grammar = Grammar.fromRules(
@@ -98,6 +105,7 @@ class GrammarTest {
         )
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun getTerminals_shouldReturnTerminals() = runTest {
         val grammar = Grammar.fromRules(
@@ -118,6 +126,7 @@ class GrammarTest {
         grammar.getTerminals() shouldBe listOf("John", "hit", "the", "ball", "ground")
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun getRules_shouldReturnRules() = runTest {
         val grammar = Grammar.fromRules(

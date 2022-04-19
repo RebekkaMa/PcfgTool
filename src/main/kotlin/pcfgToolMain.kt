@@ -13,12 +13,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.*
-import java.io.ByteArrayInputStream
-import java.io.EOFException
-import java.io.InputStream
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.toList
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
@@ -44,11 +43,10 @@ class Induce : CliktCommand() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 10) {
-
-        var line = readNotEmptyLnOrNull.invoke()
+        var line = readNotEmptyLnOrNull()
         while (line != null && isActive) {
             send(line)
-            line = readNotEmptyLnOrNull.invoke()
+            line = readNotEmptyLnOrNull()
         }
     }
 
@@ -59,40 +57,38 @@ class Induce : CliktCommand() {
         }
     }
 
-    @OptIn(ExperimentalTime::class, FlowPreview::class)
+    @OptIn(FlowPreview::class)
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
-                val time = measureTime {
-                    val producer = produceString()
+                val producer = produceString()
 
-                    launch {
+                launch {
+                    try {
                         coroutineScope {
                             repeat(8) {
                                 launchProcessor(producer)
                             }
                         }
                         rulesChannel.close()
-                    }
-
-
-                    val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
-                        .toList()
-
-
-                    if (grammar == null) {
-                        echo(Grammar.fromRules(rules).toString())
-                    } else {
-                        writeToFiles(Grammar.fromRules(rules), grammar.toString())
+                    } catch (e: ParseException) {
+                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+                        exitProcess(5)
                     }
                 }
-                echo(time.inWholeMilliseconds)
+                val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
+                    .toList()
+                if (grammar == null) {
+                    echo(Grammar.fromRules(rules).toString())
+                } else {
+                    writeToFiles(Grammar.fromRules(rules), grammar.toString())
+                }
             }
         } catch (e: Exception) {
-            if (e is ParseException) {
-               println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-               throw ProgramResult(5)
-            }
+            println("Ein Fehler ist aufgetreten!")
+            println(e.message)
+            println(e.stackTrace)
+            throw ProgramResult(1)
         }
     }
 }

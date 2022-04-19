@@ -1,6 +1,3 @@
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
-
 class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
     fun addExpressionToList(expression: Tree) {
         children.add(expression)
@@ -26,11 +23,9 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
         return Rule(expression.children.first().children.isEmpty() , expression.atom, childrenString.split(" "))
     }
 
-
     @OptIn(ExperimentalStdlibApi::class)
     fun parseToRules(): ArrayList<Rule> {
         val rules: ArrayList<Rule> = ArrayList()
-
         val mutualRecursion = object {
             val even: DeepRecursiveFunction<Tree, Unit> = DeepRecursiveFunction {
                 if (it.children.isEmpty()) return@DeepRecursiveFunction
@@ -44,21 +39,6 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
             }
         }
         mutualRecursion.even.invoke(this)
-
         return rules
-
     }
-
-//    fun parseToRules(): ArrayList<Rule> {
-//        val rules: ArrayList<Rule> = ArrayList()
-//
-//        fun parse(expression: Tree) {
-//            if (expression.children.isEmpty()) return
-//            rules.add(parseToRule(expression))
-//            expression.children.map { parse(it) }
-//            return
-//        }
-//        parse(this)
-//        return rules
-//    }
 }

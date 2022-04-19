@@ -23,7 +23,6 @@ class Grammar(val pRules : Map<Rule,Double>) {
     fun getLexicon(): List<String> {
         return pRules.filterKeys { it.lexical }.map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " +  p.format(15)}
     }
-    //String.format("%.15f", p)
 
     fun getRules(): List<String> {
         return pRules.filterKeys { !it.lexical }.map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15)}
