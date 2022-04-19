@@ -23,14 +23,23 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
         return Rule(expression.children.first().children.isEmpty() , expression.atom, childrenString.split(" "))
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     fun parseToRules(): ArrayList<Rule> {
         val rules: ArrayList<Rule> = ArrayList()
-        fun parse(expression: Tree) {
-            if (expression.children.isEmpty()) return
-            rules.add(parseToRule(expression))
-            expression.children.map { parse(it) } //TODO tailrec
+
+        val mutualRecursion = object {
+            val even: DeepRecursiveFunction<Tree, Unit> = DeepRecursiveFunction {
+                if (it.children.isEmpty()) return@DeepRecursiveFunction
+                rules.add(parseToRule())
+                it.children.map { child -> odd.callRecursive(child) } //TODO tailrec
+            }
+            val odd: DeepRecursiveFunction<Tree, Unit> = DeepRecursiveFunction {
+                if (it.children.isEmpty()) return@DeepRecursiveFunction
+                rules.add(parseToRule())
+                it.children.map { child -> even.callRecursive(child) } //TODO tailrec
+            }
         }
-        parse(this)
+        mutualRecursion.even.invoke(this)
         return rules
     }
 }

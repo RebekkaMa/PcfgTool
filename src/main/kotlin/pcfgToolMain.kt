@@ -129,7 +129,7 @@ class Induce : CliktCommand() {
 
             launch {
                 coroutineScope {
-                    repeat(4) {
+                    repeat(16) {
                         launchProcessor(producer)
                     }
                 }
