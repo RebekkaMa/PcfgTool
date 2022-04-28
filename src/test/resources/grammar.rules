@@ -1,0 +1,5 @@
+S -> NP VP 1
+VP -> VP PP 0.25
+VP -> V NP 0.5
+PP -> P NP 1
+NP -> Det N 0.333333333333333

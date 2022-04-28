@@ -1,3 +1,6 @@
+package evaluators
+
+import Tree
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo

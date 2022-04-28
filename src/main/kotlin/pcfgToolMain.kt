@@ -6,17 +6,18 @@ import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
+import evaluators.ExpressionEvaluator
+import evaluators.LexiconExpressionEvaluator
+import evaluators.RulesExpressionEvaluator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -79,26 +80,27 @@ class Induce : CliktCommand() {
                 val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
                     .toList()
                 if (grammar == null) {
-                    echo(Grammar.fromRules(rules).toString())
+                    echo(Grammar.createFromRules(rules).toString())
                 } else {
-                    writeToFiles(Grammar.fromRules(rules), grammar.toString())
+                    writeToFiles(Grammar.createFromRules(rules), grammar.toString())
                 }
             }
         } catch (e: Exception) {
-            println("Ein Fehler ist aufgetreten!")
-            println(e.message)
-            println(e.stackTrace)
+            System.err.println("Ein Fehler ist aufgetreten!")
+            System.err.println(e.message)
+            System.err.println(e.stackTrace)
             throw ProgramResult(1)
         }
     }
 }
 
 class Parse : CliktCommand() {
-    val rules by argument()
-    val lexicon by argument()
+    val rules by argument().file(mustExist = true)
+    val lexicon by argument().file(mustExist = true)
 
-    val paradigma by option("-p", "--paradigma").choice("cyk", "deductive")
+    val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("cyk")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
+
     val unking by option("-u", "--unking")
     val smoothing by option("-s", "--smoothing")
     val thresholdBeam by option("-t", "--threshold-beam")
@@ -106,8 +108,52 @@ class Parse : CliktCommand() {
     val kbest by option("-k", "--kbest")
     val astar by option("-a", "--astar")
 
+    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+
     override fun run() {
-        throw ProgramResult(22)
+        try {
+
+            runBlocking(Dispatchers.Default) {
+
+                if (!(unking.isNullOrEmpty() || smoothing.isNullOrEmpty() || thresholdBeam.isNullOrEmpty() || rankBeam.isNullOrEmpty() || kbest.isNullOrEmpty() || astar.isNullOrEmpty())) {
+                    throw ProgramResult(22)
+                }
+
+
+                val rulesExpressionEvaluator = RulesExpressionEvaluator()
+                val lexiconExpressionEvaluator = LexiconExpressionEvaluator()
+
+
+                val getRulesFromFile = async {
+                    val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
+                    rulesExpressionEvaluator.parseToEnd(
+                        it
+                    )
+                }
+                }
+
+                val getLexiconsFromFile = async {
+                    val lexiconBr = lexicon.bufferedReader(); generateSequence { lexiconBr.readLine() }.map {
+                    lexiconExpressionEvaluator.parseToEnd(
+                        it
+                    )
+                }
+                }
+
+                Grammar.create(
+                    initialNonterminal,
+                    (getLexiconsFromFile.await() + getRulesFromFile.await()).toMap()
+                )
+
+                //generateSequence { readNotEmptyLnOrNull }.map { it.parse }
+            }
+
+        } catch (e: java.lang.Exception) {
+            System.err.println("Ein Fehler ist aufgetreten!")
+            System.err.println(e.message)
+            System.err.println(e.stackTrace)
+            throw ProgramResult(1)
+        }
     }
 }
 

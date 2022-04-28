@@ -4,15 +4,23 @@ import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.*
 
-class Grammar(val pRules : Map<Rule,Double>) {
-    val initial = "ROOT"
+class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
-    companion object{
-        suspend fun fromRules(rules: List<Rule>):Grammar = coroutineScope {
-            val absoluteRules = async{rules.groupingBy { it }.eachCount()}
-            val lhsCount = async{ rules.groupingBy { it.lhs }.eachCount()}
-            val pcfgRules = absoluteRules.await().mapValues{  (rule, count) -> (count.toDouble()/(lhsCount.await().getOrElse(rule.lhs) { 1 }) )}
-            Grammar(pcfgRules)
+    companion object {
+        suspend fun createFromRules(rules: List<Rule>): Grammar = coroutineScope {
+            val absoluteRules = async { rules.groupingBy { it }.eachCount() }
+            val lhsCount = async { rules.groupingBy { it.lhs }.eachCount() }
+            val pcfgRules = absoluteRules.await()
+                .mapValues { (rule, count) -> (count.toDouble() / (lhsCount.await().getOrElse(rule.lhs) { 1 })) }
+            Grammar(pRules = pcfgRules)
+        }
+
+        suspend fun create(initial: String?, rules: Map<Rule, Double>): Grammar = coroutineScope {
+            if (initial == null) {
+                Grammar(pRules = rules.toMap())
+            } else {
+                Grammar(initial, rules.toMap())
+            }
         }
     }
 
@@ -21,11 +29,13 @@ class Grammar(val pRules : Map<Rule,Double>) {
     }
 
     fun getLexicon(): List<String> {
-        return pRules.filterKeys { it.lexical }.map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " +  p.format(15)}
+        return pRules.filterKeys { it.lexical }
+            .map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
     fun getRules(): List<String> {
-        return pRules.filterKeys { !it.lexical }.map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15)}
+        return pRules.filterKeys { !it.lexical }
+            .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
     override fun toString(): String {

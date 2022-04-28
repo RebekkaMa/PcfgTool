@@ -20,7 +20,7 @@ class GrammarTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun init_shouldReturnASimpleGrammar() = runTest {
-        val grammar = Grammar.fromRules(
+        val grammar = Grammar.createFromRules(
             arrayListOf(
                 rule1,
                 rule2,
@@ -80,7 +80,7 @@ class GrammarTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun getLexicon_shouldReturnLexicon() = runTest {
-        val grammar = Grammar.fromRules(
+        val grammar = Grammar.createFromRules(
             arrayListOf(
                 rule1,
                 rule2,
@@ -108,7 +108,7 @@ class GrammarTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun getTerminals_shouldReturnTerminals() = runTest {
-        val grammar = Grammar.fromRules(
+        val grammar = Grammar.createFromRules(
             arrayListOf(
                 rule1,
                 rule2,
@@ -129,7 +129,7 @@ class GrammarTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun getRules_shouldReturnRules() = runTest {
-        val grammar = Grammar.fromRules(
+        val grammar = Grammar.createFromRules(
             arrayListOf(
                 rule1,
                 rule2,
