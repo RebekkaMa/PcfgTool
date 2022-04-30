@@ -44,12 +44,12 @@ class DeductiveParserTest {
                 rule13 to 1.0
             )
         )
-        val tuple1 = Tuple5(0, "NN", 1, 1.0, null)
-        val tuple2 = Tuple5(1, "NNS", 2, 1 / 3.toDouble(), null)
-        val tuple3 = Tuple5(1, "VBZ", 2, 1.0, null)
-        val tuple4 = Tuple5(2, "VBP", 3, 1.0, null)
-        val tuple5 = Tuple5(2, "IN", 3, 1.0, null)
-        val tuple6 = Tuple5(3, "NNS", 4, 2 / 3.toDouble(), null)
+        val tuple1 = Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null))
+        val tuple2 = Tuple5(1, "NNS", 2, 1 / 3.toDouble(), DeductiveParser.Bactrace(rule9 to 1 / 3.toDouble(), null))
+        val tuple3 = Tuple5(1, "VBZ", 2, 1.0, DeductiveParser.Bactrace(rule12 to 1.0, null))
+        val tuple4 = Tuple5(2, "VBP", 3, 1.0, DeductiveParser.Bactrace(rule11 to 1.0, null))
+        val tuple5 = Tuple5(2, "IN", 3, 1.0, DeductiveParser.Bactrace(rule13 to 1.0, null))
+        val tuple6 = Tuple5(3, "NNS", 4, 2 / 3.toDouble(), DeductiveParser.Bactrace(rule10 to 2 / 3.toDouble(), null))
 
 
         val parser = DeductiveParser(grammar)
@@ -86,9 +86,19 @@ class DeductiveParserTest {
             )
         )
         val parser = DeductiveParser(grammar)
-        parser.zeile8(0, "NN", 1, 1.0, false)
-        parser.itemsLeft shouldBe mutableMapOf(Pair(Pair(0, "NN"), mutableListOf(Tuple4(0, "NN", 1, 1.0))))
-        parser.itemsRight shouldBe mutableMapOf(Pair(Pair("NN", 1), mutableListOf(Tuple4(0, "NN", 1, 1.0))))
+        parser.zeile8(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null), false)
+        parser.itemsLeft shouldBe mutableMapOf(
+            Pair(
+                Pair(0, "NN"),
+                mutableListOf(Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
+            )
+        )
+        parser.itemsRight shouldBe mutableMapOf(
+            Pair(
+                Pair("NN", 1),
+                mutableListOf(Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
+            )
+        )
     }
 
     @Test
@@ -113,12 +123,24 @@ class DeductiveParserTest {
             )
         )
         val parser = DeductiveParser(grammar)
-        parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple4(0, "NN", 1, 0.0))
-        parser.itemsRight[Pair("NN", 1)] = mutableListOf(Tuple4(0, "NN", 1, 0.0))
+        parser.itemsLeft[Pair(0, "NN")] =
+            mutableListOf(Tuple5(0, "NN", 1, 0.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
+        parser.itemsRight[Pair("NN", 1)] =
+            mutableListOf(Tuple5(0, "NN", 1, 0.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
 
-        parser.zeile8(0, "NN", 1, 1.0, true)
-        parser.itemsLeft shouldBe mutableMapOf(Pair(Pair(0, "NN"), mutableListOf(Tuple4(0, "NN", 1, 1.0))))
-        parser.itemsRight shouldBe mutableMapOf(Pair(Pair("NN", 1), mutableListOf(Tuple4(0, "NN", 1, 1.0))))
+        parser.zeile8(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null), true)
+        parser.itemsLeft shouldBe mutableMapOf(
+            Pair(
+                Pair(0, "NN"),
+                mutableListOf(Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
+            )
+        )
+        parser.itemsRight shouldBe mutableMapOf(
+            Pair(
+                Pair("NN", 1),
+                mutableListOf(Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
+            )
+        )
     }
 
     @Test
@@ -143,33 +165,33 @@ class DeductiveParserTest {
             )
         )
         val parser = DeductiveParser(grammar)
-        parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple4(0, "NN", 2, 0.5))
-        parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple4(2, "NNS", 3, 0.5))
-        parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple4(0, "NN", 2, 0.5))
-        parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple4(2, "NNS", 3, 0.5))
+        parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, null))
+        parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
+        parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, null))
+        parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
 
 
-        parser.zeile8(0, "NN", 1, 1.0, false)
+        parser.zeile8(0, "NN", 1, 1.0, null, false)
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),
-                mutableListOf(Tuple4(0, "NN", 2, 0.5), Tuple4(0, "NN", 1, 1.0))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 2, 0.5, null), Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 1, 1.0, null))
             ), Pair(
                 Pair(2, "NNS"),
-                mutableListOf(Tuple4(2, "NNS", 3, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.5, null))
             )
         )
         parser.itemsRight shouldBe mutableMapOf(
             Pair(
                 Pair("NN", 2),
-                mutableListOf(Tuple4(0, "NN", 2, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 2, 0.5, null))
             ), Pair(
                 Pair("NNS", 3),
-                mutableListOf(Tuple4(2, "NNS", 3, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.5, null))
             ),
             Pair(
                 Pair("NN", 1),
-                mutableListOf(Tuple4(0, "NN", 1, 1.0))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 1, 1.0, null))
             )
         )
     }
@@ -197,45 +219,45 @@ class DeductiveParserTest {
         )
         val parser = DeductiveParser(grammar)
 
-        parser.itemsLeft[Pair(3, "NN")] = mutableListOf(Tuple4(3, "NN", 4, 0.5))
-        parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple4(2, "NNS", 3, 0.6))
-        parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple4(0, "NN", 2, 0.4))
+        parser.itemsLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, null))
+        parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+        parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.4, null))
 
 
-        parser.itemsRight[Pair("NN", 4)] = mutableListOf(Tuple4(3, "NN", 4, 0.5))
-        parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple4(2, "NNS", 3, 0.6))
-        parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple4(0, "NN", 2, 0.4))
+        parser.itemsRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, null))
+        parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+        parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.4, null))
 
 
-        parser.zeile9(0, "NN", 2, 0.4, listOf("Fruit", "flies", "like", "bananas"))
+        parser.zeile9(0, "NN", 2, 0.4, null, listOf("Fruit", "flies", "like", "bananas"))
 
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(3, "NN"),
-                mutableListOf(Tuple4(3, "NN", 4, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(3, "NN", 4, 0.5, null))
             ), Pair(
                 Pair(2, "NNS"),
-                mutableListOf(Tuple4(2, "NNS", 3, 0.6))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.6, null))
             ), Pair(
                 Pair(0, "NN"),
-                mutableListOf(Tuple4(0, "NN", 2, 0.4))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 2, 0.4, null))
             )
         )
         parser.itemsRight shouldBe mutableMapOf(
             Pair(
                 Pair("NN", 4),
-                mutableListOf(Tuple4(3, "NN", 4, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(3, "NN", 4, 0.5, null))
             ), Pair(
                 Pair("NNS", 3),
-                mutableListOf(Tuple4(2, "NNS", 3, 0.6))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.6, null))
             ),
             Pair(
                 Pair("NN", 2),
-                mutableListOf(Tuple4(0, "NN", 2, 0.4))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 2, 0.4, null))
             )
         )
 
-        parser.queue shouldBe mutableListOf(Tuple5(0, "NP", 3, (1 / 4.toDouble() * 0.6 * 0.4), null))
+        parser.queue shouldBe mutableListOf(Tuple5(0, "NP", 3, (1 / 4.toDouble() * 0.6 * 0.4), DeductiveParser.Bactrace(rule2 to 1 / 4.toDouble(), Pair(null, null) )))
     }
 
     @Test
@@ -261,47 +283,47 @@ class DeductiveParserTest {
         )
         val parser = DeductiveParser(grammar)
 
-        parser.itemsLeft[Pair(3, "VP")] = mutableListOf(Tuple4(3, "VP", 4, 0.5))
-        parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple4(2, "NNS", 3, 0.6))
-        parser.itemsLeft[Pair(0, "NP")] = mutableListOf(Tuple4(0, "NP", 3, 0.4))
+        parser.itemsLeft[Pair(3, "VP")] = mutableListOf(Tuple5(3, "VP", 4, 0.5, null))
+        parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+        parser.itemsLeft[Pair(0, "NP")] = mutableListOf(Tuple5(0, "NP", 3, 0.4, null))
 
 
-        parser.itemsRight[Pair("VP", 4)] = mutableListOf(Tuple4(3, "VP", 4, 0.5))
-        parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple4(2, "NNS", 3, 0.6))
-        parser.itemsRight[Pair("NP", 3)] = mutableListOf(Tuple4(0, "NP", 3, 0.4))
+        parser.itemsRight[Pair("VP", 4)] = mutableListOf(Tuple5(3, "VP", 4, 0.5, null))
+        parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+        parser.itemsRight[Pair("NP", 3)] = mutableListOf(Tuple5(0, "NP", 3, 0.4, null))
 
 
-        parser.zeile10(3, "VP", 4, 0.5, listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
+        parser.zeile10(3, "VP", 4, 0.5, null, listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
             0,
             "S",
             4,
             0.5 * 0.4,
-            null
+            DeductiveParser.Bactrace(rule1 to 1.0, Pair(null, null) )
         )
 
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(3, "VP"),
-                mutableListOf(Tuple4(3, "VP", 4, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(3, "VP", 4, 0.5, null))
             ), Pair(
                 Pair(2, "NNS"),
-                mutableListOf(Tuple4(2, "NNS", 3, 0.6))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.6, null))
             ), Pair(
                 Pair(0, "NP"),
-                mutableListOf(Tuple4(0, "NP", 3, 0.4))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NP", 3, 0.4,null))
             )
         )
         parser.itemsRight shouldBe mutableMapOf(
             Pair(
                 Pair("VP", 4),
-                mutableListOf(Tuple4(3, "VP", 4, 0.5))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(3, "VP", 4, 0.5, null))
             ), Pair(
                 Pair("NNS", 3),
-                mutableListOf(Tuple4(2, "NNS", 3, 0.6))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.6, null))
             ),
             Pair(
                 Pair("NP", 3),
-                mutableListOf(Tuple4(0, "NP", 3, 0.4))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NP", 3, 0.4, null))
             )
         )
 
@@ -330,14 +352,11 @@ class DeductiveParserTest {
             )
         )
         val parser = DeductiveParser(grammar)
-
-        parser.weightedDeductiveParsing( listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
-            0,
-            "S",
-            4,
-            1 / 24.toDouble(),
-            null
-        )
+        val tupel = parser.weightedDeductiveParsing(listOf("Fruit", "flies", "like", "bananas"))
+        tupel?.t1 shouldBe 0
+        tupel?.t2 shouldBe "S"
+        tupel?.t3 shouldBe 4
+        tupel?.t4 shouldBe 1 / 24.toDouble()
     }
 
     @Test
@@ -362,7 +381,7 @@ class DeductiveParserTest {
         )
         val parser = DeductiveParser(grammar)
 
-        parser.weightedDeductiveParsing( listOf("Fruit", "flies", "like", "bananas")) shouldBe null
+        parser.weightedDeductiveParsing(listOf("Fruit", "flies", "like", "bananas")) shouldBe null
     }
 
     @Test
@@ -389,12 +408,11 @@ class DeductiveParserTest {
         )
         val parser = DeductiveParser(grammar)
 
-        parser.weightedDeductiveParsing( listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
-            0,
-            "O",
-            4,
-            1 / 24.toDouble() * 0.5, null
-        )
+        val tupel = parser.weightedDeductiveParsing(listOf("Fruit", "flies", "like", "bananas"))
+        tupel?.t1 shouldBe 0
+        tupel?.t2 shouldBe "O"
+        tupel?.t3 shouldBe 4
+        tupel?.t4 shouldBe 1 / 24.toDouble() * 0.5
     }
 
 }
