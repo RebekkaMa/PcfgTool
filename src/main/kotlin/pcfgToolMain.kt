@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.prompt
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
@@ -109,6 +110,7 @@ class Parse : CliktCommand() {
     val astar by option("-a", "--astar")
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+    val sd by option().prompt()
 
     override fun run() {
         try {
@@ -140,12 +142,33 @@ class Parse : CliktCommand() {
                 }
                 }
 
-                Grammar.create(
+                val grammar = Grammar.create(
                     initialNonterminal,
                     (getLexiconsFromFile.await() + getRulesFromFile.await()).toMap()
                 )
 
-                //generateSequence { readNotEmptyLnOrNull }.map { it.parse }
+                val parser = DeductiveParser(grammar)
+
+                val result = parser.weightedDeductiveParsing(sd.split(" "))
+
+
+                val bt = result?.t5
+                val tree = ""
+
+                fun getTree(bt: DeductiveParser.Bactrace?): String {
+                    if (bt == null){
+                        return ""
+                    }
+                    if (bt.chain == null){
+                        return "(" + bt.bin.first.lhs + " " + bt.bin.first.rhs.first() + ")"
+                    }
+                    if (bt.chain.second == null){
+                        return "(" + bt.bin.first.lhs + " " + getTree(bt.chain.first) + ")"
+                    }
+                    return "(" + bt.bin.first.lhs + " " + getTree(bt.chain.first) + " " + getTree(bt.chain.second) + ")"
+                }
+
+                echo(getTree(bt))
             }
 
         } catch (e: java.lang.Exception) {

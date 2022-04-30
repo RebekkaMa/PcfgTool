@@ -1,10 +1,6 @@
 import com.github.h0tk3y.betterParse.utils.Tuple4
 import com.github.h0tk3y.betterParse.utils.Tuple5
-import io.kotest.inspectors.runTest
 import io.kotest.matchers.collections.shouldContain
-import io.kotest.matchers.collections.shouldContainAll
-import io.kotest.matchers.maps.shouldContain
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -25,9 +21,6 @@ class DeductiveParserTest {
     val rule11 = Rule(true, "VBP", listOf("like"))
     val rule12 = Rule(true, "VBZ", listOf("flies"))
     val rule13 = Rule(true, "IN", listOf("like"))
-
-
-
 
 
     @Test
@@ -60,7 +53,7 @@ class DeductiveParserTest {
 
 
         val parser = DeductiveParser(grammar)
-        parser.getQueueElementsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
+        parser.fillQueueElementsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
         parser.queue shouldContain tuple1
         parser.queue shouldContain tuple2
         parser.queue shouldContain tuple3
@@ -242,7 +235,7 @@ class DeductiveParserTest {
             )
         )
 
-        parser.queue shouldBe mutableListOf(Tuple5(0, "NP", 3, (1/4.toDouble() * 0.6 * 0.4),null))
+        parser.queue shouldBe mutableListOf(Tuple5(0, "NP", 3, (1 / 4.toDouble() * 0.6 * 0.4), null))
     }
 
     @Test
@@ -278,7 +271,13 @@ class DeductiveParserTest {
         parser.itemsRight[Pair("NP", 3)] = mutableListOf(Tuple4(0, "NP", 3, 0.4))
 
 
-        parser.zeile10(3, "VP", 4, 0.5, listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(0,"S",4, 0.5 * 0.4, null)
+        parser.zeile10(3, "VP", 4, 0.5, listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
+            0,
+            "S",
+            4,
+            0.5 * 0.4,
+            null
+        )
 
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
@@ -332,8 +331,70 @@ class DeductiveParserTest {
         )
         val parser = DeductiveParser(grammar)
 
-        parser.weightedDeductiveParsing(grammar, listOf("Fruit", "flies", "like", "bananas") ) shouldBe Tuple5(0,"S",4, 1/24.toDouble(), null)
+        parser.weightedDeductiveParsing( listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
+            0,
+            "S",
+            4,
+            1 / 24.toDouble(),
+            null
+        )
     }
 
+    @Test
+    fun should_returnNull() = runTest {
+
+        val grammar = Grammar.create(
+            initial = "S",
+            mapOf(
+                rule2 to 1 / 4.toDouble(),
+                rule3 to 1 / 2.toDouble(),
+                rule4 to 1 / 4.toDouble(),
+                rule5 to 1 / 2.toDouble(),
+                rule6 to 1 / 2.toDouble(),
+                rule7 to 1.0,
+                rule8 to 1.0,
+                rule9 to 1 / 3.toDouble(),
+                rule10 to 2 / 3.toDouble(),
+                rule11 to 1.0,
+                rule12 to 1.0,
+                rule13 to 1.0
+            )
+        )
+        val parser = DeductiveParser(grammar)
+
+        parser.weightedDeductiveParsing( listOf("Fruit", "flies", "like", "bananas")) shouldBe null
+    }
+
+    @Test
+    fun should_returnNull_() = runTest {
+
+        val grammar = Grammar.create(
+            initial = "O",
+            mapOf(
+                rule1 to 1.0,
+                Rule(false, "O", listOf("S")) to 0.5,
+                rule2 to 1 / 4.toDouble(),
+                rule3 to 1 / 2.toDouble(),
+                rule4 to 1 / 4.toDouble(),
+                rule5 to 1 / 2.toDouble(),
+                rule6 to 1 / 2.toDouble(),
+                rule7 to 1.0,
+                rule8 to 1.0,
+                rule9 to 1 / 3.toDouble(),
+                rule10 to 2 / 3.toDouble(),
+                rule11 to 1.0,
+                rule12 to 1.0,
+                rule13 to 1.0
+            )
+        )
+        val parser = DeductiveParser(grammar)
+
+        parser.weightedDeductiveParsing( listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
+            0,
+            "O",
+            4,
+            1 / 24.toDouble() * 0.5, null
+        )
+    }
 
 }

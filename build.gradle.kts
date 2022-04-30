@@ -11,14 +11,14 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("com.github.ajalt.clikt:clikt:3.4.0")
-    implementation("com.github.h0tk3y.betterParse:better-parse:0.4.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    implementation("com.github.ajalt.clikt:clikt:3.4.1")
+    implementation("com.github.h0tk3y.betterParse:better-parse:0.4.4")
 
     testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.2.1")
-    testImplementation("com.squareup.okio:okio-fakefilesystem:3.0.0")
+    testImplementation("io.kotest:kotest-runner-junit5:5.2.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.2.3")
 }
 
 kotlin {
