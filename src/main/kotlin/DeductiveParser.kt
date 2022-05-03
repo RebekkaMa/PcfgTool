@@ -1,5 +1,6 @@
 import com.github.h0tk3y.betterParse.utils.Tuple5
 import kotlinx.coroutines.internal.ThreadSafeHeap
+import java.util.PriorityQueue
 
 class DeductiveParser(val grammar: Grammar) {
 
@@ -47,7 +48,7 @@ class DeductiveParser(val grammar: Grammar) {
 
 
 //TODO BinaryHeap
-    val queue = mutableListOf<Tuple5<Int, String, Int, Double, Bactrace?>>()
+    val queue = PriorityQueue(compareBy<Tuple5<Int, String, Int, Double, Bactrace?>> { it.t4 }.reversed())
     val itemsLeft = mutableMapOf<Pair<Int, String>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     val itemsRight = mutableMapOf<Pair<String, Int>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     lateinit var selectedItem: Tuple5<Int, String, Int, Double, Bactrace?>
@@ -91,7 +92,7 @@ class DeductiveParser(val grammar: Grammar) {
                 sentence
                     .forEachIndexed { index, word ->
                         if (word == it.key.rhs.first()) {
-                            queue.add(Tuple5(index, it.key.lhs, index + 1, it.value, Bactrace(it.toPair(), null)))
+                            queue.offer(Tuple5(index, it.key.lhs, index + 1, it.value, Bactrace(it.toPair(), null)))
                         }
                     }
             }
@@ -100,8 +101,7 @@ class DeductiveParser(val grammar: Grammar) {
 
     // Zeile 5
     fun findMaxInQueueSaveAsSelectedItem() {
-        selectedItem = queue.maxByOrNull { it.t4 } ?: throw Exception("Queue is Empty")
-        queue.remove(selectedItem)
+        selectedItem = queue.poll() ?: throw Exception("Queue is Empty")
     }
 
     // Zeile 8
@@ -156,7 +156,7 @@ class DeductiveParser(val grammar: Grammar) {
                     if (newQueueElement.t1 == 0 && newQueueElement.t2 == grammar.initial && newQueueElement.t3 == sentence.size) {
                         return newQueueElement
                     }
-                    queue.add(newQueueElement)
+                    queue.offer(newQueueElement)
                 }
             }
         }
@@ -179,7 +179,7 @@ class DeductiveParser(val grammar: Grammar) {
                         if (newQueueElement.t1 == 0 && newQueueElement.t2 == grammar.initial && newQueueElement.t3 == sentence.size) {
                             return newQueueElement
                         }
-                        queue.add(newQueueElement)
+                        queue.offer(newQueueElement)
                     }
             }
         }
@@ -198,7 +198,7 @@ class DeductiveParser(val grammar: Grammar) {
             if (newQueueElement.t1 == 0 && newQueueElement.t2 == grammar.initial && newQueueElement.t3 == sentence.size) {
                 return newQueueElement
             }
-            queue.add(newQueueElement)
+            queue.offer(newQueueElement)
         }
         return null
     }
