@@ -47,8 +47,8 @@ class DeductiveParser(val grammar: Grammar) {
     }
 
 
-//TODO BinaryHeap
-    val queue = PriorityQueue(compareBy<Tuple5<Int, String, Int, Double, Bactrace?>> { it.t4 }.reversed())
+    val queue =
+        PriorityQueue(compareBy<Tuple5<Int, String, Int, Double, Bactrace?>> { it.t4 }.reversed()) //TODO BinaryHeap
     val itemsLeft = mutableMapOf<Pair<Int, String>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     val itemsRight = mutableMapOf<Pair<String, Int>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     lateinit var selectedItem: Tuple5<Int, String, Int, Double, Bactrace?>
@@ -142,15 +142,14 @@ class DeductiveParser(val grammar: Grammar) {
         sentence: List<String>
     ): Tuple5<Int, String, Int, Double, Bactrace?>? {
         val (i, nt, j, wt, bt) = selectedItem
-        itemsLeft.filterKeys { it.first == j }.map { entry ->
-            entry.value.forEach { tuple ->
-                grammarLhs[nt]?.filter { it.first.rhs.component2() == tuple.t2 }?.
-                forEach {
+        grammarLhs[nt]?.forEach { rulePair ->
+            itemsLeft[Pair(j, rulePair.first.rhs.component2())]?.forEach {
+                if (rulePair.first.rhs.component2() == it.t2 && j < it.t3) {
                     val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
                         Tuple5(
-                            i, it.first.lhs, tuple.t3, it.second * wt * tuple.t4, Bactrace(
-                                it,
-                                Pair(bt, tuple.t5)
+                            i, rulePair.first.lhs, it.t3, rulePair.second * wt * it.t4, Bactrace(
+                                rulePair,
+                                Pair(bt, it.t5)
                             )
                         )
                     if (newQueueElement.t1 == 0 && newQueueElement.t2 == grammar.initial && newQueueElement.t3 == sentence.size) {
@@ -158,11 +157,11 @@ class DeductiveParser(val grammar: Grammar) {
                     }
                     queue.offer(newQueueElement)
                 }
+
             }
         }
         return null
     }
-
 
     //Zeile 10
     fun findRuleAddItemToQueueLhs(
@@ -170,18 +169,24 @@ class DeductiveParser(val grammar: Grammar) {
 
     ): Tuple5<Int, String, Int, Double, Bactrace?>? {
         val (i, nt, j, wt, bt) = selectedItem
-        itemsRight.filterKeys { it.second == i }.map { entry ->
-            entry.value.forEach { tuple ->
-                grammarRhs[nt]?.filter { it.first.rhs.first() == tuple.t2 }
-                    ?.forEach {
-                        val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
-                            Tuple5(tuple.t1, it.first.lhs, j, it.second * tuple.t4 * wt, Bactrace(it, Pair(tuple.t5, bt)))
-                        if (newQueueElement.t1 == 0 && newQueueElement.t2 == grammar.initial && newQueueElement.t3 == sentence.size) {
-                            return newQueueElement
-                        }
-                        queue.offer(newQueueElement)
+        grammarRhs[nt]?.forEach { rulePair ->
+            itemsRight[Pair(rulePair.first.rhs.first(), i)]?.forEach{tuple ->
+                if (rulePair.first.rhs.first() == tuple.t2){
+                    val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
+                        Tuple5(
+                            tuple.t1,
+                            rulePair.first.lhs,
+                            j,
+                            rulePair.second * tuple.t4 * wt,
+                            Bactrace(rulePair, Pair(tuple.t5, bt))
+                        )
+                    if (newQueueElement.t1 == 0 && newQueueElement.t2 == grammar.initial && newQueueElement.t3 == sentence.size) {
+                        return newQueueElement
                     }
+                    queue.offer(newQueueElement)
+                }
             }
+
         }
         return null
     }
