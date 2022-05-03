@@ -3,7 +3,7 @@ import com.github.h0tk3y.betterParse.utils.Tuple5
 class DeductiveParser(val grammar: Grammar) {
 
     val grammarRhsNonterminal =
-        grammar.pRules.asSequence().sortedByDescending { it.value }
+        grammar.pRules.asSequence()
             .fold(mutableMapOf<List<String>, MutableList<Pair<Rule, Double>>>()) { acc, entry ->
                 if (!entry.key.lexical) {
                     acc.compute(entry.key.rhs) { _, v ->
@@ -18,31 +18,82 @@ class DeductiveParser(val grammar: Grammar) {
                 acc
             }
 
+    val grammarRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+
+    val grammarLhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+    val grammarChain = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+
+    init {
+        grammar.pRules.forEach {
+            when (it.key.rhs.size) {
+                2 -> {
+                    grammarLhs.compute(it.key.rhs.first()) { _, v ->
+                        if (v != null) {
+                            v.add(it.toPair())
+                            v
+                        } else {
+                            mutableListOf(it.toPair())
+                        }
+                    }
+                    grammarRhs.compute(it.key.rhs[1]) { _, v ->
+                        if (v != null) {
+                            v.add(it.toPair())
+                            v
+                        } else {
+                            mutableListOf(it.toPair())
+                        }
+                    }
+                }
+                1 -> {
+                    grammarChain.compute(it.key.rhs.first()) { _, v ->
+                        if (v != null) {
+                            v.add(it.toPair())
+                            v
+                        } else {
+                            mutableListOf(it.toPair())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+//TODO BinaryHeap
+
     val queue = mutableListOf<Tuple5<Int, String, Int, Double, Bactrace?>>()
     val itemsLeft = mutableMapOf<Pair<Int, String>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     val itemsRight = mutableMapOf<Pair<String, Int>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
+    lateinit var selectedItem: Tuple5<Int, String, Int, Double, Bactrace?>
 
     data class Bactrace(val bin: Pair<Rule, Double>, val chain: Pair<Bactrace?, Bactrace?>?)
 
     fun weightedDeductiveParsing(sentence: List<String>): Tuple5<Int, String, Int, Double, Bactrace?>? {
         fillQueueElementsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
-            val (i, nt, j, wt, bt) = zeile5()
-
+            findMaxInQueueSaveAsSelectedItem()
+            val (i, nt, j, _, _) = selectedItem
             val presentC = itemsLeft[Pair(i, nt)]?.find { it.t3 == j }
             val isCnull = presentC?.t4?.equals(0.0) ?: true
 
             if (isCnull) {
-                zeile8(i, nt, j, wt, bt, presentC != null)
+                addSelectedItemPropertyToSavedItems(presentC != null)
 
-                val a = zeile9(i, nt, j, wt, bt, sentence)
-                if (a != null) return a
-                val b = zeile10(i, nt, j, wt, bt, sentence)
-                if (b != null) return b
-                val c = zeile11(i, nt, j, wt, bt, sentence)
-                if (c != null) return c
+                val a = findRuleAddItemToQueueRhs(sentence)
+                if (a != null) {
+                    clearAll(); return a
+                }
+                val b = findRuleAddItemToQueueLhs(sentence)
+                if (b != null) {
+                    clearAll(); return b
+                }
+                val c = findRuleAddItemToQueueChain(sentence)
+                if (c != null) {
+                    clearAll(); return c
+                }
             }
         }
+        clearAll()
         return null
     }
 
@@ -61,13 +112,15 @@ class DeductiveParser(val grammar: Grammar) {
         }
     }
 
-    fun zeile5(): Tuple5<Int, String, Int, Double, Bactrace?> {
-        val tupel = queue.maxByOrNull { it.t4 } ?: throw Exception("Nooooo")
-        queue.remove(tupel)
-        return tupel
+    // Zeile 5
+    fun findMaxInQueueSaveAsSelectedItem() {
+        selectedItem = queue.maxByOrNull { it.t4 } ?: throw Exception("Queue is Empty")
+        queue.remove(selectedItem)
     }
 
-    fun zeile8(i: Int, nt: String, j: Int, wt: Double, bt: Bactrace?, presentC: Boolean) {
+    // Zeile 8
+    fun addSelectedItemPropertyToSavedItems(presentC: Boolean) {
+        val (i, nt, j, wt, bt) = selectedItem
         itemsLeft.compute(Pair(i, nt)) { _, v ->
             if (!presentC) {
                 if (v == null) {
@@ -77,7 +130,7 @@ class DeductiveParser(val grammar: Grammar) {
                     v
                 }
             } else {
-                v?.remove(Tuple5(i, nt, j, 0.0, bt)) ?: throw Exception("Nooooo2")
+                v?.remove(Tuple5(i, nt, j, 0.0, bt)) ?: throw Exception("v cannot be null")
                 v.add(Tuple5(i, nt, j, wt, bt))
                 v
             }
@@ -91,21 +144,18 @@ class DeductiveParser(val grammar: Grammar) {
                     v
                 }
             } else {
-                v?.remove(Tuple5(i, nt, j, 0.0, bt)) ?: throw Exception("Nooooo2")
+                v?.remove(Tuple5(i, nt, j, 0.0, bt)) ?: throw Exception("v cannot be null")
                 v.add(Tuple5(i, nt, j, wt, bt))
                 v
             }
         }
     }
 
-    fun zeile9(
-        i: Int,
-        nt: String,
-        j: Int,
-        wt: Double,
-        bt: Bactrace?,
+    //Zeile 9
+    fun findRuleAddItemToQueueRhs(
         sentence: List<String>
     ): Tuple5<Int, String, Int, Double, Bactrace?>? {
+        val (i, nt, j, wt, bt) = selectedItem
         itemsLeft.filterKeys { it.first == j }.map { entry ->
             entry.value.forEach { tuple ->
                 grammarRhsNonterminal[listOf(nt, tuple.t2)]?.forEach {
@@ -127,15 +177,12 @@ class DeductiveParser(val grammar: Grammar) {
     }
 
 
-    fun zeile10(
-        i: Int,
-        nt: String,
-        j: Int,
-        wt: Double,
-        bt: Bactrace?,
+    //Zeile 10
+    fun findRuleAddItemToQueueLhs(
         sentence: List<String>
 
     ): Tuple5<Int, String, Int, Double, Bactrace?>? {
+        val (i, nt, j, wt, bt) = selectedItem
         itemsRight.filterKeys { it.second == i }.map { entry ->
             entry.value.forEach { tuple ->
                 grammarRhsNonterminal[listOf(tuple.t2, nt)]?.forEach {
@@ -151,15 +198,12 @@ class DeductiveParser(val grammar: Grammar) {
         return null
     }
 
-    fun zeile11(
-        i: Int,
-        nt: String,
-        j: Int,
-        wt: Double,
-        bt: Bactrace?,
+    //Zeile 11
+    fun findRuleAddItemToQueueChain(
         sentence: List<String>
 
     ): Tuple5<Int, String, Int, Double, Bactrace?>? {
+        val (i, nt, j, wt, bt) = selectedItem
         grammarRhsNonterminal[listOf(nt)]?.forEach {
             val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
                 Tuple5(i, it.first.lhs, j, it.second * wt, Bactrace(it, Pair(bt, null)))
@@ -169,5 +213,11 @@ class DeductiveParser(val grammar: Grammar) {
             queue.add(newQueueElement)
         }
         return null
+    }
+
+    fun clearAll() {
+        queue.clear()
+        itemsLeft.clear()
+        itemsRight.clear()
     }
 }

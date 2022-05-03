@@ -1,26 +1,26 @@
-import com.github.h0tk3y.betterParse.utils.Tuple4
 import com.github.h0tk3y.betterParse.utils.Tuple5
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
 class DeductiveParserTest {
 
-    val rule1 = Rule(false, "S", listOf("NP", "VP"))
-    val rule2 = Rule(false, "NP", listOf("NN", "NNS"))
-    val rule3 = Rule(false, "NP", listOf("NNS"))
-    val rule4 = Rule(false, "NP", listOf("NN"))
-    val rule5 = Rule(false, "VP", listOf("VBP", "NP"))
-    val rule6 = Rule(false, "VP", listOf("VBZ", "PP"))
-    val rule7 = Rule(false, "PP", listOf("IN", "NP"))
+    private val rule1 = Rule(false, "S", listOf("NP", "VP"))
+    private val rule2 = Rule(false, "NP", listOf("NN", "NNS"))
+    private val rule3 = Rule(false, "NP", listOf("NNS"))
+    private val rule4 = Rule(false, "NP", listOf("NN"))
+    private val rule5 = Rule(false, "VP", listOf("VBP", "NP"))
+    private val rule6 = Rule(false, "VP", listOf("VBZ", "PP"))
+    private val rule7 = Rule(false, "PP", listOf("IN", "NP"))
 
-    val rule8 = Rule(true, "NN", listOf("Fruit"))
-    val rule9 = Rule(true, "NNS", listOf("flies"))
-    val rule10 = Rule(true, "NNS", listOf("bananas"))
-    val rule11 = Rule(true, "VBP", listOf("like"))
-    val rule12 = Rule(true, "VBZ", listOf("flies"))
-    val rule13 = Rule(true, "IN", listOf("like"))
+    private val rule8 = Rule(true, "NN", listOf("Fruit"))
+    private val rule9 = Rule(true, "NNS", listOf("flies"))
+    private val rule10 = Rule(true, "NNS", listOf("bananas"))
+    private val rule11 = Rule(true, "VBP", listOf("like"))
+    private val rule12 = Rule(true, "VBZ", listOf("flies"))
+    private val rule13 = Rule(true, "IN", listOf("like"))
 
 
     @Test
@@ -86,7 +86,8 @@ class DeductiveParserTest {
             )
         )
         val parser = DeductiveParser(grammar)
-        parser.zeile8(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null), false)
+        parser.selectedItem = Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null))
+        parser.addSelectedItemPropertyToSavedItems(false)
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),
@@ -128,7 +129,8 @@ class DeductiveParserTest {
         parser.itemsRight[Pair("NN", 1)] =
             mutableListOf(Tuple5(0, "NN", 1, 0.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
 
-        parser.zeile8(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null), true)
+        parser.selectedItem = Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null))
+        parser.addSelectedItemPropertyToSavedItems(true)
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),
@@ -171,11 +173,15 @@ class DeductiveParserTest {
         parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
 
 
-        parser.zeile8(0, "NN", 1, 1.0, null, false)
+        parser.selectedItem = Tuple5(0, "NN", 1, 1.0, null)
+        parser.addSelectedItemPropertyToSavedItems(false)
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),
-                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 2, 0.5, null), Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 1, 1.0, null))
+                mutableListOf(
+                    Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 2, 0.5, null),
+                    Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NN", 1, 1.0, null)
+                )
             ), Pair(
                 Pair(2, "NNS"),
                 mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.5, null))
@@ -229,7 +235,8 @@ class DeductiveParserTest {
         parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.4, null))
 
 
-        parser.zeile9(0, "NN", 2, 0.4, null, listOf("Fruit", "flies", "like", "bananas"))
+        parser.selectedItem = Tuple5(0, "NN", 2, 0.4, null)
+        parser.findRuleAddItemToQueueRhs(listOf("Fruit", "flies", "like", "bananas"))
 
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
@@ -257,7 +264,15 @@ class DeductiveParserTest {
             )
         )
 
-        parser.queue shouldBe mutableListOf(Tuple5(0, "NP", 3, (1 / 4.toDouble() * 0.6 * 0.4), DeductiveParser.Bactrace(rule2 to 1 / 4.toDouble(), Pair(null, null) )))
+        parser.queue shouldBe mutableListOf(
+            Tuple5(
+                0,
+                "NP",
+                3,
+                (1 / 4.toDouble() * 0.6 * 0.4),
+                DeductiveParser.Bactrace(rule2 to 1 / 4.toDouble(), Pair(null, null))
+            )
+        )
     }
 
     @Test
@@ -293,12 +308,13 @@ class DeductiveParserTest {
         parser.itemsRight[Pair("NP", 3)] = mutableListOf(Tuple5(0, "NP", 3, 0.4, null))
 
 
-        parser.zeile10(3, "VP", 4, 0.5, null, listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
+        parser.selectedItem = Tuple5(3, "VP", 4, 0.5, null)
+        parser.findRuleAddItemToQueueLhs(listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
             0,
             "S",
             4,
             0.5 * 0.4,
-            DeductiveParser.Bactrace(rule1 to 1.0, Pair(null, null) )
+            DeductiveParser.Bactrace(rule1 to 1.0, Pair(null, null))
         )
 
         parser.itemsLeft shouldBe mutableMapOf(
@@ -310,7 +326,7 @@ class DeductiveParserTest {
                 mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(2, "NNS", 3, 0.6, null))
             ), Pair(
                 Pair(0, "NP"),
-                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NP", 3, 0.4,null))
+                mutableListOf(Tuple5<Int, String, Int, Double, DeductiveParser.Bactrace?>(0, "NP", 3, 0.4, null))
             )
         )
         parser.itemsRight shouldBe mutableMapOf(
@@ -330,6 +346,7 @@ class DeductiveParserTest {
         parser.queue shouldBe mutableListOf()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun should_testAll() = runTest {
 

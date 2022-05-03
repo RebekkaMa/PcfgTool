@@ -54,6 +54,4 @@ class TreeTest {
 
         tree.parseToRule() shouldBe Rule(false, lhs = "NP", rhs = listOf("ART-NK", "NP-SB", "VP"))
     }
-
-
 }

@@ -20,6 +20,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import kotlin.system.exitProcess
+import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
@@ -45,11 +46,11 @@ class Induce : CliktCommand() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 10) {
-        var line = readNotEmptyLnOrNull()
-        while (line != null && isActive) {
-            send(line)
-            line = readNotEmptyLnOrNull()
-        }
+            var line = readNotEmptyLnOrNull()
+            while (line != null && isActive) {
+                send(line)
+                line = readNotEmptyLnOrNull()
+            }
     }
 
     fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) = launch(context = Dispatchers.Default) {
@@ -99,7 +100,7 @@ class Parse : CliktCommand() {
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
 
-    val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("cyk")
+    val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
 
     val unking by option("-u", "--unking")
@@ -110,7 +111,6 @@ class Parse : CliktCommand() {
     val astar by option("-a", "--astar")
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-    val sd by option().prompt()
 
     override fun run() {
         try {
@@ -149,26 +149,31 @@ class Parse : CliktCommand() {
 
                 val parser = DeductiveParser(grammar)
 
-                val result = parser.weightedDeductiveParsing(sd.split(" "))
+                val rules = generateSequence(readNotEmptyLnOrNull).map {
+                    parser.weightedDeductiveParsing(
+                        it.split(" ")
+                    )
+                }
 
 
-                val bt = result?.t5
-                val tree = ""
-
-                fun getTree(bt: DeductiveParser.Bactrace?): String {
-                    if (bt == null){
-                        return ""
-                    }
-                    if (bt.chain == null){
+                fun getTree(bt: DeductiveParser.Bactrace?): String{
+                    if (bt == null) return ""
+                    if (bt.chain == null) {
                         return "(" + bt.bin.first.lhs + " " + bt.bin.first.rhs.first() + ")"
                     }
-                    if (bt.chain.second == null){
+                    if (bt.chain.second == null) {
                         return "(" + bt.bin.first.lhs + " " + getTree(bt.chain.first) + ")"
                     }
                     return "(" + bt.bin.first.lhs + " " + getTree(bt.chain.first) + " " + getTree(bt.chain.second) + ")"
                 }
 
-                echo(getTree(bt))
+                rules.forEach {
+                    if (it != null) {
+                        echo(getTree(it.t5))
+                    } else{
+                        echo("(NOPARSE w)") //TODO
+                    }
+                }
             }
 
         } catch (e: java.lang.Exception) {
