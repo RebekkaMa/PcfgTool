@@ -87,7 +87,7 @@ class DeductiveParserTest {
         )
         val parser = DeductiveParser(grammar)
         parser.selectedItem = Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null))
-        parser.addSelectedItemPropertyToSavedItems(false)
+        parser.addSelectedItemPropertyToSavedItems()
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),
@@ -130,7 +130,7 @@ class DeductiveParserTest {
             mutableListOf(Tuple5(0, "NN", 1, 0.0, DeductiveParser.Bactrace(rule8 to 1.0, null)))
 
         parser.selectedItem = Tuple5(0, "NN", 1, 1.0, DeductiveParser.Bactrace(rule8 to 1.0, null))
-        parser.addSelectedItemPropertyToSavedItems(true)
+        parser.addSelectedItemPropertyToSavedItems()
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),
@@ -174,7 +174,7 @@ class DeductiveParserTest {
 
 
         parser.selectedItem = Tuple5(0, "NN", 1, 1.0, null)
-        parser.addSelectedItemPropertyToSavedItems(false)
+        parser.addSelectedItemPropertyToSavedItems()
         parser.itemsLeft shouldBe mutableMapOf(
             Pair(
                 Pair(0, "NN"),

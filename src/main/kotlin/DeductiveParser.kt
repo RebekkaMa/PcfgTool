@@ -1,5 +1,4 @@
 import com.github.h0tk3y.betterParse.utils.Tuple5
-import kotlinx.coroutines.internal.ThreadSafeHeap
 import java.util.PriorityQueue
 
 class DeductiveParser(val grammar: Grammar) {
@@ -59,25 +58,19 @@ class DeductiveParser(val grammar: Grammar) {
         fillQueueElementsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
             findMaxInQueueSaveAsSelectedItem()
-            val (i, nt, j, _, _) = selectedItem
-            val presentC = itemsLeft[Pair(i, nt)]?.find { it.t3 == j }
-            val isCnull = presentC?.t4?.equals(0.0) ?: true
+            if (addSelectedItemPropertyToSavedItems()) continue
 
-            if (isCnull) {
-                addSelectedItemPropertyToSavedItems(presentC != null)
-
-                val a = findRuleAddItemToQueueRhs(sentence)
-                if (a != null) {
-                    clearAll(); return a
-                }
-                val b = findRuleAddItemToQueueLhs(sentence)
-                if (b != null) {
-                    clearAll(); return b
-                }
-                val c = findRuleAddItemToQueueChain(sentence)
-                if (c != null) {
-                    clearAll(); return c
-                }
+            val a = findRuleAddItemToQueueRhs(sentence)
+            if (a != null) {
+                clearAll(); return a
+            }
+            val b = findRuleAddItemToQueueLhs(sentence)
+            if (b != null) {
+                clearAll(); return b
+            }
+            val c = findRuleAddItemToQueueChain(sentence)
+            if (c != null) {
+                clearAll(); return c
             }
         }
         clearAll()
@@ -105,36 +98,49 @@ class DeductiveParser(val grammar: Grammar) {
     }
 
     // Zeile 8
-    fun addSelectedItemPropertyToSavedItems(presentC: Boolean) {
-        val (i, nt, j, wt, bt) = selectedItem
-        itemsLeft.compute(Pair(i, nt)) { _, v ->
-            if (!presentC) {
-                if (v == null) {
-                    mutableListOf(Tuple5(i, nt, j, wt, bt))
-                } else {
-                    v.add(Tuple5(i, nt, j, wt, bt))
-                    v
-                }
+    fun addSelectedItemPropertyToSavedItems(): Boolean {
+        var notNullPropertyEntry = false
+        itemsLeft.compute(Pair(selectedItem.t1, selectedItem.t2)) { _, v ->
+            if (v == null) {
+                mutableListOf(selectedItem)
             } else {
-                v?.remove(Tuple5(i, nt, j, 0.0, bt)) ?: throw Exception("v cannot be null")
-                v.add(Tuple5(i, nt, j, wt, bt))
+                val presentItem = v.find { it.t3 == selectedItem.t3 }
+                when {
+                    presentItem == null -> {
+                        v.add(selectedItem)
+                    }
+                    presentItem.t4.equals(0.0) -> {
+                        v.remove(presentItem)
+                        v.add(selectedItem)
+                    }
+                    else -> {
+                        notNullPropertyEntry = true
+                    }
+                }
                 v
             }
         }
-        itemsRight.compute(Pair(nt, j)) { _, v ->
-            if (!presentC) {
-                if (v == null) {
-                    mutableListOf(Tuple5(i, nt, j, wt, bt))
-                } else {
-                    v.add(Tuple5(i, nt, j, wt, bt))
-                    v
-                }
+        itemsRight.compute(Pair(selectedItem.t2, selectedItem.t3)) { _, v ->
+            if (v == null) {
+                mutableListOf(selectedItem)
             } else {
-                v?.remove(Tuple5(i, nt, j, 0.0, bt)) ?: throw Exception("v cannot be null")
-                v.add(Tuple5(i, nt, j, wt, bt))
+                val presentItem = v.find { it.t1 == selectedItem.t1 }
+                when {
+                    presentItem == null -> {
+                        v.add(selectedItem)
+                    }
+                    presentItem.t4.equals(0.0) -> {
+                        v.remove(presentItem)
+                        v.add(selectedItem)
+                    }
+                    else -> {
+                        notNullPropertyEntry = true
+                    }
+                }
                 v
             }
         }
+        return notNullPropertyEntry
     }
 
     //Zeile 9
@@ -157,7 +163,6 @@ class DeductiveParser(val grammar: Grammar) {
                     }
                     queue.offer(newQueueElement)
                 }
-
             }
         }
         return null
@@ -170,8 +175,8 @@ class DeductiveParser(val grammar: Grammar) {
     ): Tuple5<Int, String, Int, Double, Bactrace?>? {
         val (i, nt, j, wt, bt) = selectedItem
         grammarRhs[nt]?.forEach { rulePair ->
-            itemsRight[Pair(rulePair.first.rhs.first(), i)]?.forEach{tuple ->
-                if (rulePair.first.rhs.first() == tuple.t2){
+            itemsRight[Pair(rulePair.first.rhs.first(), i)]?.forEach { tuple ->
+                if (rulePair.first.rhs.first() == tuple.t2) {
                     val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
                         Tuple5(
                             tuple.t1,
