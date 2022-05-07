@@ -5,7 +5,6 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.prompt
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
@@ -20,7 +19,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import kotlin.system.exitProcess
-import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
@@ -46,11 +44,11 @@ class Induce : CliktCommand() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 10) {
-            var line = readNotEmptyLnOrNull()
-            while (line != null && isActive) {
-                send(line)
-                line = readNotEmptyLnOrNull()
-            }
+        var line = readNotEmptyLnOrNull()
+        while (line != null && isActive) {
+            send(line)
+            line = readNotEmptyLnOrNull()
+        }
     }
 
     fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) = launch(context = Dispatchers.Default) {
@@ -150,13 +148,15 @@ class Parse : CliktCommand() {
                 val parser = DeductiveParser(grammar)
 
                 val rules = generateSequence(readNotEmptyLnOrNull).map {
-                    parser.weightedDeductiveParsing(
-                        it.split(" ")
-                    )
+                    async(Dispatchers.IO) {
+                        return@async DeductiveParser(grammar).weightedDeductiveParsing(
+                            it.split(" ")
+                        )
+                    }
                 }
 
 
-                fun getTree(bt: DeductiveParser.Bactrace?): String{
+                fun getTree(bt: DeductiveParser.Bactrace?): String {
                     if (bt == null) return ""
                     if (bt.chain == null) {
                         return "(" + bt.bin.first.lhs + " " + bt.bin.first.rhs.first() + ")"
@@ -168,10 +168,11 @@ class Parse : CliktCommand() {
                 }
 
                 rules.forEach {
-                    if (it != null) {
-                        echo(getTree(it.t5))
-                    } else{
-                        echo("(NOPARSE w)") //TODO
+                    val result = it.await()
+                    if (result.second != null) {
+                        echo(getTree(result.second!!.t5))
+                    } else {
+                        echo("(NOPARSE " + result.first.joinToString(" ") + ")") //TODO
                     }
                 }
             }
