@@ -23,6 +23,7 @@ import model.Grammar
 import model.Rule
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.system.exitProcess
+import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
@@ -59,8 +60,8 @@ class Induce : CliktCommand() {
         launch(context = Dispatchers.Default) {
             val expressionEvaluator = ExpressionEvaluator()
             for (expression in channel) {
-
                 rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())
+
             }
         }
 
@@ -122,7 +123,7 @@ class Parse : CliktCommand() {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
         generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
-            send(Pair(i+1, sentence))
+            send(Pair(i + 1, sentence))
         }
     }
 
@@ -137,13 +138,16 @@ class Parse : CliktCommand() {
         launch(context = Dispatchers.Default) {
             val parser = DeductiveParser(initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
             for (line in channel) {
-                val result = parser.weightedDeductiveParsing(line.second.split(" "))
-                if (result.second != null) {
-                    outputQueue.put(line.first to result.second!!.t5!!.getTree()) //TODO
-                    //println(result.second!!.t4)
-                } else {
-                    outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
-                }
+                measureTimeMillis {
+                    val result = parser.weightedDeductiveParsing(line.second.split(" "))
+
+                    if (result.second != null) {
+                        outputQueue.put(line.first to result.second!!.t5!!.getTree()) //TODO
+                        //println(result.second!!.t4)
+                    } else {
+                        outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
+                    }
+                }.apply { println("expressionEvaluator = $this") }
             }
         }
 
@@ -205,7 +209,7 @@ class Parse : CliktCommand() {
                 launch {
                     for (idx in 1..Int.MAX_VALUE) {
                         if (parser.isCompleted && outputQueue.isEmpty()) return@launch
-                        while (idx != outputQueue.peek()?.first){
+                        while (idx != outputQueue.peek()?.first) {
                             delay(1000)
                         }
                         echo(outputQueue.poll().second)

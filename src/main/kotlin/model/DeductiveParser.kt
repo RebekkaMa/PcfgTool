@@ -4,6 +4,7 @@ import com.github.h0tk3y.betterParse.utils.Tuple5
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
+import kotlin.time.measureTime
 
 class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableList<Pair<Rule, Double>>>,  val grammarLhs: Map<String, MutableList<Pair<Rule, Double>>>,  val grammarChain: Map<String, MutableList<Pair<Rule, Double>>>,  val grammarLexical: Map<String, MutableList<Pair<Rule, Double>>>) {
 
@@ -38,31 +39,32 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
 
     suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, model.Bactrace?>?> =
         coroutineScope {
-            fillQueueElementsFromLexicalRules(sentence)
-            while (queue.isNotEmpty()) {
-                findMaxInQueueSaveAsSelectedItem()
-                if (addSelectedItemPropertyToSavedItems()) continue
+                fillQueueElementsFromLexicalRules(sentence)
+                while (queue.isNotEmpty()) {
+                    findMaxInQueueSaveAsSelectedItem()
+                    if (addSelectedItemPropertyToSavedItems()) continue
 
-                val b = async { findRuleAddItemToQueueLhs(sentence) }
+                    val b = async { findRuleAddItemToQueueLhs(sentence) }
 
-                val c = async { findRuleAddItemToQueueChain(sentence) }
+                    val c = async { findRuleAddItemToQueueChain(sentence) }
 
-                val a = async { findRuleAddItemToQueueRhs(sentence) }
-
-
-                val results = awaitAll(a, b, c)
+                    val a = async { findRuleAddItemToQueueRhs(sentence) }
 
 
+                    val results = awaitAll(a, b, c)
 
-                results.forEach {
-                    if (it != null) {
-                        clearAll()
-                        return@coroutineScope sentence to it
+
+
+                    results.forEach {
+                        if (it != null) {
+                            clearAll()
+                            return@coroutineScope sentence to it
+                        }
                     }
-                }
 
-            }
-            clearAll()
+                }
+                clearAll()
+
             return@coroutineScope sentence to null
         }
 
@@ -134,10 +136,10 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
         return@coroutineScope notNullPropertyEntryRhs
     }
 
-    //Zeile 9
-    suspend fun findRuleAddItemToQueueRhs(
+
+    fun findRuleAddItemToQueueRhs(
         sentence: List<String>
-    ): Tuple5<Int, String, Int, Double, Bactrace?>? = coroutineScope {
+    ): Tuple5<Int, String, Int, Double, Bactrace?>? {
         val (i, nt, j, wt, bt) = selectedItem
         grammarLhs[nt]?.forEach { rulePair ->
             itemsLeft[Pair(j, rulePair.first.rhs.component2())]?.forEach {
@@ -150,24 +152,25 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
                             )
                         )
                     if (newQueueElement.t1 == 0 && newQueueElement.t2 == initial && newQueueElement.t3 == sentence.size) {
-                        return@coroutineScope newQueueElement
+                        return newQueueElement
                     }
-                    queue.put(newQueueElement)
+                    queue.offer(newQueueElement)
                 }
+
             }
         }
-        return@coroutineScope null
+        return null
     }
 
     //Zeile 10
-    suspend fun findRuleAddItemToQueueLhs(
+    fun findRuleAddItemToQueueLhs(
         sentence: List<String>
 
-    ): Tuple5<Int, String, Int, Double, Bactrace?>? = coroutineScope {
+    ): Tuple5<Int, String, Int, Double, Bactrace?>? {
         val (i, nt, j, wt, bt) = selectedItem
         grammarRhs[nt]?.forEach { rulePair ->
-            itemsRight[Pair(rulePair.first.rhs.first(), i)]?.forEach { tuple ->
-                if (rulePair.first.rhs.first() == tuple.t2) {
+            itemsRight[Pair(rulePair.first.rhs.first(), i)]?.forEach{tuple ->
+                if (rulePair.first.rhs.first() == tuple.t2){
                     val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
                         Tuple5(
                             tuple.t1,
@@ -177,16 +180,69 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
                             Bactrace(rulePair, Pair(tuple.t5, bt))
                         )
                     if (newQueueElement.t1 == 0 && newQueueElement.t2 == initial && newQueueElement.t3 == sentence.size) {
-                        return@coroutineScope newQueueElement
+                        return newQueueElement
                     }
-                    withContext(Dispatchers.IO) {
-                        queue.put(newQueueElement)
-                    }
+                    queue.offer(newQueueElement)
                 }
             }
+
         }
-        return@coroutineScope null
+        return null
     }
+
+//    //Zeile 9
+//    suspend fun findRuleAddItemToQueueRhs(
+//        sentence: List<String>
+//    ): Tuple5<Int, String, Int, Double, Bactrace?>? = coroutineScope {
+//        val (i, nt, j, wt, bt) = selectedItem
+//        grammarLhs[nt]?.forEach { rulePair ->
+//            itemsLeft[Pair(j, rulePair.first.rhs.component2())]?.forEach {
+//                if (rulePair.first.rhs.component2() == it.t2 && j < it.t3) {
+//                    val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
+//                        Tuple5(
+//                            i, rulePair.first.lhs, it.t3, rulePair.second * wt * it.t4, Bactrace(
+//                                rulePair,
+//                                Pair(bt, it.t5)
+//                            )
+//                        )
+//                    if (newQueueElement.t1 == 0 && newQueueElement.t2 == initial && newQueueElement.t3 == sentence.size) {
+//                        return@coroutineScope newQueueElement
+//                    }
+//                    queue.put(newQueueElement)
+//                }
+//            }
+//        }
+//        return@coroutineScope null
+//    }
+//
+//    //Zeile 10
+//    suspend fun findRuleAddItemToQueueLhs(
+//        sentence: List<String>
+//
+//    ): Tuple5<Int, String, Int, Double, Bactrace?>? = coroutineScope {
+//        val (i, nt, j, wt, bt) = selectedItem
+//        grammarRhs[nt]?.forEach { rulePair ->
+//            itemsRight[Pair(rulePair.first.rhs.first(), i)]?.forEach { tuple ->
+//                if (rulePair.first.rhs.first() == tuple.t2) {
+//                    val newQueueElement: Tuple5<Int, String, Int, Double, Bactrace?> =
+//                        Tuple5(
+//                            tuple.t1,
+//                            rulePair.first.lhs,
+//                            j,
+//                            rulePair.second * tuple.t4 * wt,
+//                            Bactrace(rulePair, Pair(tuple.t5, bt))
+//                        )
+//                    if (newQueueElement.t1 == 0 && newQueueElement.t2 == initial && newQueueElement.t3 == sentence.size) {
+//                        return@coroutineScope newQueueElement
+//                    }
+//                    withContext(Dispatchers.IO) {
+//                        queue.put(newQueueElement)
+//                    }
+//                }
+//            }
+//        }
+//        return@coroutineScope null
+//    }
 
     //Zeile 11
     suspend fun findRuleAddItemToQueueChain(
