@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.*
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
+import java.util.concurrent.PriorityBlockingQueue
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -54,12 +55,14 @@ class Induce : CliktCommand() {
         }
     }
 
-    private fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) = launch(context = Dispatchers.Default) {
-        val expressionEvaluator = ExpressionEvaluator()
-        for (expression in channel) {
-            rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())
+    private fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) =
+        launch(context = Dispatchers.Default) {
+            val expressionEvaluator = ExpressionEvaluator()
+            for (expression in channel) {
+
+                rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())
+            }
         }
-    }
 
     @OptIn(FlowPreview::class)
     override fun run() {
@@ -113,14 +116,45 @@ class Parse : CliktCommand() {
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
 
+    val outputQueue = PriorityBlockingQueue(50, compareBy<Pair<Int, String>> { it.first })
+
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
+            send(Pair(i+1, sentence))
+        }
+    }
+
+    private fun CoroutineScope.launchProcessor(
+        channel: ReceiveChannel<Pair<Int, String>>,
+        initial: String,
+        grammarRhs: Map<String, MutableList<Pair<Rule, Double>>>,
+        grammarLhs: Map<String, MutableList<Pair<Rule, Double>>>,
+        grammarChain: Map<String, MutableList<Pair<Rule, Double>>>,
+        grammarLexical: Map<String, MutableList<Pair<Rule, Double>>>
+    ) =
+        launch(context = Dispatchers.Default) {
+            val parser = DeductiveParser(initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+            for (line in channel) {
+                val result = parser.weightedDeductiveParsing(line.second.split(" "))
+                if (result.second != null) {
+                    outputQueue.put(line.first to result.second!!.t5!!.getTree()) //TODO
+                    //println(result.second!!.t4)
+                } else {
+                    outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
+                }
+            }
+        }
+
     override fun run() {
         try {
-
             runBlocking(Dispatchers.Default) {
 
                 if (!(unking.isNullOrEmpty() || smoothing.isNullOrEmpty() || thresholdBeam.isNullOrEmpty() || rankBeam.isNullOrEmpty() || kbest.isNullOrEmpty() || astar.isNullOrEmpty() || paradigma == "cyk")) {
                     throw ProgramResult(22)
                 }
+
 
                 val getRulesFromFile = async {
                     val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
@@ -145,24 +179,67 @@ class Parse : CliktCommand() {
 
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
 
-                val rules = generateSequence(readNotEmptyLnOrNull).map {
-                    async {
-                        DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical).weightedDeductiveParsing(
-                            it.split(" ")
-                        )
+
+                val producer = produceString()
+
+                val parser = launch {
+                    try {
+                        coroutineScope {
+                            repeat(1) {
+                                launchProcessor(
+                                    producer,
+                                    grammar.initial,
+                                    grammarRhs,
+                                    grammarLhs,
+                                    grammarChain,
+                                    grammarLexical
+                                )
+                            }
+                        }
+                    } catch (e: ParseException) {
+                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+                        exitProcess(5)
                     }
                 }
 
-                rules.forEach {
-                    val result = it.await()
-                    if (result.second != null) {
-                        echo(result.second?.t5?.getTree()) //TODO
-                        //println(result.second!!.t4)
-                    } else {
-                        echo("(NOPARSE " + result.first.joinToString(" ") + ")")
+                launch {
+                    for (idx in 1..Int.MAX_VALUE) {
+                        if (parser.isCompleted && outputQueue.isEmpty()) return@launch
+                        while (idx != outputQueue.peek()?.first){
+                            delay(1000)
+                        }
+                        echo(outputQueue.poll().second)
                     }
                 }
+
+
+//                val rules = generateSequence(readNotEmptyLnOrNull)
+//                    .map {
+//                        async {
+//                            DeductiveParser(
+//                                grammar.initial,
+//                                grammarRhs,
+//                                grammarLhs,
+//                                grammarChain,
+//                                grammarLexical
+//                            ).weightedDeductiveParsing(
+//                                it.split(" ")
+//                            )
+//                        }
+//                    }
+//
+//
+//                rules.forEach {
+//                    val result = it.await()
+//                    if (result.second != null) {
+//                        echo(result.second?.t5?.getTree()) //TODO
+//                        //println(result.second!!.t4)
+//                    } else {
+//                        echo("(NOPARSE " + result.first.joinToString(" ") + ")")
+//                    }
+//                }
             }
+
 
         } catch (e: java.lang.Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")

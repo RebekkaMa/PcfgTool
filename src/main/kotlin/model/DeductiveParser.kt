@@ -12,48 +12,18 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
     val itemsRight = ConcurrentHashMap<Pair<String, Int>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     lateinit var selectedItem: Tuple5<Int, String, Int, Double, Bactrace?>
 
-    suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Bactrace?>?> =
-        coroutineScope {
-            fillQueueElementsFromLexicalRules(sentence)
-            while (queue.isNotEmpty()) {
-                findMaxInQueueSaveAsSelectedItem()
-                if (addSelectedItemPropertyToSavedItems()) continue
-
-                val a = findRuleAddItemToQueueRhs(sentence)
-                val b = findRuleAddItemToQueueLhs(sentence)
-                val c = findRuleAddItemToQueueChain(sentence)
-
-                val results = listOf(a, b, c)
-
-                results.forEach {
-                    if (it != null) {
-                        clearAll()
-                        return@coroutineScope sentence to it
-                    }
-                }
-            }
-            clearAll()
-            return@coroutineScope sentence to null
-        }
-
-//    suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, model.Bactrace?>?> =
+//    suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Bactrace?>?> =
 //        coroutineScope {
 //            fillQueueElementsFromLexicalRules(sentence)
 //            while (queue.isNotEmpty()) {
 //                findMaxInQueueSaveAsSelectedItem()
 //                if (addSelectedItemPropertyToSavedItems()) continue
 //
+//                val a = findRuleAddItemToQueueRhs(sentence)
+//                val b = findRuleAddItemToQueueLhs(sentence)
+//                val c = findRuleAddItemToQueueChain(sentence)
 //
-//                val b = async { findRuleAddItemToQueueLhs(sentence) }
-//
-//                val c = async { findRuleAddItemToQueueChain(sentence) }
-//
-//                val a = async { findRuleAddItemToQueueRhs(sentence) }
-//
-//
-//                val results = awaitAll(a, b, c)
-//
-//
+//                val results = listOf(a, b, c)
 //
 //                results.forEach {
 //                    if (it != null) {
@@ -61,11 +31,40 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
 //                        return@coroutineScope sentence to it
 //                    }
 //                }
-//
 //            }
 //            clearAll()
 //            return@coroutineScope sentence to null
 //        }
+
+    suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, model.Bactrace?>?> =
+        coroutineScope {
+            fillQueueElementsFromLexicalRules(sentence)
+            while (queue.isNotEmpty()) {
+                findMaxInQueueSaveAsSelectedItem()
+                if (addSelectedItemPropertyToSavedItems()) continue
+
+                val b = async { findRuleAddItemToQueueLhs(sentence) }
+
+                val c = async { findRuleAddItemToQueueChain(sentence) }
+
+                val a = async { findRuleAddItemToQueueRhs(sentence) }
+
+
+                val results = awaitAll(a, b, c)
+
+
+
+                results.forEach {
+                    if (it != null) {
+                        clearAll()
+                        return@coroutineScope sentence to it
+                    }
+                }
+
+            }
+            clearAll()
+            return@coroutineScope sentence to null
+        }
 
     fun fillQueueElementsFromLexicalRules(
         sentence: List<String>
