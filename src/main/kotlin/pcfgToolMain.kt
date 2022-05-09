@@ -115,18 +115,13 @@ class Parse : CliktCommand() {
 
             runBlocking(Dispatchers.Default) {
 
-                if (!(unking.isNullOrEmpty() || smoothing.isNullOrEmpty() || thresholdBeam.isNullOrEmpty() || rankBeam.isNullOrEmpty() || kbest.isNullOrEmpty() || astar.isNullOrEmpty())) {
+                if (!(unking.isNullOrEmpty() || smoothing.isNullOrEmpty() || thresholdBeam.isNullOrEmpty() || rankBeam.isNullOrEmpty() || kbest.isNullOrEmpty() || astar.isNullOrEmpty() || paradigma == "cyk")) {
                     throw ProgramResult(22)
                 }
 
-
-                val rulesExpressionEvaluator = RulesExpressionEvaluator()
-                val lexiconExpressionEvaluator = LexiconExpressionEvaluator()
-
-
                 val getRulesFromFile = async {
                     val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
-                    rulesExpressionEvaluator.parseToEnd(
+                    RulesExpressionEvaluator().parseToEnd(
                         it
                     )
                 }
@@ -134,7 +129,7 @@ class Parse : CliktCommand() {
 
                 val getLexiconsFromFile = async {
                     val lexiconBr = lexicon.bufferedReader(); generateSequence { lexiconBr.readLine() }.map {
-                    lexiconExpressionEvaluator.parseToEnd(
+                    LexiconExpressionEvaluator().parseToEnd(
                         it
                     )
                 }
@@ -145,34 +140,23 @@ class Parse : CliktCommand() {
                     (getLexiconsFromFile.await() + getRulesFromFile.await()).toMap()
                 )
 
-                val parser = DeductiveParser(grammar)
+                val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
 
                 val rules = generateSequence(readNotEmptyLnOrNull).map {
-                    async(Dispatchers.IO) {
-                        return@async DeductiveParser(grammar).weightedDeductiveParsing(
+                    async {
+                        DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical).weightedDeductiveParsing(
                             it.split(" ")
                         )
                     }
                 }
 
-
-                fun getTree(bt: DeductiveParser.Bactrace?): String {
-                    if (bt == null) return ""
-                    if (bt.chain == null) {
-                        return "(" + bt.bin.first.lhs + " " + bt.bin.first.rhs.first() + ")"
-                    }
-                    if (bt.chain.second == null) {
-                        return "(" + bt.bin.first.lhs + " " + getTree(bt.chain.first) + ")"
-                    }
-                    return "(" + bt.bin.first.lhs + " " + getTree(bt.chain.first) + " " + getTree(bt.chain.second) + ")"
-                }
-
                 rules.forEach {
                     val result = it.await()
                     if (result.second != null) {
-                        echo(getTree(result.second!!.t5))
+                        echo(result.second?.t5?.getTree()) //TODO
+                        //println(result.second!!.t4)
                     } else {
-                        echo("(NOPARSE " + result.first.joinToString(" ") + ")") //TODO
+                        echo("(NOPARSE " + result.first.joinToString(" ") + ")")
                     }
                 }
             }

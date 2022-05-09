@@ -1,3 +1,4 @@
+import com.github.h0tk3y.betterParse.utils.Tuple4
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.text.DecimalFormat
@@ -36,6 +37,61 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
     fun getRules(): List<String> {
         return pRules.filterKeys { !it.lexical }
             .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
+    }
+
+    fun getGrammarDataStructuresForParsing(): Tuple4<Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>>{
+
+        val grammarRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val grammarLhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val grammarChain = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val grammarLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+
+        this.pRules.forEach {
+            when (it.key.rhs.size) {
+                2 -> {
+                    grammarLhs.compute(it.key.rhs.first()) { _, v ->
+                        if (v != null) {
+                            v.add(it.toPair())
+                            v
+                        } else {
+                            mutableListOf(it.toPair())
+                        }
+                    }
+                    grammarRhs.compute(it.key.rhs.component2()) { _, v ->
+                        if (v != null) {
+                            v.add(it.toPair())
+                            v
+                        } else {
+                            mutableListOf(it.toPair())
+                        }
+                    }
+                }
+                1 -> {
+                    if (!it.key.lexical) {
+                        grammarChain.compute(it.key.rhs.first()) { _, v ->
+                            if (v != null) {
+                                v.add(it.toPair())
+                                v
+                            } else {
+                                mutableListOf(it.toPair())
+                            }
+                        }
+                    } else {
+                        grammarLexical.compute(it.key.rhs.first()) { _, v ->
+                            if (v != null) {
+                                v.add(it.toPair())
+                                v
+                            } else {
+                                mutableListOf(it.toPair())
+                            }
+                        }
+                    }
+                }
+                else -> {
+                }
+            }
+        }
+        return Tuple4(grammarRhs, grammarLhs, grammarChain, grammarLexical)
     }
 
     override fun toString(): String {
