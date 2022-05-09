@@ -1,3 +1,5 @@
+package model
+
 class Rule(val lexical: Boolean, val lhs: String, val rhs: List<String>) {
     override fun toString(): String {
         return lhs + " -> " + rhs.joinToString(" ")

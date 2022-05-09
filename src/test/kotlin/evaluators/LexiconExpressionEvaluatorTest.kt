@@ -1,9 +1,9 @@
 package evaluators
 
-import Rule
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
+import model.Rule
 import org.junit.jupiter.api.Test
 
 internal class LexiconExpressionEvaluatorTest {

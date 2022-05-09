@@ -1,3 +1,5 @@
+package model
+
 data class Bactrace(val bin: Pair<Rule, Double>, val chain: Pair<Bactrace?, Bactrace?>?) {
 
     fun getTree(): String {

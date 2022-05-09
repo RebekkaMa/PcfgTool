@@ -1,12 +1,12 @@
 package evaluators
 
-import Rule
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
+import model.Rule
 
 
 class LexiconExpressionEvaluator : Grammar<Pair<Rule, Double>>() {

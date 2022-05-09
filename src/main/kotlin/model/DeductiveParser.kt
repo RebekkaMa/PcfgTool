@@ -1,7 +1,7 @@
+package model
+
 import com.github.h0tk3y.betterParse.utils.Tuple5
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 
@@ -11,8 +11,6 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
     val itemsLeft = ConcurrentHashMap<Pair<Int, String>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     val itemsRight = ConcurrentHashMap<Pair<String, Int>, MutableList<Tuple5<Int, String, Int, Double, Bactrace?>>>()
     lateinit var selectedItem: Tuple5<Int, String, Int, Double, Bactrace?>
-
-
 
     suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Bactrace?>?> =
         coroutineScope {
@@ -38,14 +36,7 @@ class DeductiveParser(val initial: String, val grammarRhs: Map<String, MutableLi
             return@coroutineScope sentence to null
         }
 
-
-    suspend fun putElementsInQueue(channel: Channel<Tuple5<Int, String, Int, Double, Bactrace?>>) = coroutineScope {
-        channel.consumeEach {
-            queue.add(it)
-        }
-    }
-
-//    suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Bactrace?>?> =
+//    suspend fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, model.Bactrace?>?> =
 //        coroutineScope {
 //            fillQueueElementsFromLexicalRules(sentence)
 //            while (queue.isNotEmpty()) {

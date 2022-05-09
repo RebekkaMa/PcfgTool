@@ -1,3 +1,5 @@
+package model
+
 import com.github.h0tk3y.betterParse.utils.Tuple4
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope

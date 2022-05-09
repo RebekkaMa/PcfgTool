@@ -2,9 +2,11 @@ import com.github.h0tk3y.betterParse.utils.Tuple5
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Test
+import model.Bactrace
+import model.DeductiveParser
+import model.Grammar
+import model.Rule
 import java.util.*
 
 class DeductiveParserTest : ShouldSpec({

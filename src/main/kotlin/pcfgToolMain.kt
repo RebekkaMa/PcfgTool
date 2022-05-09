@@ -18,6 +18,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
+import model.DeductiveParser
+import model.Grammar
+import model.Rule
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -51,7 +54,7 @@ class Induce : CliktCommand() {
         }
     }
 
-    fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) = launch(context = Dispatchers.Default) {
+    private fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) = launch(context = Dispatchers.Default) {
         val expressionEvaluator = ExpressionEvaluator()
         for (expression in channel) {
             rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())

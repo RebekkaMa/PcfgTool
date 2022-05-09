@@ -2,6 +2,8 @@ import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import model.Rule
+import model.Tree
 import kotlin.test.Test
 
 class TreeTest {

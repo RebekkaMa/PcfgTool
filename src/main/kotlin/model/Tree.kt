@@ -1,3 +1,5 @@
+package model
+
 class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
     fun addExpressionToList(expression: Tree) {
         children.add(expression)

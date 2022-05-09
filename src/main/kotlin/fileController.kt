@@ -1,3 +1,4 @@
+import model.Grammar
 import java.io.File
 
 fun writeToFiles(grammar: Grammar, grammarFileName: String){
