@@ -41,50 +41,50 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
-    fun getGrammarDataStructuresForParsing(): Tuple4<Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>>{
+    fun getGrammarDataStructuresForParsing(): Tuple4<Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>> {
 
-        val grammarRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val grammarLhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val grammarChain = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val grammarLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesBySecondNtOnRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesByFirstNtOnRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessChainRulesByNtRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesByTerminal = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
 
-        this.pRules.forEach {
-            when (it.key.rhs.size) {
+        this.pRules.forEach { (rule, ruleProbability) ->
+            when (rule.rhs.size) {
                 2 -> {
-                    grammarLhs.compute(it.key.rhs.first()) { _, v ->
+                    accessRulesByFirstNtOnRhs.compute(rule.rhs.first()) { _, v ->
                         if (v != null) {
-                            v.add(it.toPair())
+                            v.add(rule to ruleProbability)
                             v
                         } else {
-                            mutableListOf(it.toPair())
+                            mutableListOf(rule to ruleProbability)
                         }
                     }
-                    grammarRhs.compute(it.key.rhs.component2()) { _, v ->
+                    accessRulesBySecondNtOnRhs.compute(rule.rhs.component2()) { _, v ->
                         if (v != null) {
-                            v.add(it.toPair())
+                            v.add(rule to ruleProbability)
                             v
                         } else {
-                            mutableListOf(it.toPair())
+                            mutableListOf(rule to ruleProbability)
                         }
                     }
                 }
                 1 -> {
-                    if (!it.key.lexical) {
-                        grammarChain.compute(it.key.rhs.first()) { _, v ->
+                    if (!rule.lexical) {
+                        accessChainRulesByNtRhs.compute(rule.rhs.first()) { _, v ->
                             if (v != null) {
-                                v.add(it.toPair())
+                                v.add(rule to ruleProbability)
                                 v
                             } else {
-                                mutableListOf(it.toPair())
+                                mutableListOf(rule to ruleProbability)
                             }
                         }
                     } else {
-                        grammarLexical.compute(it.key.rhs.first()) { _, v ->
+                        accessRulesByTerminal.compute(rule.rhs.first()) { _, v ->
                             if (v != null) {
-                                v.add(it.toPair())
+                                v.add(rule to ruleProbability)
                                 v
                             } else {
-                                mutableListOf(it.toPair())
+                                mutableListOf(rule to ruleProbability)
                             }
                         }
                     }
@@ -93,7 +93,12 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                 }
             }
         }
-        return Tuple4(grammarRhs, grammarLhs, grammarChain, grammarLexical)
+        return Tuple4(
+            accessRulesBySecondNtOnRhs,
+            accessRulesByFirstNtOnRhs,
+            accessChainRulesByNtRhs,
+            accessRulesByTerminal
+        )
     }
 
     override fun toString(): String {

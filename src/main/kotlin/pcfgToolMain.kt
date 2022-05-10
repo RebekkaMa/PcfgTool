@@ -139,7 +139,7 @@ class Parse : CliktCommand() {
                 }
 
 
-                val getRulesFromFile = async {
+                val getRulesFromRulesFile = async {
                     val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
                     RulesExpressionEvaluator().parseToEnd(
                         it
@@ -147,7 +147,7 @@ class Parse : CliktCommand() {
                 }
                 }
 
-                val getLexiconsFromFile = async {
+                val getRulesFromLexiconFile = async {
                     val lexiconBr = lexicon.bufferedReader(); generateSequence { lexiconBr.readLine() }.map {
                     LexiconExpressionEvaluator().parseToEnd(
                         it
@@ -157,30 +157,29 @@ class Parse : CliktCommand() {
 
                 val grammar = Grammar.create(
                     initialNonterminal,
-                    (getLexiconsFromFile.await() + getRulesFromFile.await()).toMap()
+                    (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
 
-                val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
+                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal) = grammar.getGrammarDataStructuresForParsing()
 
-                val rules = generateSequence(readNotEmptyLnOrNull)
+                val resultPairs = generateSequence(readNotEmptyLnOrNull)
                     .map {
-                        val result = DeductiveParser(
+                        DeductiveParser(
                             grammar.initial,
-                            grammarRhs,
-                            grammarLhs,
-                            grammarChain,
-                            grammarLexical
+                            accessRulesBySecondNtOnRhs,
+                            accessRulesByFirstNtOnRhs,
+                            accessChainRulesByNtRhs,
+                            accessRulesByTerminal
                         ).weightedDeductiveParsing(
                             it.split(" ")
                         )
-                        result
                     }
 
-                rules.forEach { result ->
-                    if (result.second != null) {
-                        echo(result.second?.t5?.getTree())
+                resultPairs.forEach { (sentence, resultTuple) ->
+                    if (resultTuple != null) {
+                        echo(resultTuple.t5.getParseTreeAsString())
                     } else {
-                        echo("(NOPARSE " + result.first.joinToString(" ") + ")")
+                        echo("(NOPARSE " + sentence.joinToString(" ") + ")")
                     }
                 }
             }

@@ -2,9 +2,8 @@ package model
 
 data class Backtrace(val bin: Pair<Rule, Double>, val chain: Pair<Backtrace?, Backtrace?>?) {
 
-    fun getTree(): String {
+    fun getParseTreeAsString(): String {
         fun getPartOfTree(bt : Backtrace?): String {
-
             if (bt == null) return ""
             if (bt.chain == null) {
                 return "(" + bt.bin.first.lhs + " " + bt.bin.first.rhs.first() + ")"
@@ -16,5 +15,4 @@ data class Backtrace(val bin: Pair<Rule, Double>, val chain: Pair<Backtrace?, Ba
         }
         return getPartOfTree(this)
     }
-
 }

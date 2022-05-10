@@ -15,12 +15,12 @@ class LexiconExpressionEvaluator : Grammar<Pair<Rule, Double>>() {
     val text by regexToken("[\\w\\p{Punct}&&[^\\s\\(\\)]]+")
     val space by literalToken(" ", ignore = true)
 
-    val property by number use {this.text.dropLastWhile{ it.isWhitespace() }.replace(",",".").toDouble()}
+    val probability by number use {this.text.dropLastWhile{ it.isWhitespace() }.replace(",",".").toDouble()}
     val txt by text use { this.text }
 
 
     val rule: Parser<Pair<Rule,Double>> by
-    (txt and txt and property).map { (lhs, rhs, property)-> Pair(Rule(lexical = true, lhs = lhs, rhs = listOf(rhs)), property) }
+    (txt and txt and probability).map { (lhs, rhs, prob)-> Pair(Rule(lexical = true, lhs = lhs, rhs = listOf(rhs)), prob) }
 
     override val rootParser: Parser<Pair<Rule, Double>> by rule
 }

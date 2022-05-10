@@ -27,7 +27,7 @@ class DeductiveParser(
 
             while (queue.isNotEmpty()) {
                 findMaxInQueueSaveAsSelectedItem()
-                if (addSelectedItemPropertyToSavedItems()) continue
+                if (addSelectedItemProbabilityToSavedItems()) continue
 
                 val solutionRhs = findRulesAddItemsToQueueSecondNtOnRhs(sentence)
                 if (solutionRhs != null) return sentence to solutionRhs
@@ -46,15 +46,15 @@ class DeductiveParser(
         sentence: List<String>
     ): Tuple5<Int, String, Int, Double, Backtrace>? {
         sentence.forEachIndexed { index, word ->
-            accessRulesByTerminal[word]?.forEach { (rule, ruleProperty) ->
+            accessRulesByTerminal[word]?.forEach { (rule, ruleProbability) ->
                 if (index == 0 && rule.lhs == initial && 1 == sentence.size) return Tuple5(
                     0,
                     initial,
                     1,
-                    ruleProperty,
-                    Backtrace(rule to ruleProperty, null)
+                    ruleProbability,
+                    Backtrace(rule to ruleProbability, null)
                 )
-                queue.add(Tuple5(index, rule.lhs, index + 1, ruleProperty, Backtrace(rule to ruleProperty, null)))
+                queue.add(Tuple5(index, rule.lhs, index + 1, ruleProbability, Backtrace(rule to ruleProbability, null)))
             }
         }
         return null
@@ -67,9 +67,9 @@ class DeductiveParser(
     }
 
     // Zeile 8
-    fun addSelectedItemPropertyToSavedItems(): Boolean {
-        var notNullPropertyEntryLhs = false
-        var notNullPropertyEntryRhs = false
+    fun addSelectedItemProbabilityToSavedItems(): Boolean {
+        var notNullProbabilityEntryLhs = false
+        var notNullProbabilityEntryRhs = false
         accessFoundItemsFromLeft.compute(Pair(selectedItem.t1, selectedItem.t2)) { _, v ->
             if (v == null) {
                 mutableListOf(selectedItem)
@@ -84,7 +84,7 @@ class DeductiveParser(
                         v.add(selectedItem)
                     }
                     else -> {
-                        notNullPropertyEntryLhs = true
+                        notNullProbabilityEntryLhs = true
                     }
                 }
                 v
@@ -104,14 +104,14 @@ class DeductiveParser(
                         v.add(selectedItem)
                     }
                     else -> {
-                        notNullPropertyEntryRhs = true
+                        notNullProbabilityEntryRhs = true
                     }
                 }
                 v
             }
         }
-        if (notNullPropertyEntryLhs != notNullPropertyEntryRhs) throw Exception("Internal Error: itemsRight and itemsLeft not equal")
-        return notNullPropertyEntryRhs
+        if (notNullProbabilityEntryLhs != notNullProbabilityEntryRhs) throw Exception("Internal Error: itemsRight and itemsLeft not equal")
+        return notNullProbabilityEntryRhs
     }
 
     //Zeile 9
@@ -119,13 +119,13 @@ class DeductiveParser(
         sentence: List<String>
     ): Tuple5<Int, String, Int, Double, Backtrace>? {
         val (i, nt, j, wt, bt) = selectedItem
-        accessRulesByFirstNtOnRhs[nt]?.forEach { (rule, ruleProperty) ->
+        accessRulesByFirstNtOnRhs[nt]?.forEach { (rule, ruleProbability) ->
             accessFoundItemsFromLeft[Pair(j, rule.rhs.component2())]?.forEach { (i2, nt2, j2, wt2, bt2) ->     // --> j == i2
                 if (rule.rhs.component2() == nt2 && j < j2) {
                     val newQueueElement: Tuple5<Int, String, Int, Double, Backtrace> =
                         Tuple5(
-                            i, rule.lhs, j2, ruleProperty * wt * wt2, Backtrace(
-                                rule to ruleProperty,
+                            i, rule.lhs, j2, ruleProbability * wt * wt2, Backtrace(
+                                rule to ruleProbability,
                                 Pair(bt, bt2)
                             )
                         )
@@ -145,7 +145,7 @@ class DeductiveParser(
 
     ): Tuple5<Int, String, Int, Double, Backtrace>? {
         val (i, nt, j, wt, bt) = selectedItem
-        accessRulesBySecondNtOnRhs[nt]?.forEach { (rule, ruleProperty) ->
+        accessRulesBySecondNtOnRhs[nt]?.forEach { (rule, ruleProbability) ->
             accessFoundItemsFromRight[Pair(rule.rhs.component1(), i)]?.forEach { (i0, nt0, j0, wt0, bt0) ->    // --> j0 = i
                 if (rule.rhs.component1() == nt0) {
                     val newQueueElement: Tuple5<Int, String, Int, Double, Backtrace> =
@@ -153,8 +153,8 @@ class DeductiveParser(
                             i0,
                             rule.lhs,
                             j,
-                            ruleProperty * wt0 * wt,
-                            Backtrace(rule to ruleProperty, Pair(bt0, bt))
+                            ruleProbability * wt0 * wt,
+                            Backtrace(rule to ruleProbability, Pair(bt0, bt))
                         )
                     if (newQueueElement.t1 == 0 && newQueueElement.t2 == initial && newQueueElement.t3 == sentence.size) {
                         return newQueueElement
@@ -172,9 +172,9 @@ class DeductiveParser(
 
     ): Tuple5<Int, String, Int, Double, Backtrace>? {
         val (i, nt, j, wt, bt) = selectedItem
-        accessChainRulesByNtRhs[nt]?.forEach { (rule, ruleProperty) ->
+        accessChainRulesByNtRhs[nt]?.forEach { (rule, ruleProbability) ->
             val newQueueElement: Tuple5<Int, String, Int, Double, Backtrace> =
-                Tuple5(i, rule.lhs, j, ruleProperty * wt, Backtrace(rule to ruleProperty, Pair(bt, null)))
+                Tuple5(i, rule.lhs, j, ruleProbability * wt, Backtrace(rule to ruleProbability, Pair(bt, null)))
             if (newQueueElement.t1 == 0 && newQueueElement.t2 == initial && newQueueElement.t3 == sentence.size) {
                 return newQueueElement
             }

@@ -157,7 +157,7 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
                 parser.selectedItem = Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
-                parser.addSelectedItemPropertyToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems()
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
@@ -200,7 +200,7 @@ class DeductiveParserTest : ShouldSpec({
                     mutableListOf(Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null)))
 
                 parser.selectedItem = Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
-                parser.addSelectedItemPropertyToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems()
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
@@ -250,7 +250,7 @@ class DeductiveParserTest : ShouldSpec({
 
 
                 parser.selectedItem = Tuple5(0, "NN", 1, 1.0, backtrace)
-                parser.addSelectedItemPropertyToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems()
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
@@ -341,7 +341,7 @@ class DeductiveParserTest : ShouldSpec({
 
 
                 parser.selectedItem = Tuple5(0, "NN", 2, 0.3, backtrace)
-                parser.addSelectedItemPropertyToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems()
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
