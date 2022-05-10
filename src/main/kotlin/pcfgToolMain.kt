@@ -184,64 +184,65 @@ class Parse : CliktCommand() {
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
 
 
-                val producer = produceString()
+//                val producer = produceString()
 
-                val parser = launch {
-                    try {
-                        coroutineScope {
-                            repeat(1) {
-                                launchProcessor(
-                                    producer,
-                                    grammar.initial,
-                                    grammarRhs,
-                                    grammarLhs,
-                                    grammarChain,
-                                    grammarLexical
-                                )
-                            }
-                        }
-                    } catch (e: ParseException) {
-                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-                        exitProcess(5)
-                    }
-                }
-
-                launch {
-                    for (idx in 1..Int.MAX_VALUE) {
-                        if (parser.isCompleted && outputQueue.isEmpty()) return@launch
-                        while (idx != outputQueue.peek()?.first) {
-                            delay(1000)
-                        }
-                        echo(outputQueue.poll().second)
-                    }
-                }
-
-
-//                val rules = generateSequence(readNotEmptyLnOrNull)
-//                    .map {
-//                        async {
-//                            DeductiveParser(
-//                                grammar.initial,
-//                                grammarRhs,
-//                                grammarLhs,
-//                                grammarChain,
-//                                grammarLexical
-//                            ).weightedDeductiveParsing(
-//                                it.split(" ")
-//                            )
+//                val parser = launch {
+//                    try {
+//                        coroutineScope {
+//                            repeat(1) {
+//                                launchProcessor(
+//                                    producer,
+//                                    grammar.initial,
+//                                    grammarRhs,
+//                                    grammarLhs,
+//                                    grammarChain,
+//                                    grammarLexical
+//                                )
+//                            }
 //                        }
-//                    }
-//
-//
-//                rules.forEach {
-//                    val result = it.await()
-//                    if (result.second != null) {
-//                        echo(result.second?.t5?.getTree()) //TODO
-//                        //println(result.second!!.t4)
-//                    } else {
-//                        echo("(NOPARSE " + result.first.joinToString(" ") + ")")
+//                    } catch (e: ParseException) {
+//                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+//                        exitProcess(5)
 //                    }
 //                }
+//
+//                launch {
+//                    for (idx in 1..Int.MAX_VALUE) {
+//                        if (parser.isCompleted && outputQueue.isEmpty()) return@launch
+//                        while (idx != outputQueue.peek()?.first) {
+//                            delay(1000)
+//                        }
+//                        echo(outputQueue.poll().second)
+//                    }
+//                }
+
+
+                val rules = generateSequence(readNotEmptyLnOrNull)
+                    .map {
+                        val startime = System.currentTimeMillis()
+                        val result = DeductiveParser(
+                            grammar.initial,
+                            grammarRhs,
+                            grammarLhs,
+                            grammarChain,
+                            grammarLexical
+                        ).weightedDeductiveParsing(
+                            it.split(" ")
+                        )
+                        println(System.currentTimeMillis() - startime)
+                        result
+
+                    }
+
+
+                rules.forEach { result ->
+                    if (result.second != null) {
+                        echo(result.second?.t5?.getTree()) //TODO
+                        //println(result.second!!.t4)
+                    } else {
+                        echo("(NOPARSE " + result.first.joinToString(" ") + ")")
+                    }
+                }
             }
 
 
