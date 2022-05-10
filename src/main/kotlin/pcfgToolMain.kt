@@ -4,6 +4,8 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.deprecated
+import com.github.ajalt.clikt.parameters.options.eagerOption
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
@@ -80,7 +82,7 @@ class Induce : CliktCommand() {
                         }
                         rulesChannel.close()
                     } catch (e: ParseException) {
-                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+                        System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
                         exitProcess(5)
                     }
                 }
@@ -102,61 +104,41 @@ class Induce : CliktCommand() {
 }
 
 class Parse : CliktCommand() {
+    init {
+        eagerOption("-u", "--unking") {
+            throw ProgramResult(22)
+        }
+        eagerOption("-s", "--smoothing") {
+            throw ProgramResult(22)
+        }
+        eagerOption("-t", "--threshold-beam") {
+            throw ProgramResult(22)
+        }
+        eagerOption("-r", "--rank-beam") {
+            throw ProgramResult(22)
+        }
+        eagerOption("-k", "--kbest") {
+            throw ProgramResult(22)
+        }
+        eagerOption("-a", "--astar") {
+            throw ProgramResult(22)
+        }
+    }
+
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
 
-    val unking by option("-u", "--unking")
-    val smoothing by option("-s", "--smoothing")
-    val thresholdBeam by option("-t", "--threshold-beam")
-    val rankBeam by option("-r", "--rank-beam")
-    val kbest by option("-k", "--kbest")
-    val astar by option("-a", "--astar")
-
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-
-    val outputQueue = PriorityBlockingQueue(50, compareBy<Pair<Int, String>> { it.first })
-
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
-        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
-            send(Pair(i + 1, sentence))
-        }
-    }
-
-    private fun CoroutineScope.launchProcessor(
-        channel: ReceiveChannel<Pair<Int, String>>,
-        initial: String,
-        grammarRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-        grammarLhs: Map<String, MutableList<Pair<Rule, Double>>>,
-        grammarChain: Map<String, MutableList<Pair<Rule, Double>>>,
-        grammarLexical: Map<String, MutableList<Pair<Rule, Double>>>
-    ) =
-        launch(context = Dispatchers.Default) {
-            val parser = DeductiveParser(initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-            for (line in channel) {
-                measureTimeMillis {
-                    val result = parser.weightedDeductiveParsing(line.second.split(" "))
-
-                    if (result.second != null) {
-                        outputQueue.put(line.first to result.second!!.t5!!.getTree()) //TODO
-                        //println(result.second!!.t4)
-                    } else {
-                        outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
-                    }
-                }.apply { println("expressionEvaluator = $this") }
-            }
-        }
 
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
 
-                if (!(unking.isNullOrEmpty() || smoothing.isNullOrEmpty() || thresholdBeam.isNullOrEmpty() || rankBeam.isNullOrEmpty() || kbest.isNullOrEmpty() || astar.isNullOrEmpty() || paradigma == "cyk")) {
-                    throw ProgramResult(22)
+                if (paradigma == "cyk") {
+                    exitProcess(22)
                 }
 
 
@@ -183,43 +165,8 @@ class Parse : CliktCommand() {
 
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
 
-
-//                val producer = produceString()
-
-//                val parser = launch {
-//                    try {
-//                        coroutineScope {
-//                            repeat(1) {
-//                                launchProcessor(
-//                                    producer,
-//                                    grammar.initial,
-//                                    grammarRhs,
-//                                    grammarLhs,
-//                                    grammarChain,
-//                                    grammarLexical
-//                                )
-//                            }
-//                        }
-//                    } catch (e: ParseException) {
-//                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-//                        exitProcess(5)
-//                    }
-//                }
-//
-//                launch {
-//                    for (idx in 1..Int.MAX_VALUE) {
-//                        if (parser.isCompleted && outputQueue.isEmpty()) return@launch
-//                        while (idx != outputQueue.peek()?.first) {
-//                            delay(1000)
-//                        }
-//                        echo(outputQueue.poll().second)
-//                    }
-//                }
-
-
                 val rules = generateSequence(readNotEmptyLnOrNull)
                     .map {
-                        val startime = System.currentTimeMillis()
                         val result = DeductiveParser(
                             grammar.initial,
                             grammarRhs,
@@ -229,27 +176,24 @@ class Parse : CliktCommand() {
                         ).weightedDeductiveParsing(
                             it.split(" ")
                         )
-                        println(System.currentTimeMillis() - startime)
                         result
-
                     }
-
 
                 rules.forEach { result ->
                     if (result.second != null) {
                         echo(result.second?.t5?.getTree()) //TODO
-                        //println(result.second!!.t4)
                     } else {
                         echo("(NOPARSE " + result.first.joinToString(" ") + ")")
                     }
                 }
             }
-
-
-        } catch (e: java.lang.Exception) {
+        } catch (e: ParseException) {
+            System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
+            throw ProgramResult(5)
+        }
+        catch (e: java.lang.Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
             System.err.println(e.message)
-            System.err.println(e.stackTrace)
             throw ProgramResult(1)
         }
     }

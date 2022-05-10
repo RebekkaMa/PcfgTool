@@ -7,7 +7,6 @@ import model.Bactrace
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
-import java.util.*
 
 class DeductiveParserTest : ShouldSpec({
 
@@ -50,7 +49,7 @@ class DeductiveParserTest : ShouldSpec({
 
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.fillQueueElementsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
+                parser.fillQueueElementsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas")) shouldBe null
                 parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Bactrace(rule8 to 1.0, null))
                 parser.queue shouldContain Tuple5(
                     1,
@@ -70,6 +69,64 @@ class DeductiveParserTest : ShouldSpec({
                     Bactrace(rule10 to 2 / 3.toDouble(), null)
                 )
                 parser.queue.size shouldBe 6
+            }
+        }
+        context("sentence contains of one word"){
+            context("Tree exist"){
+                should("return Result Element with Bactrace") {
+                    runTest {
+                        val grammar = Grammar.create(
+                            initial = "NNS",
+                            mapOf(
+                                rule1 to 1.0,
+                                rule2 to 1 / 4.toDouble(),
+                                rule3 to 1 / 2.toDouble(),
+                                rule4 to 1 / 4.toDouble(),
+                                rule5 to 1 / 2.toDouble(),
+                                rule6 to 1 / 2.toDouble(),
+                                rule7 to 1.0,
+                                rule8 to 1.0,
+                                Rule(true, "NNS", listOf("flies")) to 1 / 3.toDouble(),
+                                rule10 to 2 / 3.toDouble(),
+                                rule11 to 1.0,
+                                rule12 to 1.0,
+                                rule13 to 1.0
+                            )
+                        )
+
+                        val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
+                        val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                        parser.fillQueueElementsFromLexicalRules(listOf("flies")) shouldBe Tuple5(0, "NNS", 1, 1 / 3.toDouble(), Bactrace(Rule(true, "NNS", listOf("flies")) to 1 / 3.toDouble(), null))
+                    }
+                }
+            }
+            context("Tree not exist"){
+                should("return null") {
+                    runTest {
+                        val grammar = Grammar.create(
+                            initial = "VBZ",
+                            mapOf(
+                                rule1 to 1.0,
+                                rule2 to 1 / 4.toDouble(),
+                                rule3 to 1 / 2.toDouble(),
+                                rule4 to 1 / 4.toDouble(),
+                                rule5 to 1 / 2.toDouble(),
+                                rule6 to 1 / 2.toDouble(),
+                                rule7 to 1.0,
+                                rule8 to 1.0,
+                                Rule(true, "VBZ", listOf("flies")) to 1 / 3.toDouble(),
+                                rule10 to 2 / 3.toDouble(),
+                                rule11 to 1.0,
+                                rule12 to 1.0,
+                                rule13 to 1.0
+                            )
+                        )
+
+                        val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
+                        val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                        parser.fillQueueElementsFromLexicalRules(listOf("Ananas")) shouldBe null
+                    }
+                }
             }
         }
     }
@@ -163,6 +220,7 @@ class DeductiveParserTest : ShouldSpec({
 
         context("When itemsLeft and itemsRight have present key but not item") {
             should("should add selected Item to itemsLeft and itemsRight") {
+                val bactrace = Bactrace(Pair(rule1, 1.0), null)
                 val grammar = Grammar.create(
                     initial = "ROOT",
                     mapOf(
@@ -183,20 +241,20 @@ class DeductiveParserTest : ShouldSpec({
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, null))
-                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
-                parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, null))
-                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
+                parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, bactrace))
+                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, bactrace))
+                parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, bactrace))
+                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, bactrace))
 
 
-                parser.selectedItem = Tuple5(0, "NN", 1, 1.0, null)
+                parser.selectedItem = Tuple5(0, "NN", 1, 1.0, bactrace)
                 parser.addSelectedItemPropertyToSavedItems()
                 parser.itemsLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
                         mutableListOf(
-                            Tuple5<Int, String, Int, Double, Bactrace?>(0, "NN", 2, 0.5, null),
-                            Tuple5<Int, String, Int, Double, Bactrace?>(0, "NN", 1, 1.0, null)
+                            Tuple5<Int, String, Int, Double, Bactrace?>(0, "NN", 2, 0.5, bactrace),
+                            Tuple5<Int, String, Int, Double, Bactrace?>(0, "NN", 1, 1.0, bactrace)
                         )
                     ), Pair(
                         Pair(2, "NNS"),
@@ -206,7 +264,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -220,7 +278,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NN",
                                 2,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -231,7 +289,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ),
@@ -243,7 +301,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NN",
                                 1,
                                 1.0,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -253,6 +311,7 @@ class DeductiveParserTest : ShouldSpec({
 
         context("When itemsLeft and itemsRight have selected Item already with probability greater than zero") {
             should("should make nothing") {
+                val bactrace = Bactrace(Pair(rule1, 1.0), null)
                 val grammar = Grammar.create(
                     initial = "ROOT",
                     mapOf(
@@ -273,19 +332,19 @@ class DeductiveParserTest : ShouldSpec({
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, null))
-                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
-                parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, null))
-                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, null))
+                parser.itemsLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, bactrace))
+                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, bactrace))
+                parser.itemsRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, bactrace))
+                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, bactrace))
 
 
-                parser.selectedItem = Tuple5(0, "NN", 2, 0.3, null)
+                parser.selectedItem = Tuple5(0, "NN", 2, 0.3, bactrace)
                 parser.addSelectedItemPropertyToSavedItems()
                 parser.itemsLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
                         mutableListOf(
-                            Tuple5<Int, String, Int, Double, Bactrace?>(0, "NN", 2, 0.5, null)
+                            Tuple5<Int, String, Int, Double, Bactrace?>(0, "NN", 2, 0.5, bactrace)
                         )
                     ), Pair(
                         Pair(2, "NNS"),
@@ -295,7 +354,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -309,7 +368,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NN",
                                 2,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -320,7 +379,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -332,6 +391,7 @@ class DeductiveParserTest : ShouldSpec({
     context("findRuleAddItemToQueueRHS") {
         context("When there is a matching rule and saved item") {
             should("should add the new Item to the queue") {
+                val bactrace = Bactrace(Pair(rule1, 1.0), null)
                 val grammar = Grammar.create(
                     initial = "ROOT",
                     mapOf(
@@ -353,13 +413,13 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.itemsLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, null))
-                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+                parser.itemsLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, bactrace))
+                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, bactrace))
 
-                parser.itemsRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, null))
-                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+                parser.itemsRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, bactrace))
+                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, bactrace))
 
-                parser.selectedItem = Tuple5(0, "NN", 2, 0.4, null)
+                parser.selectedItem = Tuple5(0, "NN", 2, 0.4, bactrace)
                 parser.findRuleAddItemToQueueRhs(listOf("Fruit", "flies", "like", "bananas"))
 
                 parser.itemsLeft shouldBe mutableMapOf(
@@ -371,7 +431,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NN",
                                 4,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -382,7 +442,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.6,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -396,7 +456,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NN",
                                 4,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -407,7 +467,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.6,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -419,7 +479,7 @@ class DeductiveParserTest : ShouldSpec({
                         "NP",
                         3,
                         (1 / 4.toDouble() * 0.6 * 0.4),
-                        Bactrace(rule2 to 1 / 4.toDouble(), Pair(null, null))
+                        Bactrace(rule2 to 1 / 4.toDouble(), Pair(bactrace, bactrace))
                     )
                 )
             }
@@ -428,6 +488,7 @@ class DeductiveParserTest : ShouldSpec({
     context("findRuleAddItemtoQueueLhs") {
         context("When there is a matching rule and saved item") {
             should("should add the new Item to the queue") {
+                val bactrace = Bactrace(Pair(rule1, 1.0), null)
                 val grammar = Grammar.create(
                     initial = "S",
                     mapOf(
@@ -449,23 +510,23 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.itemsLeft[Pair(3, "VP")] = mutableListOf(Tuple5(3, "VP", 4, 0.5, null))
-                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
-                parser.itemsLeft[Pair(0, "NP")] = mutableListOf(Tuple5(0, "NP", 3, 0.4, null))
+                parser.itemsLeft[Pair(3, "VP")] = mutableListOf(Tuple5(3, "VP", 4, 0.5, bactrace))
+                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, bactrace))
+                parser.itemsLeft[Pair(0, "NP")] = mutableListOf(Tuple5(0, "NP", 3, 0.4, bactrace))
 
 
-                parser.itemsRight[Pair("VP", 4)] = mutableListOf(Tuple5(3, "VP", 4, 0.5, null))
-                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
-                parser.itemsRight[Pair("NP", 3)] = mutableListOf(Tuple5(0, "NP", 3, 0.4, null))
+                parser.itemsRight[Pair("VP", 4)] = mutableListOf(Tuple5(3, "VP", 4, 0.5, bactrace))
+                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, bactrace))
+                parser.itemsRight[Pair("NP", 3)] = mutableListOf(Tuple5(0, "NP", 3, 0.4, bactrace))
 
 
-                parser.selectedItem = Tuple5(3, "VP", 4, 0.5, null)
+                parser.selectedItem = Tuple5(3, "VP", 4, 0.5, bactrace)
                 parser.findRuleAddItemToQueueLhs(listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
                     0,
                     "S",
                     4,
                     0.5 * 0.4,
-                    Bactrace(rule1 to 1.0, Pair(null, null))
+                    Bactrace(rule1 to 1.0, Pair(bactrace, bactrace))
                 )
 
                 parser.itemsLeft shouldBe mutableMapOf(
@@ -477,7 +538,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "VP",
                                 4,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -488,7 +549,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.6,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -499,7 +560,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NP",
                                 3,
                                 0.4,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -513,7 +574,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "VP",
                                 4,
                                 0.5,
-                                null
+                                bactrace
                             )
                         )
                     ), Pair(
@@ -524,7 +585,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NNS",
                                 3,
                                 0.6,
-                                null
+                                bactrace
                             )
                         )
                     ),
@@ -536,7 +597,7 @@ class DeductiveParserTest : ShouldSpec({
                                 "NP",
                                 3,
                                 0.4,
-                                null
+                                bactrace
                             )
                         )
                     )
@@ -549,7 +610,8 @@ class DeductiveParserTest : ShouldSpec({
 
     context("findRuleAddItemToQueueChain"){
         context("When there is a matiching rule and saved item"){
-            should("should att the new Item to the queue"){
+            should("should add the new Item to the queue"){
+                val bactrace = Bactrace(Pair(rule1, 1.0), null)
                 val grammar = Grammar.create(
                     initial = "First",
                     mapOf(
@@ -572,13 +634,13 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.itemsLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, null))
-                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+                parser.itemsLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, bactrace))
+                parser.itemsLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, bactrace))
 
-                parser.itemsRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, null))
-                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, null))
+                parser.itemsRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, bactrace))
+                parser.itemsRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, bactrace))
 
-                parser.selectedItem = Tuple5(0, "S", 2, 0.4, null)
+                parser.selectedItem = Tuple5(0, "S", 2, 0.4, bactrace)
                 parser.findRuleAddItemToQueueChain(listOf("Fruit", "flies", "like", "bananas"))
 
 
@@ -588,7 +650,7 @@ class DeductiveParserTest : ShouldSpec({
                         "First",
                         2,
                         (0.4 * 0.9),
-                        Bactrace(Rule(false, "First", listOf("S") ) to 0.9, Pair(null, null))
+                        Bactrace(Rule(false, "First", listOf("S") ) to 0.9, Pair(bactrace, null))
                     )
                 )
             }
