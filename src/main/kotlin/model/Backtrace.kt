@@ -1,9 +1,9 @@
 package model
 
-data class Bactrace(val bin: Pair<Rule, Double>, val chain: Pair<Bactrace?, Bactrace?>?) {
+data class Backtrace(val bin: Pair<Rule, Double>, val chain: Pair<Backtrace?, Backtrace?>?) {
 
     fun getTree(): String {
-        fun getPartOfTree(bt : Bactrace?): String {
+        fun getPartOfTree(bt : Backtrace?): String {
 
             if (bt == null) return ""
             if (bt.chain == null) {
