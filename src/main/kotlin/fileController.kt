@@ -6,7 +6,3 @@ fun writeToFiles(grammar: Grammar, grammarFileName: String){
     File("$grammarFileName.lexicon").writeText(grammar.getLexicon().joinToString("\n"))
     File("$grammarFileName.words").writeText(grammar.getTerminals().joinToString("\n"))
 }
-
-fun readFileLineByLine(fileName: String){
-    File(fileName).bufferedReader().readLine()
-}

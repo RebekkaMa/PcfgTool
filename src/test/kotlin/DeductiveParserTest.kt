@@ -660,7 +660,6 @@ class DeductiveParserTest : ShouldSpec({
     context("weightedDeductiveParsing") {
         context("When there is a parsing tree for the sentence") {
             should("return the corresponding item with the parsing tree") {
-                //TODO Backtrace
                 val grammar = Grammar.create(
                     initial = "S",
                     mapOf(

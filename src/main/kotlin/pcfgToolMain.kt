@@ -4,7 +4,6 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.deprecated
 import com.github.ajalt.clikt.parameters.options.eagerOption
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
@@ -23,9 +22,7 @@ import kotlinx.coroutines.flow.*
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
-import java.util.concurrent.PriorityBlockingQueue
 import kotlin.system.exitProcess
-import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
     PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
@@ -181,7 +178,7 @@ class Parse : CliktCommand() {
 
                 rules.forEach { result ->
                     if (result.second != null) {
-                        echo(result.second?.t5?.getTree()) //TODO
+                        echo(result.second?.t5?.getTree())
                     } else {
                         echo("(NOPARSE " + result.first.joinToString(" ") + ")")
                     }
