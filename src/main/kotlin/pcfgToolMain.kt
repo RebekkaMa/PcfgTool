@@ -164,7 +164,8 @@ class Parse : CliktCommand() {
 
                 val resultPairs = generateSequence(readNotEmptyLnOrNull)
                     .map {
-                        DeductiveParser(
+                        val starttime = System.currentTimeMillis()
+                        val result = DeductiveParser(
                             grammar.initial,
                             accessRulesBySecondNtOnRhs,
                             accessRulesByFirstNtOnRhs,
@@ -173,6 +174,18 @@ class Parse : CliktCommand() {
                         ).weightedDeductiveParsing(
                             it.split(" ")
                         )
+                        println(System.currentTimeMillis() - starttime)
+                        result
+//                        DeductiveParser(
+//                            grammar.initial,
+//                            accessRulesBySecondNtOnRhs,
+//                            accessRulesByFirstNtOnRhs,
+//                            accessChainRulesByNtRhs,
+//                            accessRulesByTerminal
+//                        ).weightedDeductiveParsing(
+//                            it.split(" ")
+//                        )
+
                     }
 
                 resultPairs.forEach { (sentence, resultTuple) ->

@@ -26,7 +26,6 @@ class DeductiveParserTest : ShouldSpec({
     val rule13 = Rule(true, "IN", listOf("like"))
 
     context("fillQueueWithItemsFromLexicalRules") {
-        context("sentence consists of more than one word") {
             should("add Items to Queue") {
                 runTest {
                     val grammar = Grammar.create(
@@ -50,7 +49,7 @@ class DeductiveParserTest : ShouldSpec({
 
                     val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                     val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                    parser.fillQueueWithItemsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas")) shouldBe null
+                    parser.fillQueueWithItemsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
                     parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
                     parser.queue shouldContain Tuple5(
                         1,
@@ -73,65 +72,7 @@ class DeductiveParserTest : ShouldSpec({
                 }
             }
         }
-        context("sentence consists of one word"){
-            context("Tree exist"){
-                should("return Result Element with Bactrace") {
-                    runTest {
-                        val grammar = Grammar.create(
-                            initial = "NNS",
-                            mapOf(
-                                rule1 to 1.0,
-                                rule2 to 1 / 4.toDouble(),
-                                rule3 to 1 / 2.toDouble(),
-                                rule4 to 1 / 4.toDouble(),
-                                rule5 to 1 / 2.toDouble(),
-                                rule6 to 1 / 2.toDouble(),
-                                rule7 to 1.0,
-                                rule8 to 1.0,
-                                Rule(true, "NNS", listOf("flies")) to 1 / 3.toDouble(),
-                                rule10 to 2 / 3.toDouble(),
-                                rule11 to 1.0,
-                                rule12 to 1.0,
-                                rule13 to 1.0
-                            )
-                        )
 
-                        val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                        val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                        parser.fillQueueWithItemsFromLexicalRules(listOf("flies")) shouldBe Tuple5(0, "NNS", 1, 1 / 3.toDouble(), Backtrace(Rule(true, "NNS", listOf("flies")) to 1 / 3.toDouble(), null))
-                    }
-                }
-            }
-            context("Tree not exist"){
-                should("return null") {
-                    runTest {
-                        val grammar = Grammar.create(
-                            initial = "VBZ",
-                            mapOf(
-                                rule1 to 1.0,
-                                rule2 to 1 / 4.toDouble(),
-                                rule3 to 1 / 2.toDouble(),
-                                rule4 to 1 / 4.toDouble(),
-                                rule5 to 1 / 2.toDouble(),
-                                rule6 to 1 / 2.toDouble(),
-                                rule7 to 1.0,
-                                rule8 to 1.0,
-                                Rule(true, "VBZ", listOf("flies")) to 1 / 3.toDouble(),
-                                rule10 to 2 / 3.toDouble(),
-                                rule11 to 1.0,
-                                rule12 to 1.0,
-                                rule13 to 1.0
-                            )
-                        )
-
-                        val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                        val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                        parser.fillQueueWithItemsFromLexicalRules(listOf("Ananas")) shouldBe null
-                    }
-                }
-            }
-        }
-    }
 
     context("addSelectedItemPropertyToSavedItems") {
         context("When itemsLeft and itemsRight are empty") {
@@ -422,7 +363,7 @@ class DeductiveParserTest : ShouldSpec({
                 parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
 
                 parser.selectedItem = Tuple5(0, "NN", 2, 0.4, backtrace)
-                parser.findRulesAddItemsToQueueSecondNtOnRhs(listOf("Fruit", "flies", "like", "bananas"))
+                parser.findRulesAddItemsToQueueSecondNtOnRhs()
 
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
@@ -512,38 +453,17 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.accessFoundItemsFromLeft[Pair(3, "VP")] = mutableListOf(Tuple5(3, "VP", 4, 0.5, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(0, "NP")] = mutableListOf(Tuple5(0, "NP", 3, 0.4, backtrace))
 
-
-                parser.accessFoundItemsFromRight[Pair("VP", 4)] = mutableListOf(Tuple5(3, "VP", 4, 0.5, backtrace))
                 parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
                 parser.accessFoundItemsFromRight[Pair("NP", 3)] = mutableListOf(Tuple5(0, "NP", 3, 0.4, backtrace))
 
 
                 parser.selectedItem = Tuple5(3, "VP", 4, 0.5, backtrace)
-                parser.findRulesAddItemsToQueueFirstNtOnRhs(listOf("Fruit", "flies", "like", "bananas")) shouldBe Tuple5(
-                    0,
-                    "S",
-                    4,
-                    0.5 * 0.4,
-                    Backtrace(rule1 to 1.0, Pair(backtrace, backtrace))
-                )
 
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
-                        Pair(3, "VP"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                3,
-                                "VP",
-                                4,
-                                0.5,
-                                backtrace
-                            )
-                        )
-                    ), Pair(
                         Pair(2, "NNS"),
                         mutableListOf(
                             Tuple5<Int, String, Int, Double, Backtrace?>(
@@ -568,18 +488,7 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
-                    Pair(
-                        Pair("VP", 4),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                3,
-                                "VP",
-                                4,
-                                0.5,
-                                backtrace
-                            )
-                        )
-                    ), Pair(
+                     Pair(
                         Pair("NNS", 3),
                         mutableListOf(
                             Tuple5<Int, String, Int, Double, Backtrace?>(
@@ -643,7 +552,7 @@ class DeductiveParserTest : ShouldSpec({
                 parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
 
                 parser.selectedItem = Tuple5(0, "S", 2, 0.4, backtrace)
-                parser.findRulesAddItemsToQueueChain(listOf("Fruit", "flies", "like", "bananas"))
+                parser.findRulesAddItemsToQueueChain()
 
 
                 parser.queue shouldBe mutableListOf(
