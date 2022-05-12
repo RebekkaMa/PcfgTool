@@ -12,13 +12,13 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
-    implementation("com.github.ajalt.clikt:clikt:3.4.1")
+    implementation("com.github.ajalt.clikt:clikt:3.4.2")
     implementation("com.github.h0tk3y.betterParse:better-parse:0.4.4")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.kotest:kotest-runner-junit5:5.2.3")
+    testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.2.3")
+    testImplementation("io.kotest:kotest-assertions-core:5.3.0")
 }
 
 kotlin {

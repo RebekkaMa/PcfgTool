@@ -161,34 +161,25 @@ class Parse : CliktCommand() {
                 )
 
                 val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal) = grammar.getGrammarDataStructuresForParsing()
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    accessRulesBySecondNtOnRhs,
+                    accessRulesByFirstNtOnRhs,
+                    accessChainRulesByNtRhs,
+                    accessRulesByTerminal
+                )
 
                 val resultPairs = generateSequence(readNotEmptyLnOrNull)
                     .map {
-                        val starttime = System.currentTimeMillis()
-                        val result = DeductiveParser(
-                            grammar.initial,
-                            accessRulesBySecondNtOnRhs,
-                            accessRulesByFirstNtOnRhs,
-                            accessChainRulesByNtRhs,
-                            accessRulesByTerminal
-                        ).weightedDeductiveParsing(
+                        val start = System.currentTimeMillis()
+                        val res = parser.weightedDeductiveParsing(
                             it.split(" ")
                         )
-                        println(System.currentTimeMillis() - starttime)
-                        result
-//                        DeductiveParser(
-//                            grammar.initial,
-//                            accessRulesBySecondNtOnRhs,
-//                            accessRulesByFirstNtOnRhs,
-//                            accessChainRulesByNtRhs,
-//                            accessRulesByTerminal
-//                        ).weightedDeductiveParsing(
-//                            it.split(" ")
-//                        )
-
+                        println(System.currentTimeMillis()-start)
+                        res
                     }
 
-                resultPairs.forEach { (sentence, resultTuple) ->
+                resultPairs.forEach { (sentence, resultTuple)  ->
                     if (resultTuple != null) {
                         echo(resultTuple.t5.getParseTreeAsString())
                     } else {
@@ -199,8 +190,7 @@ class Parse : CliktCommand() {
         } catch (e: ParseException) {
             System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
             throw ProgramResult(5)
-        }
-        catch (e: java.lang.Exception) {
+        } catch (e: java.lang.Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
             System.err.println(e.message)
             throw ProgramResult(1)
