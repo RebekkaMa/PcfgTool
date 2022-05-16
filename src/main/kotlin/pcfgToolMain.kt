@@ -138,7 +138,6 @@ class Parse : CliktCommand() {
                     exitProcess(22)
                 }
 
-
                 val getRulesFromRulesFile = async {
                     val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
                     RulesExpressionEvaluator().parseToEnd(

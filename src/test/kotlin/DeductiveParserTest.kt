@@ -26,52 +26,52 @@ class DeductiveParserTest : ShouldSpec({
     val rule13 = Rule(true, "IN", listOf("like"))
 
     context("fillQueueWithItemsFromLexicalRules") {
-            should("add Items to Queue") {
-                runTest {
-                    val grammar = Grammar.create(
-                        initial = "ROOT",
-                        mapOf(
-                            rule1 to 1.0,
-                            rule2 to 1 / 4.toDouble(),
-                            rule3 to 1 / 2.toDouble(),
-                            rule4 to 1 / 4.toDouble(),
-                            rule5 to 1 / 2.toDouble(),
-                            rule6 to 1 / 2.toDouble(),
-                            rule7 to 1.0,
-                            rule8 to 1.0,
-                            rule9 to 1 / 3.toDouble(),
-                            rule10 to 2 / 3.toDouble(),
-                            rule11 to 1.0,
-                            rule12 to 1.0,
-                            rule13 to 1.0
-                        )
+        should("add Items to Queue") {
+            runTest {
+                val grammar = Grammar.create(
+                    initial = "ROOT",
+                    mapOf(
+                        rule1 to 1.0,
+                        rule2 to 1 / 4.toDouble(),
+                        rule3 to 1 / 2.toDouble(),
+                        rule4 to 1 / 4.toDouble(),
+                        rule5 to 1 / 2.toDouble(),
+                        rule6 to 1 / 2.toDouble(),
+                        rule7 to 1.0,
+                        rule8 to 1.0,
+                        rule9 to 1 / 3.toDouble(),
+                        rule10 to 2 / 3.toDouble(),
+                        rule11 to 1.0,
+                        rule12 to 1.0,
+                        rule13 to 1.0
                     )
+                )
 
-                    val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                    val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                    parser.fillQueueWithItemsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
-                    parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
-                    parser.queue shouldContain Tuple5(
-                        1,
-                        "NNS",
-                        2,
-                        1 / 3.toDouble(),
-                        Backtrace(rule9 to 1 / 3.toDouble(), null)
-                    )
-                    parser.queue shouldContain Tuple5(1, "VBZ", 2, 1.0, Backtrace(rule12 to 1.0, null))
-                    parser.queue shouldContain Tuple5(2, "VBP", 3, 1.0, Backtrace(rule11 to 1.0, null))
-                    parser.queue shouldContain Tuple5(2, "IN", 3, 1.0, Backtrace(rule13 to 1.0, null))
-                    parser.queue shouldContain Tuple5(
-                        3,
-                        "NNS",
-                        4,
-                        2 / 3.toDouble(),
-                        Backtrace(rule10 to 2 / 3.toDouble(), null)
-                    )
-                    parser.queue.size shouldBe 6
-                }
+                val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
+                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                parser.fillQueueWithItemsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
+                parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
+                parser.queue shouldContain Tuple5(
+                    1,
+                    "NNS",
+                    2,
+                    1 / 3.toDouble(),
+                    Backtrace(rule9 to 1 / 3.toDouble(), null)
+                )
+                parser.queue shouldContain Tuple5(1, "VBZ", 2, 1.0, Backtrace(rule12 to 1.0, null))
+                parser.queue shouldContain Tuple5(2, "VBP", 3, 1.0, Backtrace(rule11 to 1.0, null))
+                parser.queue shouldContain Tuple5(2, "IN", 3, 1.0, Backtrace(rule13 to 1.0, null))
+                parser.queue shouldContain Tuple5(
+                    3,
+                    "NNS",
+                    4,
+                    2 / 3.toDouble(),
+                    Backtrace(rule10 to 2 / 3.toDouble(), null)
+                )
+                parser.queue.size shouldBe 6
             }
         }
+    }
 
 
     context("addSelectedItemPropertyToSavedItems") {
@@ -97,18 +97,17 @@ class DeductiveParserTest : ShouldSpec({
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.selectedItem = Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
-                parser.addSelectedItemProbabilityToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
-                        mutableListOf(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(1 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 1),
-                        mutableListOf(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(0 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
                     )
                 )
             }
@@ -136,29 +135,24 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
                 parser.accessFoundItemsFromLeft[Pair(0, "NN")] =
-                    mutableListOf(Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null)))
+                    mutableMapOf(1 to Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null)))
                 parser.accessFoundItemsFromRight[Pair("NN", 1)] =
-                    mutableListOf(Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null)))
+                    mutableMapOf(0 to (Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null))))
 
-                parser.selectedItem = Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
-                parser.addSelectedItemProbabilityToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
-                        mutableListOf(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(1 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 1),
-                        mutableListOf(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(0 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
                     )
                 )
-
-
             }
-
-
         }
 
         context("When itemsLeft and itemsRight have present key but not item") {
@@ -184,68 +178,73 @@ class DeductiveParserTest : ShouldSpec({
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.accessFoundItemsFromLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, backtrace))
-                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(0, "NN")] = mutableMapOf(2 to Tuple5(0, "NN", 2, 0.5, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.5, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NN", 2)] = mutableMapOf(0 to Tuple5(0, "NN", 2, 0.5, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
+                    mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.5, backtrace))
 
 
-                parser.selectedItem = Tuple5(0, "NN", 1, 1.0, backtrace)
-                parser.addSelectedItemProbabilityToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, backtrace))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(0, "NN", 2, 0.5, backtrace),
-                            Tuple5<Int, String, Int, Double, Backtrace?>(0, "NN", 1, 1.0, backtrace)
+                        mutableMapOf(
+                            2 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(0, "NN", 2, 0.5, backtrace), 1 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(0, "NN", 1, 1.0, backtrace)
                         )
                     ), Pair(
                         Pair(2, "NNS"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            3 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 2),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                0,
-                                "NN",
-                                2,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            0 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        0,
+                                        "NN",
+                                        2,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     ), Pair(
                         Pair("NNS", 3),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            2 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     ),
                     Pair(
                         Pair("NN", 1),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                0,
-                                "NN",
-                                1,
-                                1.0,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            0 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        0,
+                                        "NN",
+                                        1,
+                                        1.0,
+                                        backtrace
+                                    )
                         )
                     )
                 )
@@ -275,55 +274,59 @@ class DeductiveParserTest : ShouldSpec({
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.accessFoundItemsFromLeft[Pair(0, "NN")] = mutableListOf(Tuple5(0, "NN", 2, 0.5, backtrace))
-                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NN", 2)] = mutableListOf(Tuple5(0, "NN", 2, 0.5, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.5, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(0, "NN")] = mutableMapOf(2 to Tuple5(0, "NN", 2, 0.5, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.5, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NN", 2)] = mutableMapOf(0 to Tuple5(0, "NN", 2, 0.5, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
+                    mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.5, backtrace))
 
 
-                parser.selectedItem = Tuple5(0, "NN", 2, 0.3, backtrace)
-                parser.addSelectedItemProbabilityToSavedItems()
+                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 2, 0.3, backtrace))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(0, "NN", 2, 0.5, backtrace)
+                        mutableMapOf(
+                            2 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(0, "NN", 2, 0.5, backtrace)
                         )
                     ), Pair(
                         Pair(2, "NNS"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            3 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 2),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                0,
-                                "NN",
-                                2,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            0 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        0,
+                                        "NN",
+                                        2,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     ), Pair(
                         Pair("NNS", 3),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            2 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     )
                 )
@@ -356,62 +359,66 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.accessFoundItemsFromLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, backtrace))
-                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(3, "NN")] = mutableMapOf(4 to Tuple5(3, "NN", 4, 0.5, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
 
-                parser.accessFoundItemsFromRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NN", 4)] = mutableMapOf(3 to Tuple5(3, "NN", 4, 0.5, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
+                    mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.6, backtrace))
 
-                parser.selectedItem = Tuple5(0, "NN", 2, 0.4, backtrace)
-                parser.findRulesAddItemsToQueueSecondNtOnRhs()
+                parser.findRulesAddItemsToQueueSecondNtOnRhs(Tuple5(0, "NN", 2, 0.4, backtrace))
 
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(3, "NN"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                3,
-                                "NN",
-                                4,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            4 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        3,
+                                        "NN",
+                                        4,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     ), Pair(
                         Pair(2, "NNS"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.6,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            3 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.6,
+                                        backtrace
+                                    )
                         )
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 4),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                3,
-                                "NN",
-                                4,
-                                0.5,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            3 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        3,
+                                        "NN",
+                                        4,
+                                        0.5,
+                                        backtrace
+                                    )
                         )
                     ), Pair(
                         Pair("NNS", 3),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.6,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            2 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.6,
+                                        backtrace
+                                    )
                         )
                     )
                 )
@@ -422,7 +429,7 @@ class DeductiveParserTest : ShouldSpec({
                         "NP",
                         3,
                         (1 / 4.toDouble() * 0.6 * 0.4),
-                        Backtrace(rule2 to 1 / 4.toDouble(), Pair(backtrace, backtrace))
+                        Backtrace(rule2 to (1 / 4.toDouble() * 0.6 * 0.4), Pair(backtrace, backtrace))
                     )
                 )
             }
@@ -453,80 +460,221 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
-                parser.accessFoundItemsFromLeft[Pair(0, "NP")] = mutableListOf(Tuple5(0, "NP", 3, 0.4, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(0, "NP")] = mutableMapOf(3 to Tuple5(0, "NP", 3, 0.4, backtrace))
 
-                parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NP", 3)] = mutableListOf(Tuple5(0, "NP", 3, 0.4, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
+                    mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.6, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NP", 3)] = mutableMapOf(0 to Tuple5(0, "NP", 3, 0.4, backtrace))
 
-
-                parser.selectedItem = Tuple5(3, "VP", 4, 0.5, backtrace)
+                parser.findRulesAddItemsToQueueFirstNtOnRhs(Tuple5(3, "VP", 4, 0.5, backtrace))
 
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(2, "NNS"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.6,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            3 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.6,
+                                        backtrace
+                                    )
                         )
                     ), Pair(
                         Pair(0, "NP"),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                0,
-                                "NP",
-                                3,
-                                0.4,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            3 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        0,
+                                        "NP",
+                                        3,
+                                        0.4,
+                                        backtrace
+                                    )
                         )
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
-                     Pair(
+                    Pair(
                         Pair("NNS", 3),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                2,
-                                "NNS",
-                                3,
-                                0.6,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            2 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        2,
+                                        "NNS",
+                                        3,
+                                        0.6,
+                                        backtrace
+                                    )
                         )
                     ),
                     Pair(
                         Pair("NP", 3),
-                        mutableListOf(
-                            Tuple5<Int, String, Int, Double, Backtrace?>(
-                                0,
-                                "NP",
-                                3,
-                                0.4,
-                                backtrace
-                            )
+                        mutableMapOf(
+                            0 to
+                                    Tuple5<Int, String, Int, Double, Backtrace?>(
+                                        0,
+                                        "NP",
+                                        3,
+                                        0.4,
+                                        backtrace
+                                    )
                         )
                     )
                 )
 
-                parser.queue shouldBe mutableListOf()
+                parser.queue shouldBe mutableListOf(
+                    Tuple5(
+                        0,
+                        "S",
+                        4,
+                        0.4 * 0.5,
+                        Backtrace(rule1 to 0.4 * 0.5, backtrace to backtrace)
+                    )
+                )
             }
+            context("When there is not a matiching rule and saved item"){
+                should("should make nothing and return null") {
+                    val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                    val grammar = Grammar.create(
+                        initial = "S",
+                        mapOf(
+                            rule1 to 1.0,
+                            rule2 to 1 / 4.toDouble(),
+                            rule3 to 1 / 2.toDouble(),
+                            rule4 to 1 / 4.toDouble(),
+                            rule5 to 1 / 2.toDouble(),
+                            rule6 to 1 / 2.toDouble(),
+                            rule7 to 1.0,
+                            rule8 to 1.0,
+                            rule9 to 1 / 3.toDouble(),
+                            rule10 to 2 / 3.toDouble(),
+                            rule11 to 1.0,
+                            rule12 to 1.0,
+                            rule13 to 1.0
+                        )
+                    )
+                    val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
+                    val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+
+                    parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
+                    parser.accessFoundItemsFromLeft[Pair(0, "NP")] = mutableMapOf(3 to Tuple5(0, "NP", 3, 0.4, backtrace))
+                    parser.accessFoundItemsFromLeft[Pair(0, "S")] = mutableMapOf(
+                        4 to Tuple5(0, "S", 4, 0.6, Backtrace(rule1 to 0.5, backtrace to backtrace))
+                    )
+
+                    parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
+                        mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.6, backtrace))
+                    parser.accessFoundItemsFromRight[Pair("NP", 3)] = mutableMapOf(0 to Tuple5(0, "NP", 3, 0.4, backtrace))
+                    parser.accessFoundItemsFromRight[Pair("S", 4)] = mutableMapOf(
+                        0 to Tuple5(0, "S", 4, 0.6, Backtrace(rule1 to 0.5, backtrace to backtrace))
+
+                    )
+
+                    parser.findRulesAddItemsToQueueFirstNtOnRhs(Tuple5(3, "LP", 4, 0.5, backtrace))
+
+                    parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
+                        Pair(
+                            Pair(2, "NNS"),
+                            mutableMapOf(
+                                3 to
+                                        Tuple5<Int, String, Int, Double, Backtrace?>(
+                                            2,
+                                            "NNS",
+                                            3,
+                                            0.6,
+                                            backtrace
+                                        )
+                            )
+                        ), Pair(
+                            Pair(0, "NP"),
+                            mutableMapOf(
+                                3 to
+                                        Tuple5<Int, String, Int, Double, Backtrace?>(
+                                            0,
+                                            "NP",
+                                            3,
+                                            0.4,
+                                            backtrace
+                                        )
+                            )
+                        ),
+                        Pair(
+                            Pair(0, "S"),
+                            mutableMapOf(
+                                4 to
+                                        Tuple5(
+                                            0,
+                                            "S",
+                                            4,
+                                            0.6,
+                                            Backtrace(rule1 to 0.5, backtrace to backtrace)
+                                        )
+
+                            ),
+                        )
+                    )
+                    parser.accessFoundItemsFromRight shouldBe mutableMapOf(
+                        Pair(
+                            Pair("NNS", 3),
+                            mutableMapOf(
+                                2 to
+                                        Tuple5<Int, String, Int, Double, Backtrace?>(
+                                            2,
+                                            "NNS",
+                                            3,
+                                            0.6,
+                                            backtrace
+                                        )
+                            )
+                        ),
+                        Pair(
+                            Pair("NP", 3),
+                            mutableMapOf(
+                                0 to
+                                        Tuple5<Int, String, Int, Double, Backtrace?>(
+                                            0,
+                                            "NP",
+                                            3,
+                                            0.4,
+                                            backtrace
+                                        )
+                            )
+                        ),
+                        Pair(
+                            Pair("S", 4),
+                            mutableMapOf(
+                                0 to
+                                        Tuple5(
+                                            0,
+                                            "S",
+                                            4,
+                                            0.6,
+                                            Backtrace(rule1 to 0.5, backtrace to backtrace)
+                                        )
+
+                            ),
+                        )
+                    )
+
+                    parser.queue shouldBe mutableListOf(
+                    )
+                }
+            }
+
         }
     }
 
-    context("findRuleAddItemToQueueChain"){
-        context("When there is a matiching rule and saved item"){
-            should("should add the new Item to the queue"){
+    context("findRuleAddItemToQueueChain") {
+        context("When there is a matiching rule and saved item") {
+            should("should add the new Item to the queue") {
                 val backtrace = Backtrace(Pair(rule1, 1.0), null)
                 val grammar = Grammar.create(
                     initial = "First",
                     mapOf(
-                        Rule(false, "First", listOf("S") ) to 0.9,
+                        Rule(false, "First", listOf("S")) to 0.9,
                         rule1 to 0.5,
                         rule2 to 1 / 4.toDouble(),
                         rule3 to 1 / 2.toDouble(),
@@ -545,14 +693,14 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.accessFoundItemsFromLeft[Pair(3, "NN")] = mutableListOf(Tuple5(3, "NN", 4, 0.5, backtrace))
-                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(3, "NN")] = mutableMapOf(4 to Tuple5(3, "NN", 4, 0.5, backtrace))
+                parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
 
-                parser.accessFoundItemsFromRight[Pair("NN", 4)] = mutableListOf(Tuple5(3, "NN", 4, 0.5, backtrace))
-                parser.accessFoundItemsFromRight[Pair("NNS", 3)] = mutableListOf(Tuple5(2, "NNS", 3, 0.6, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NN", 4)] = mutableMapOf(3 to Tuple5(3, "NN", 4, 0.5, backtrace))
+                parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
+                    mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.6, backtrace))
 
-                parser.selectedItem = Tuple5(0, "S", 2, 0.4, backtrace)
-                parser.findRulesAddItemsToQueueChain()
+                parser.findRulesAddItemsToQueueChain(Tuple5(0, "S", 2, 0.4, backtrace))
 
 
                 parser.queue shouldBe mutableListOf(
@@ -561,7 +709,7 @@ class DeductiveParserTest : ShouldSpec({
                         "First",
                         2,
                         (0.4 * 0.9),
-                        Backtrace(Rule(false, "First", listOf("S") ) to 0.9, Pair(backtrace, null))
+                        Backtrace(Rule(false, "First", listOf("S")) to 0.9, Pair(backtrace, null))
                     )
                 )
             }
@@ -620,7 +768,14 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                parser.weightedDeductiveParsing(listOf("Fruit", "flies", "like", "bananas")) shouldBe Pair(listOf("Fruit", "flies", "like", "bananas"), null)
+                parser.weightedDeductiveParsing(
+                    listOf(
+                        "Fruit",
+                        "flies",
+                        "like",
+                        "bananas"
+                    )
+                ) shouldBe Pair(listOf("Fruit", "flies", "like", "bananas"), null)
             }
         }
 
