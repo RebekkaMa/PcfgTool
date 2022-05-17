@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.*
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
+import java.util.concurrent.PriorityBlockingQueue
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -130,6 +131,36 @@ class Parse : CliktCommand() {
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
 
+    val outputQueue = PriorityBlockingQueue(10, compareBy<Pair<Int, String>> { it.first })
+
+    private fun CoroutineScope.launchProcessor(
+        channel: ReceiveChannel<Pair<Int, String>>,
+        initial: String,
+        accessRulesBySecondNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
+        accessRulesByFirstNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
+        accessChainRulesByNtRhs: Map<String, MutableList<Pair<Rule, Double>>>,
+        accessRulesByTerminal: Map<String, MutableList<Pair<Rule, Double>>>
+    ) =
+        launch(context = Dispatchers.Default) {
+            val parser = DeductiveParser(initial, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal)
+            for (line in channel) {
+                val result = parser.weightedDeductiveParsing(line.second.split(" "))
+                if (result.second != null) {
+                    outputQueue.put(line.first to result.second!!.t5.getParseTreeAsString()) //TODO
+                } else {
+                    outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
+                }
+            }
+        }
+
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
+            send(Pair(i+1, sentence))
+        }
+    }
+
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
@@ -160,29 +191,36 @@ class Parse : CliktCommand() {
                 )
 
                 val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(
-                    grammar.initial,
-                    accessRulesBySecondNtOnRhs,
-                    accessRulesByFirstNtOnRhs,
-                    accessChainRulesByNtRhs,
-                    accessRulesByTerminal
-                )
 
-                val resultPairs = generateSequence(readNotEmptyLnOrNull)
-                    .map {
-                        val start = System.currentTimeMillis()
-                        val res = parser.weightedDeductiveParsing(
-                            it.split(" ")
-                        )
-                        println(System.currentTimeMillis()-start)
-                        res
+                val producer = produceString()
+
+                val parser = launch {
+                    try {
+                        coroutineScope {
+                            repeat(1) {
+                                launchProcessor(
+                                    producer,
+                                    grammar.initial,
+                                    accessRulesBySecondNtOnRhs,
+                                    accessRulesByFirstNtOnRhs,
+                                    accessChainRulesByNtRhs,
+                                    accessRulesByTerminal
+                                )
+                            }
+                        }
+                    } catch (e: ParseException) {
+                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+                        exitProcess(5)
                     }
+                }
 
-                resultPairs.forEach { (sentence, resultTuple)  ->
-                    if (resultTuple != null) {
-                        echo(resultTuple.t5.getParseTreeAsString())
-                    } else {
-                        echo("(NOPARSE " + sentence.joinToString(" ") + ")")
+                launch {
+                    for (idx in 1..Int.MAX_VALUE) {
+                        if (parser.isCompleted && outputQueue.isEmpty()) return@launch
+                        while (idx != outputQueue.peek()?.first){
+                            delay(1000)
+                        }
+                        echo(outputQueue.poll().second)
                     }
                 }
             }
