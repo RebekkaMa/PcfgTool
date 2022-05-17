@@ -144,18 +144,21 @@ class Parse : CliktCommand() {
         launch(context = Dispatchers.Default) {
             val parser = DeductiveParser(initial, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal)
             for (line in channel) {
+                val startTime = System.currentTimeMillis()
                 val result = parser.weightedDeductiveParsing(line.second.split(" "))
+                System.out.println(line.first.toString() +  " " + (System.currentTimeMillis() - startTime).toString())
                 if (result.second != null) {
                     outputQueue.put(line.first to result.second!!.t5.getParseTreeAsString()) //TODO
                 } else {
                     outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
                 }
+
             }
         }
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.Default, capacity = 10) {
         generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
             send(Pair(i+1, sentence))
         }
@@ -195,9 +198,7 @@ class Parse : CliktCommand() {
                 val producer = produceString()
 
                 val parser = launch {
-                    try {
-                        coroutineScope {
-                            repeat(1) {
+                            repeat(3) {
                                 launchProcessor(
                                     producer,
                                     grammar.initial,
@@ -208,13 +209,9 @@ class Parse : CliktCommand() {
                                 )
                             }
                         }
-                    } catch (e: ParseException) {
-                        println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-                        exitProcess(5)
-                    }
-                }
 
                 launch {
+                    val startTime = System.currentTimeMillis()
                     for (idx in 1..Int.MAX_VALUE) {
                         if (parser.isCompleted && outputQueue.isEmpty()) return@launch
                         while (idx != outputQueue.peek()?.first){
@@ -222,6 +219,7 @@ class Parse : CliktCommand() {
                         }
                         echo(outputQueue.poll().second)
                     }
+                    System.out.println(System.currentTimeMillis() - startTime)
                 }
             }
         } catch (e: ParseException) {
