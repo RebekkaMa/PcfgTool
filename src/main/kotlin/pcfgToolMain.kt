@@ -170,12 +170,9 @@ class Parse : CliktCommand() {
 
                 val resultPairs = generateSequence(readNotEmptyLnOrNull)
                     .map {
-                        val start = System.currentTimeMillis()
-                        val res = parser.weightedDeductiveParsing(
+                        parser.weightedDeductiveParsing(
                             it.split(" ")
                         )
-                        println(System.currentTimeMillis()-start)
-                        res
                     }
 
                 resultPairs.forEach { (sentence, resultTuple)  ->
