@@ -45,7 +45,7 @@ class DeductiveParser(
     ) {
         sentence.forEachIndexed { index, word ->
             accessRulesByTerminal[word]?.forEach { (rule, ruleProbability) ->
-                queue.add(Tuple5(index, rule.lhs, index + 1, ruleProbability, Backtrace(rule to ruleProbability, null)))
+                queue.add(Tuple5(index, rule.lhs, index + 1, ruleProbability, Backtrace(rule, ruleProbability, null)))
             }
         }
     }
@@ -55,7 +55,7 @@ class DeductiveParser(
     fun addSelectedItemProbabilityToSavedItems(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>): Boolean {
         var notNullProbabilityEntryLhs = false
         var notNullProbabilityEntryRhs = false
-        accessFoundItemsFromLeft.compute(Pair(selectedItem.t1, selectedItem.t2)) { _, v ->
+        accessFoundItemsFromLeft.compute(Pair(selectedItem.t1, selectedItem.t2)) outerCompute@{ _, v ->
             if (v == null) {
                 mutableMapOf(selectedItem.t3 to selectedItem)
             } else {
@@ -72,7 +72,7 @@ class DeductiveParser(
             }
         }
         if (notNullProbabilityEntryLhs) return true
-        accessFoundItemsFromRight.compute(Pair(selectedItem.t2, selectedItem.t3)) { _, v ->
+        accessFoundItemsFromRight.compute(Pair(selectedItem.t2, selectedItem.t3)) outerCompute@ { _, v ->
             if (v == null) {
                 mutableMapOf(selectedItem.t1 to selectedItem)
             } else {
@@ -104,7 +104,7 @@ class DeductiveParser(
                     queue.add(
                         Tuple5(
                             i, rule.lhs, j2, ruleProbability * wt * wt2, Backtrace(
-                                rule to ruleProbability * wt * wt2,
+                                rule, ruleProbability * wt * wt2,
                                 Pair(bt, bt2)
                             )
                         )
@@ -129,7 +129,7 @@ class DeductiveParser(
                             rule.lhs,
                             j,
                             ruleProbability * wt0 * wt,
-                            Backtrace(rule to ruleProbability * wt0 * wt, Pair(bt0, bt))
+                            Backtrace(rule, ruleProbability * wt0 * wt, Pair(bt0, bt))
                         )
                     )
                 }
@@ -147,7 +147,7 @@ class DeductiveParser(
                     rule.lhs,
                     j,
                     ruleProbability * wt,
-                    Backtrace(rule to ruleProbability * wt, Pair(bt, null))
+                    Backtrace(rule, ruleProbability * wt, Pair(bt, null))
                 )
             )
         }

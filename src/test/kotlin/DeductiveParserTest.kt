@@ -50,23 +50,23 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
                 parser.fillQueueWithItemsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
-                parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null))
+                parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null))
                 parser.queue shouldContain Tuple5(
                     1,
                     "NNS",
                     2,
                     1 / 3.toDouble(),
-                    Backtrace(rule9 to 1 / 3.toDouble(), null)
+                    Backtrace(rule9, 1 / 3.toDouble(), null)
                 )
-                parser.queue shouldContain Tuple5(1, "VBZ", 2, 1.0, Backtrace(rule12 to 1.0, null))
-                parser.queue shouldContain Tuple5(2, "VBP", 3, 1.0, Backtrace(rule11 to 1.0, null))
-                parser.queue shouldContain Tuple5(2, "IN", 3, 1.0, Backtrace(rule13 to 1.0, null))
+                parser.queue shouldContain Tuple5(1, "VBZ", 2, 1.0, Backtrace(rule12, 1.0, null))
+                parser.queue shouldContain Tuple5(2, "VBP", 3, 1.0, Backtrace(rule11, 1.0, null))
+                parser.queue shouldContain Tuple5(2, "IN", 3, 1.0, Backtrace(rule13, 1.0, null))
                 parser.queue shouldContain Tuple5(
                     3,
                     "NNS",
                     4,
                     2 / 3.toDouble(),
-                    Backtrace(rule10 to 2 / 3.toDouble(), null)
+                    Backtrace(rule10, 2 / 3.toDouble(), null)
                 )
                 parser.queue.size shouldBe 6
             }
@@ -97,17 +97,17 @@ class DeductiveParserTest : ShouldSpec({
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
-                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
-                        mutableMapOf(1 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(1 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 1),
-                        mutableMapOf(0 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(0 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                     )
                 )
             }
@@ -135,21 +135,21 @@ class DeductiveParserTest : ShouldSpec({
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                 val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
                 parser.accessFoundItemsFromLeft[Pair(0, "NN")] =
-                    mutableMapOf(1 to Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null)))
+                    mutableMapOf(1 to Tuple5(0, "NN", 1, 0.0, Backtrace(rule8, 1.0, null)))
                 parser.accessFoundItemsFromRight[Pair("NN", 1)] =
-                    mutableMapOf(0 to (Tuple5(0, "NN", 1, 0.0, Backtrace(rule8 to 1.0, null))))
+                    mutableMapOf(0 to (Tuple5(0, "NN", 1, 0.0, Backtrace(rule8, 1.0, null))))
 
-                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
                         Pair(0, "NN"),
-                        mutableMapOf(1 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(1 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                     )
                 )
                 parser.accessFoundItemsFromRight shouldBe mutableMapOf(
                     Pair(
                         Pair("NN", 1),
-                        mutableMapOf(0 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8 to 1.0, null)))
+                        mutableMapOf(0 to Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                     )
                 )
             }
@@ -157,7 +157,7 @@ class DeductiveParserTest : ShouldSpec({
 
         context("When itemsLeft and itemsRight have present key but not item") {
             should("should add selected Item to itemsLeft and itemsRight") {
-                val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                val backtrace = Backtrace(rule1, 1.0, null)
                 val grammar = Grammar.create(
                     initial = "ROOT",
                     mapOf(
@@ -253,7 +253,7 @@ class DeductiveParserTest : ShouldSpec({
 
         context("When itemsLeft and itemsRight have selected Item already with probability greater than zero") {
             should("should make nothing") {
-                val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                val backtrace = Backtrace(rule1, 1.0, null)
                 val grammar = Grammar.create(
                     initial = "ROOT",
                     mapOf(
@@ -337,7 +337,7 @@ class DeductiveParserTest : ShouldSpec({
     context("findRulesAddItemsToQueueSecondNtOnRhs") {
         context("When there is a matching rule and saved item") {
             should("should add the new Item to the queue") {
-                val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                val backtrace = Backtrace(rule1, 1.0, null)
                 val grammar = Grammar.create(
                     initial = "ROOT",
                     mapOf(
@@ -429,7 +429,7 @@ class DeductiveParserTest : ShouldSpec({
                         "NP",
                         3,
                         (1 / 4.toDouble() * 0.6 * 0.4),
-                        Backtrace(rule2 to (1 / 4.toDouble() * 0.6 * 0.4), Pair(backtrace, backtrace))
+                        Backtrace(rule2 , (1 / 4.toDouble() * 0.6 * 0.4), Pair(backtrace, backtrace))
                     )
                 )
             }
@@ -438,7 +438,7 @@ class DeductiveParserTest : ShouldSpec({
     context("findRulesAddItemsToQueueFirstNtOnRhs") {
         context("When there is a matching rule and saved item") {
             should("should add the new Item to the queue") {
-                val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                val backtrace = Backtrace(rule1, 1.0, null)
                 val grammar = Grammar.create(
                     initial = "S",
                     mapOf(
@@ -531,13 +531,13 @@ class DeductiveParserTest : ShouldSpec({
                         "S",
                         4,
                         0.4 * 0.5,
-                        Backtrace(rule1 to 0.4 * 0.5, backtrace to backtrace)
+                        Backtrace(rule1, 0.4 * 0.5, backtrace to backtrace)
                     )
                 )
             }
-            context("When there is not a matiching rule and saved item"){
+            context("When there is not a matiching rule and saved item") {
                 should("should make nothing and return null") {
-                    val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                    val backtrace = Backtrace(rule1, 1.0, null)
                     val grammar = Grammar.create(
                         initial = "S",
                         mapOf(
@@ -559,17 +559,20 @@ class DeductiveParserTest : ShouldSpec({
                     val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
                     val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
 
-                    parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
-                    parser.accessFoundItemsFromLeft[Pair(0, "NP")] = mutableMapOf(3 to Tuple5(0, "NP", 3, 0.4, backtrace))
+                    parser.accessFoundItemsFromLeft[Pair(2, "NNS")] =
+                        mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
+                    parser.accessFoundItemsFromLeft[Pair(0, "NP")] =
+                        mutableMapOf(3 to Tuple5(0, "NP", 3, 0.4, backtrace))
                     parser.accessFoundItemsFromLeft[Pair(0, "S")] = mutableMapOf(
-                        4 to Tuple5(0, "S", 4, 0.6, Backtrace(rule1 to 0.5, backtrace to backtrace))
+                        4 to Tuple5(0, "S", 4, 0.6, Backtrace(rule1 , 0.5, backtrace to backtrace))
                     )
 
                     parser.accessFoundItemsFromRight[Pair("NNS", 3)] =
                         mutableMapOf(2 to Tuple5(2, "NNS", 3, 0.6, backtrace))
-                    parser.accessFoundItemsFromRight[Pair("NP", 3)] = mutableMapOf(0 to Tuple5(0, "NP", 3, 0.4, backtrace))
+                    parser.accessFoundItemsFromRight[Pair("NP", 3)] =
+                        mutableMapOf(0 to Tuple5(0, "NP", 3, 0.4, backtrace))
                     parser.accessFoundItemsFromRight[Pair("S", 4)] = mutableMapOf(
-                        0 to Tuple5(0, "S", 4, 0.6, Backtrace(rule1 to 0.5, backtrace to backtrace))
+                        0 to Tuple5(0, "S", 4, 0.6, Backtrace(rule1 , 0.5, backtrace to backtrace))
 
                     )
 
@@ -610,7 +613,7 @@ class DeductiveParserTest : ShouldSpec({
                                             "S",
                                             4,
                                             0.6,
-                                            Backtrace(rule1 to 0.5, backtrace to backtrace)
+                                            Backtrace(rule1 , 0.5, backtrace to backtrace)
                                         )
 
                             ),
@@ -652,7 +655,7 @@ class DeductiveParserTest : ShouldSpec({
                                             "S",
                                             4,
                                             0.6,
-                                            Backtrace(rule1 to 0.5, backtrace to backtrace)
+                                            Backtrace(rule1 , 0.5, backtrace to backtrace)
                                         )
 
                             ),
@@ -670,7 +673,7 @@ class DeductiveParserTest : ShouldSpec({
     context("findRuleAddItemToQueueChain") {
         context("When there is a matiching rule and saved item") {
             should("should add the new Item to the queue") {
-                val backtrace = Backtrace(Pair(rule1, 1.0), null)
+                val backtrace = Backtrace(rule1, 1.0, null)
                 val grammar = Grammar.create(
                     initial = "First",
                     mapOf(
@@ -709,7 +712,7 @@ class DeductiveParserTest : ShouldSpec({
                         "First",
                         2,
                         (0.4 * 0.9),
-                        Backtrace(Rule(false, "First", listOf("S")) to 0.9, Pair(backtrace, null))
+                        Backtrace(Rule(false, "First", listOf("S")) , (0.4 * 0.9), Pair(backtrace, null))
                     )
                 )
             }
