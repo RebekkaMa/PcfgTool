@@ -23,7 +23,6 @@ class DeductiveParser(
 
 
     fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Backtrace>?> {
-
         try {
             fillQueueWithItemsFromLexicalRules(sentence)
             while (queue.isNotEmpty()) {
@@ -55,6 +54,7 @@ class DeductiveParser(
     fun addSelectedItemProbabilityToSavedItems(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>): Boolean {
         var notNullProbabilityEntryLhs = false
         var notNullProbabilityEntryRhs = false
+
         accessFoundItemsFromLeft.compute(Pair(selectedItem.t1, selectedItem.t2)) outerCompute@{ _, v ->
             if (v == null) {
                 mutableMapOf(selectedItem.t3 to selectedItem)

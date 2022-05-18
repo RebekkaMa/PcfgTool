@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.*
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
+import java.util.PriorityQueue
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.system.exitProcess
 
@@ -130,8 +131,7 @@ class Parse : CliktCommand() {
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-
-    val outputQueue = PriorityBlockingQueue(10, compareBy<Pair<Int, String>> { it.first })
+    val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
 
     private fun CoroutineScope.launchProcessor(
         channel: ReceiveChannel<Pair<Int, String>>,
@@ -142,15 +142,21 @@ class Parse : CliktCommand() {
         accessRulesByTerminal: Map<String, MutableList<Pair<Rule, Double>>>
     ) =
         launch(context = Dispatchers.Default) {
-            val parser = DeductiveParser(initial, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal)
+            val parser = DeductiveParser(
+                initial,
+                accessRulesBySecondNtOnRhs,
+                accessRulesByFirstNtOnRhs,
+                accessChainRulesByNtRhs,
+                accessRulesByTerminal
+            )
             for (line in channel) {
                 val startTime = System.currentTimeMillis()
                 val result = parser.weightedDeductiveParsing(line.second.split(" "))
-                System.out.println(line.first.toString() +  " " + (System.currentTimeMillis() - startTime).toString())
+                System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
                 if (result.second != null) {
-                    outputQueue.put(line.first to result.second!!.t5.getParseTreeAsString()) //TODO
+                    outputChannel.send(line.first to result.second!!.t5.getParseTreeAsString())//TODO
                 } else {
-                    outputQueue.put(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
+                    outputChannel.send(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
                 }
 
             }
@@ -160,10 +166,11 @@ class Parse : CliktCommand() {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceString() = produce(context = Dispatchers.Default, capacity = 10) {
         generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
-            send(Pair(i+1, sentence))
+            send(Pair(i + 1, sentence))
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
@@ -173,19 +180,21 @@ class Parse : CliktCommand() {
                 }
 
                 val getRulesFromRulesFile = async {
-                    val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
-                    RulesExpressionEvaluator().parseToEnd(
-                        it
-                    )
-                }
+                    val rulesBr = rules.bufferedReader()
+                    generateSequence { rulesBr.readLine() }.map {
+                        RulesExpressionEvaluator().parseToEnd(
+                            it
+                        )
+                    }
                 }
 
                 val getRulesFromLexiconFile = async {
-                    val lexiconBr = lexicon.bufferedReader(); generateSequence { lexiconBr.readLine() }.map {
-                    LexiconExpressionEvaluator().parseToEnd(
-                        it
-                    )
-                }
+                    val lexiconBr = lexicon.bufferedReader()
+                    generateSequence { lexiconBr.readLine() }.map {
+                        LexiconExpressionEvaluator().parseToEnd(
+                            it
+                        )
+                    }
                 }
 
                 val grammar = Grammar.create(
@@ -198,26 +207,34 @@ class Parse : CliktCommand() {
                 val producer = produceString()
 
                 val parser = launch {
-                            repeat(3) {
-                                launchProcessor(
-                                    producer,
-                                    grammar.initial,
-                                    accessRulesBySecondNtOnRhs,
-                                    accessRulesByFirstNtOnRhs,
-                                    accessChainRulesByNtRhs,
-                                    accessRulesByTerminal
-                                )
-                            }
-                        }
+                    repeat(3) {
+                        launchProcessor(
+                            producer,
+                            grammar.initial,
+                            accessRulesBySecondNtOnRhs,
+                            accessRulesByFirstNtOnRhs,
+                            accessChainRulesByNtRhs,
+                            accessRulesByTerminal
+                        )
+                    }
+                }
 
                 launch {
                     val startTime = System.currentTimeMillis()
-                    for (idx in 1..Int.MAX_VALUE) {
-                        if (parser.isCompleted && outputQueue.isEmpty()) return@launch
-                        while (idx != outputQueue.peek()?.first){
-                            delay(1000)
+                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
+                    var i = 1
+                    for (parseResult in outputChannel) {
+                        if (parseResult.first == i) {
+                            echo(parseResult.second)
+                            i++
+                            while ((queue.peek()?.first ?: 0) == i) {
+                                echo(queue.poll().second)
+                                i++
+                            }
+                        } else {
+                            queue.add(parseResult)
                         }
-                        echo(outputQueue.poll().second)
+                        if (parser.isCompleted && queue.isEmpty() && outputChannel.isEmpty) break
                     }
                     System.out.println(System.currentTimeMillis() - startTime)
                 }
