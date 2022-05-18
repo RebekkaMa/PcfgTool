@@ -45,7 +45,10 @@ class Induce : CliktCommand() {
 
     private val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
 
-    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+    private val readNotEmptyLnOrNull = {
+        val line = readlnOrNull()
+        if (line.isNullOrEmpty()) null else line
+    }
     private val rulesChannel = Channel<ArrayList<Rule>>(capacity = Channel.UNLIMITED)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -202,7 +205,7 @@ class Parse : CliktCommand() {
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
 
-                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal) = grammar.getGrammarDataStructuresForParsing()
+                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexicon) = grammar.getGrammarDataStructuresForParsing()
 
                 val producer = produceString()
 

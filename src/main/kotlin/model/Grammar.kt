@@ -1,11 +1,13 @@
 package model
 
 import com.github.h0tk3y.betterParse.utils.Tuple4
+import com.github.h0tk3y.betterParse.utils.Tuple5
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.*
+import kotlin.collections.HashMap
 
 class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
@@ -41,17 +43,19 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
-    fun getGrammarDataStructuresForParsing(): Tuple4<Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>, Map<String, MutableList<Pair<Rule, Double>>>> {
+    fun getGrammarDataStructuresForParsing(): Tuple5<MutableMap<Int, MutableList<Pair<Rule, Double>>>, MutableMap<Int, MutableList<Pair<Rule, Double>>>, MutableMap<Int, MutableList<Pair<Rule, Double>>>, MutableMap<Int, MutableList<Pair<Rule, Double>>>, Map<Int, String>> {
 
-        val accessRulesBySecondNtOnRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val accessRulesByFirstNtOnRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val accessChainRulesByNtRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val lexicon = this.pRules.keys.groupBy { it.lhs }.keys.associateBy { it.hashCode() }
+
+        val accessRulesBySecondNtOnRhs = mutableMapOf<Int, MutableList<Pair<Rule, Double>>>()
+        val accessRulesByFirstNtOnRhs = mutableMapOf<Int, MutableList<Pair<Rule, Double>>>()
+        val accessChainRulesByNtRhs = mutableMapOf<Int, MutableList<Pair<Rule, Double>>>()
         val accessRulesByTerminal = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
 
         this.pRules.forEach { (rule, ruleProbability) ->
             when (rule.rhs.size) {
                 2 -> {
-                    accessRulesByFirstNtOnRhs.compute(rule.rhs.first()) { _, v ->
+                    accessRulesByFirstNtOnRhs.compute(rule.rhs.first().hashCode()) { _, v ->
                         if (v != null) {
                             v.add(rule to ruleProbability)
                             v
@@ -59,7 +63,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                             mutableListOf(rule to ruleProbability)
                         }
                     }
-                    accessRulesBySecondNtOnRhs.compute(rule.rhs.component2()) { _, v ->
+                    accessRulesBySecondNtOnRhs.compute(rule.rhs.component2().hashCode()) { _, v ->
                         if (v != null) {
                             v.add(rule to ruleProbability)
                             v
@@ -70,7 +74,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                 }
                 1 -> {
                     if (!rule.lexical) {
-                        accessChainRulesByNtRhs.compute(rule.rhs.first()) { _, v ->
+                        accessChainRulesByNtRhs.compute(rule.rhs.first().hashCode()) { _, v ->
                             if (v != null) {
                                 v.add(rule to ruleProbability)
                                 v
@@ -93,11 +97,12 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                 }
             }
         }
-        return Tuple4(
+        return Tuple5(
             accessRulesBySecondNtOnRhs,
             accessRulesByFirstNtOnRhs,
             accessChainRulesByNtRhs,
-            accessRulesByTerminal
+            accessRulesByTerminal,
+            lexicon
         )
     }
 

@@ -9,25 +9,25 @@ import kotlin.system.measureTimeMillis
 class DeductiveParser(
 
     val initial: String,
-    val accessRulesBySecondNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-    val accessRulesByFirstNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-    val accessChainRulesByNtRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-    val accessRulesByTerminal: Map<String, MutableList<Pair<Rule, Double>>>
+    val accessRulesBySecondNtOnRhs: Map<Int, MutableList<Pair<Rule, Double>>>,
+    val accessRulesByFirstNtOnRhs: Map<Int, MutableList<Pair<Rule, Double>>>,
+    val accessChainRulesByNtRhs: Map<Int, MutableList<Pair<Rule, Double>>>,
+    val accessRulesByTerminal: Map<Int, MutableList<Pair<Rule, Double>>>
 ) {
 
-    val queue = PriorityBlockingQueue(100, compareBy<Tuple5<Int, String, Int, Double, Backtrace>> { it.t4 }.reversed())
+    val queue = PriorityBlockingQueue(100, compareBy<Tuple5<Int, Int, Int, Double, Backtrace>> { it.t4 }.reversed())
     val accessFoundItemsFromLeft =
-        hashMapOf<Pair<Int, String>, MutableMap<Int, Tuple5<Int, String, Int, Double, Backtrace>>>()
+        hashMapOf<Pair<Int, Int>, MutableMap<Int, Tuple5<Int, Int, Int, Double, Backtrace>>>()
     val accessFoundItemsFromRight =
-        hashMapOf<Pair<String, Int>, MutableMap<Int, Tuple5<Int, String, Int, Double, Backtrace>>>()
+        hashMapOf<Pair<Int, Int>, MutableMap<Int, Tuple5<Int, Int, Int, Double, Backtrace>>>()
 
 
-    fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Backtrace>?> {
+    fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, Int, Int, Double, Backtrace>?> {
         try {
             fillQueueWithItemsFromLexicalRules(sentence)
             while (queue.isNotEmpty()) {
-                val selectedItem: Tuple5<Int, String, Int, Double, Backtrace> = queue.poll()
-                if (selectedItem.t1 == 0 && selectedItem.t2 == initial && selectedItem.t3 == sentence.size) return sentence to selectedItem
+                val selectedItem: Tuple5<Int, Int, Int, Double, Backtrace> = queue.poll()
+                if (selectedItem.t1 == 0 && selectedItem.t2 == initial.hashCode() && selectedItem.t3 == sentence.size) return sentence to selectedItem
                 if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
                 findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
@@ -51,7 +51,7 @@ class DeductiveParser(
 
 
     //Zeile 8
-    fun addSelectedItemProbabilityToSavedItems(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>): Boolean {
+    fun addSelectedItemProbabilityToSavedItems(selectedItem: Tuple5<Int, Int, Int, Double, Backtrace>): Boolean {
         var notNullProbabilityEntryLhs = false
         var notNullProbabilityEntryRhs = false
 
@@ -93,7 +93,7 @@ class DeductiveParser(
     }
 
     //Zeile 9
-    fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>) {
+    fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Tuple5<Int, Int, Int, Double, Backtrace>) {
         val (i, nt, j, wt, bt) = selectedItem
         accessRulesByFirstNtOnRhs[nt]?.forEach { (rule, ruleProbability) ->
             accessFoundItemsFromLeft[Pair(
@@ -115,7 +115,7 @@ class DeductiveParser(
     }
 
     //Zeile 10
-    fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>) {
+    fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Tuple5<Int, Int, Int, Double, Backtrace>) {
         val (i, nt, j, wt, bt) = selectedItem
         accessRulesBySecondNtOnRhs[nt]?.forEach { (rule, ruleProbability) ->
             accessFoundItemsFromRight[Pair(
@@ -138,7 +138,7 @@ class DeductiveParser(
     }
 
     //Zeile 11
-    fun findRulesAddItemsToQueueChain(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>) {
+    fun findRulesAddItemsToQueueChain(selectedItem: Tuple5<Int, Int, Int, Double, Backtrace>) {
         val (i, nt, j, wt, bt) = selectedItem
         accessChainRulesByNtRhs[nt]?.forEach { (rule, ruleProbability) ->
             queue.add(
