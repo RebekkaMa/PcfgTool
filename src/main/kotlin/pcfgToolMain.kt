@@ -11,6 +11,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
+import com.github.h0tk3y.betterParse.utils.Tuple3
 import evaluators.ExpressionEvaluator
 import evaluators.LexiconExpressionEvaluator
 import evaluators.RulesExpressionEvaluator
@@ -23,7 +24,6 @@ import model.DeductiveParser
 import model.Grammar
 import model.Rule
 import java.util.PriorityQueue
-import java.util.concurrent.PriorityBlockingQueue
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -139,27 +139,38 @@ class Parse : CliktCommand() {
     private fun CoroutineScope.launchProcessor(
         channel: ReceiveChannel<Pair<Int, String>>,
         initial: String,
-        accessRulesBySecondNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-        accessRulesByFirstNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-        accessChainRulesByNtRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-        accessRulesByTerminal: Map<String, MutableList<Pair<Rule, Double>>>
+        accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
+        accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
+        accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
+        accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>,
+        lexicon: Map<Int, String>,
+        lexicon2: Map<String, Int>
     ) =
         launch(context = Dispatchers.Default) {
             val parser = DeductiveParser(
-                initial,
+                lexicon2[initial] ?: 0,
                 accessRulesBySecondNtOnRhs,
                 accessRulesByFirstNtOnRhs,
                 accessChainRulesByNtRhs,
-                accessRulesByTerminal
+                accessRulesByTerminal,
+                lexicon
             )
             for (line in channel) {
                 val startTime = System.currentTimeMillis()
-                val result = parser.weightedDeductiveParsing(line.second.split(" "))
+                val tokens = line.second.split(" ").map { lexicon2[it] }
+
+                if (tokens.any { it == null }){
+                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
+                    continue
+                }
+
+                val result = parser.weightedDeductiveParsing(tokens as List<Int>)
                 System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
+
                 if (result.second != null) {
-                    outputChannel.send(line.first to result.second!!.t5.getParseTreeAsString())//TODO
+                    outputChannel.send(line.first to result.second!!.t5.getParseTreeAsString(lexicon))//TODO
                 } else {
-                    outputChannel.send(line.first to "(NOPARSE " + result.first.joinToString(" ") + ")")
+                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
                 }
 
             }
@@ -205,7 +216,7 @@ class Parse : CliktCommand() {
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
 
-                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexicon) = grammar.getGrammarDataStructuresForParsing()
+                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexicon, lexicon2) = grammar.getGrammarDataStructuresForParsing()
 
                 val producer = produceString()
 
@@ -217,7 +228,9 @@ class Parse : CliktCommand() {
                             accessRulesBySecondNtOnRhs,
                             accessRulesByFirstNtOnRhs,
                             accessChainRulesByNtRhs,
-                            accessRulesByTerminal
+                            accessRulesByTerminal,
+                            lexicon,
+                            lexicon2
                         )
                     }
                 }
