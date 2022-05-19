@@ -53,14 +53,16 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         lexiconByKey[0] = initial
         lexiconByString[initial] = 0
 
+        var lastIndex = 0
+
         this.pRules.keys.groupBy { it.lhs }.keys.forEachIndexed { index, s ->
             lexiconByString.putIfAbsent(s, index + 1) ?: lexiconByKey.putIfAbsent(index + 1, s)
+            lastIndex++
         }
-        val lexiconByKeySize = lexiconByKey.size
-        val lexiconByStringSize = lexiconByString.size
+
 
         this.pRules.keys.filter { it.lexical }.groupBy { it.rhs.first() }.keys.forEachIndexed { index, s ->
-            lexiconByString.putIfAbsent(s,index + lexiconByStringSize) ?: lexiconByKey.putIfAbsent(lexiconByKeySize + index, s)
+            lexiconByString.putIfAbsent(s,index + lastIndex+  1) ?: lexiconByKey.putIfAbsent(lastIndex + index + 1, s)
         }
 
         val accessRulesBySecondNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, List<Int>, Double>>>()
@@ -89,7 +91,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                     }
                     accessRulesBySecondNtOnRhs.compute(rhsHashList[1]) { _, v ->
                         if (v != null) {
-                            Tuple3(lhsHash, rhsHashList, ruleProbability)
+                            v.add(Tuple3(lhsHash, rhsHashList, ruleProbability))
                             v
                         } else {
                             mutableListOf(newTuple)
@@ -107,7 +109,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                             }
                         }
                     } else {
-                        accessRulesByTerminal.compute(rhsHashList.first()) { _, v ->
+                        accessRulesByTerminal.compute(rhsHashList[0]) { _, v ->
                             if (v != null) {
                                 v.add(newTuple)
                                 v

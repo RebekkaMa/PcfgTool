@@ -2,6 +2,7 @@ package model
 
 import com.github.h0tk3y.betterParse.utils.Tuple3
 import com.github.h0tk3y.betterParse.utils.Tuple5
+import java.util.*
 import java.util.concurrent.PriorityBlockingQueue
 
 class DeductiveParser(
@@ -10,11 +11,12 @@ class DeductiveParser(
     val accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
     val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
     val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
-    val accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>,
+    val accessRulesByTerminal: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
     val lexicon: Map<Int, String>
 ) {
 
-    val queue = PriorityBlockingQueue(1000, compareBy<Tuple5<Int, Int, Int, Double, Backtrace>> { it.t4 }.reversed())
+
+    val queue = PriorityQueue(100, compareBy<Tuple5<Int, Int, Int, Double, Backtrace>> {  it.t4}.reversed())
     val accessFoundItemsFromLeft =
         hashMapOf<Pair<Int, Int>, MutableMap<Int, Tuple5<Int, Int, Int, Double, Backtrace>>>()
     val accessFoundItemsFromRight =
@@ -26,18 +28,25 @@ class DeductiveParser(
             fillQueueWithItemsFromLexicalRules(sentence)
             while (queue.isNotEmpty()) {
                 val selectedItem: Tuple5<Int, Int, Int, Double, Backtrace> = queue.poll()
+                //println("Selected Item: " + "(" + selectedItem.t1 + ", " + lexicon[selectedItem.t2] + ", " + selectedItem.t3 + ")")
                 if (selectedItem.t1 == 0 && selectedItem.t2 == initial && selectedItem.t3 == sentence.size) return sentence to selectedItem
-                queue.forEach {
-                    println(it.t5.getParseTreeAsString(lexicon))
-                    println("------------------------------------")
-                }
+                //println("queue:")
+//                queue.forEach {
+//                    println("(" + it.t1 + ", " + lexicon[it.t2]+ ", " + it.t3 + ", " + it.t4 + ")")
+//                }
                 if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
+                //println("------c")
+//                accessFoundItemsFromLeft.forEach{
+//                    it.value.forEach {
+//                       println( "(" + it.value.t1 + ", " + lexicon[it.value.t2]+ ", " +it.value.t3 + "," + it.value.t4 +  ")")
+//                    }
+//                }
 
                 findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueChain(selectedItem)
+                //println("------------------------------------")
             }
-
             return sentence to null
         } finally {
             clearAll()
