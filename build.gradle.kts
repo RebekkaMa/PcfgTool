@@ -37,6 +37,5 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 application {
     mainClass.set("PcfgToolMainKt")
-    applicationDefaultJvmArgs = setOf("-Dkotlinx.coroutines.debug")
     executableDir = ""
 }

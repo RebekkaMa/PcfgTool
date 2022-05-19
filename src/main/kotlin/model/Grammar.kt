@@ -73,45 +73,46 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             val rhsHashList: List<Int> = rule.rhs.map {
                 lexiconByString[it] ?: throw Exception("Internal Error")
             }
+            val newTuple = Tuple3(lhsHash, rhsHashList, ruleProbability)
 
             when (rule.rhs.size) {
                 2 -> {
-                    accessRulesByFirstNtOnRhs.compute(rhsHashList.first()) { _, v ->
+                    accessRulesByFirstNtOnRhs.compute(rhsHashList[0]) { _, v ->
                         if (v != null) {
                             v.add(
-                                Tuple3(lhsHash, rhsHashList, ruleProbability)
+                                newTuple
                             )
                             v
                         } else {
-                            mutableListOf(Tuple3(lhsHash, rhsHashList, ruleProbability))
+                            mutableListOf(newTuple)
                         }
                     }
-                    accessRulesBySecondNtOnRhs.compute(rhsHashList.component2()) { _, v ->
+                    accessRulesBySecondNtOnRhs.compute(rhsHashList[1]) { _, v ->
                         if (v != null) {
                             Tuple3(lhsHash, rhsHashList, ruleProbability)
                             v
                         } else {
-                            mutableListOf(Tuple3(lhsHash, rhsHashList, ruleProbability))
+                            mutableListOf(newTuple)
                         }
                     }
                 }
                 1 -> {
                     if (!rule.lexical) {
-                        accessChainRulesByNtRhs.compute(rhsHashList.first()) { _, v ->
+                        accessChainRulesByNtRhs.compute(rhsHashList[0]) { _, v ->
                             if (v != null) {
-                                v.add(Tuple3(lhsHash, rhsHashList, ruleProbability))
+                                v.add(newTuple)
                                 v
                             } else {
-                                mutableListOf(Tuple3(lhsHash, rhsHashList, ruleProbability))
+                                mutableListOf(newTuple)
                             }
                         }
                     } else {
                         accessRulesByTerminal.compute(rhsHashList.first()) { _, v ->
                             if (v != null) {
-                                v.add(Tuple3(lhsHash, rhsHashList, ruleProbability))
+                                v.add(newTuple)
                                 v
                             } else {
-                                mutableListOf(Tuple3(lhsHash, rhsHashList, ruleProbability))
+                                mutableListOf(newTuple)
                             }
                         }
                     }
