@@ -38,4 +38,5 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 application {
     mainClass.set("PcfgToolMainKt")
     executableDir = ""
+    applicationDefaultJvmArgs = setOf("-Xms4g", "-XX:MaxTenuringThreshold=15", "-Xmx14g")
 }
