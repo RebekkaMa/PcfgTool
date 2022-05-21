@@ -139,10 +139,10 @@ class Parse : CliktCommand() {
     private fun CoroutineScope.launchProcessor(
         channel: ReceiveChannel<Pair<Int, String>>,
         initial: String,
-        accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
-        accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
-        accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, List<Int>, Double>>>,
-        accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>,
+        accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+        accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+        accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+        accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>,
         lexicon: Map<Int, String>,
         lexicon2: Map<String, Int>
     ) =
@@ -157,18 +157,21 @@ class Parse : CliktCommand() {
             )
             for (line in channel) {
                 val startTime = System.currentTimeMillis()
-                val tokens = line.second.split(" ").map { lexicon2[it] }
+                val tokensAsString = line.second.split(" ")
+                var allWordsInLexicon = true
 
-                if (tokens.any { it == null }){
+                val tokensAsInt = tokensAsString.map {
+                    lexicon2[it] ?: -1
+                }.toIntArray()
+                if (tokensAsInt.any { it < 0 }){
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
-
-                val result = parser.weightedDeductiveParsing(tokens as List<Int>)
+                val result = parser.weightedDeductiveParsing(tokensAsInt)
                 System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
 
                 if (result.second != null) {
-                    outputChannel.send(line.first to result.second!!.t5.getParseTreeAsString(lexicon))//TODO
+                    outputChannel.send(line.first to result.second!!.bt.getParseTreeAsString(tokensAsString, lexicon))//TODO
                 } else {
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                 }

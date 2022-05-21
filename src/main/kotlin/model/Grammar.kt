@@ -45,7 +45,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
-    fun getGrammarDataStructuresForParsing(): Tuple6<MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, List<Int>, Double>>>, Map<Int, String>, Map<String, Int>> {
+    fun getGrammarDataStructuresForParsing(): Tuple6<MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, Map<Int, String>, Map<String, Int>> {
 
         val lexiconByKey = kotlin.collections.HashMap<Int, String>()
         val lexiconByString = kotlin.collections.HashMap<String, Int>()
@@ -65,16 +65,16 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             lexiconByString.putIfAbsent(s,index + lastIndex+  1) ?: lexiconByKey.putIfAbsent(lastIndex + index + 1, s)
         }
 
-        val accessRulesBySecondNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, List<Int>, Double>>>()
-        val accessRulesByFirstNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, List<Int>, Double>>>()
-        val accessChainRulesByNtRhs = mutableMapOf<Int, MutableList<Tuple3<Int, List<Int>, Double>>>()
-        val accessRulesByTerminal = mutableMapOf<Int, MutableList<Tuple3<Int, List<Int>, Double>>>()
+        val accessRulesBySecondNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
+        val accessRulesByFirstNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
+        val accessChainRulesByNtRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
+        val accessRulesByTerminal = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
 
         this.pRules.forEach { (rule, ruleProbability) ->
             val lhsHash : Int = lexiconByString[rule.lhs] ?: throw Exception("Internal Error")
-            val rhsHashList: List<Int> = rule.rhs.map {
+            val rhsHashList: IntArray = rule.rhs.map {
                 lexiconByString[it] ?: throw Exception("Internal Error")
-            }
+            }.toIntArray()
             val newTuple = Tuple3(lhsHash, rhsHashList, ruleProbability)
 
             when (rule.rhs.size) {
