@@ -56,7 +56,7 @@ class Induce : CliktCommand() {
     private val rulesChannel = Channel<ArrayList<Rule>>(capacity = Channel.UNLIMITED)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 10) {
+    fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 5) {
         var line = readNotEmptyLnOrNull()
         while (line != null && isActive) {
             send(line)
@@ -69,7 +69,6 @@ class Induce : CliktCommand() {
             val expressionEvaluator = ExpressionEvaluator()
             for (expression in channel) {
                 rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())
-
             }
         }
 
@@ -150,7 +149,7 @@ class Parse : CliktCommand() {
         lexicon: Map<Int, String>,
         lexicon2: Map<String, Int>
     ) =
-        launch(context = Dispatchers.Default) {
+        launch {
             val parser = DeductiveParser(
                 lexicon2[initial] ?: 0,
                 accessRulesBySecondNtOnRhs,
@@ -162,8 +161,6 @@ class Parse : CliktCommand() {
             for (line in channel) {
                 val startTime = System.currentTimeMillis()
                 val tokensAsString = line.second.split(" ")
-                var allWordsInLexicon = true
-
                 val tokensAsInt = tokensAsString.map {
                     lexicon2[it] ?: -1
                 }.toIntArray()
@@ -189,6 +186,7 @@ class Parse : CliktCommand() {
         generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
             send(Pair(i + 1, sentence))
         }
+        println("End2")
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -257,6 +255,7 @@ class Parse : CliktCommand() {
                         } else {
                             queue.add(parseResult)
                         }
+                        println(parser.isCompleted.toString() + queue.isEmpty() + outputChannel.isEmpty)
                         if (parser.isCompleted && queue.isEmpty() && outputChannel.isEmpty) break
                     }
                     System.out.println(System.currentTimeMillis() - startTime)
