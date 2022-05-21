@@ -1,3 +1,4 @@
+
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
@@ -19,11 +20,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.toList
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
-import java.util.PriorityQueue
+import java.util.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -219,12 +223,12 @@ class Parse : CliktCommand() {
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
 
-                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexicon, lexicon2) = grammar.getGrammarDataStructuresForParsing()
+                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString) = grammar.getGrammarDataStructuresForParsing()
 
                 val producer = produceString()
 
                 val parser = launch {
-                    repeat(3) {
+                    repeat(2) {
                         launchProcessor(
                             producer,
                             grammar.initial,
@@ -232,8 +236,8 @@ class Parse : CliktCommand() {
                             accessRulesByFirstNtOnRhs,
                             accessChainRulesByNtRhs,
                             accessRulesByTerminal,
-                            lexicon,
-                            lexicon2
+                            lexiconByInt,
+                            lexiconByString
                         )
                     }
                 }

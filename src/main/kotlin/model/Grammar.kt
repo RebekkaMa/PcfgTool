@@ -1,15 +1,12 @@
 package model
 
 import com.github.h0tk3y.betterParse.utils.Tuple3
-import com.github.h0tk3y.betterParse.utils.Tuple4
-import com.github.h0tk3y.betterParse.utils.Tuple5
 import com.github.h0tk3y.betterParse.utils.Tuple6
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.*
-import kotlin.collections.HashMap
 
 class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
@@ -55,26 +52,25 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
         var lastIndex = 0
 
-        this.pRules.keys.groupBy { it.lhs }.keys.forEachIndexed { index, s ->
-            lexiconByString.putIfAbsent(s, index + 1) ?: lexiconByKey.putIfAbsent(index + 1, s)
-            lastIndex++
-        }
-
-
-        this.pRules.keys.filter { it.lexical }.groupBy { it.rhs.first() }.keys.forEachIndexed { index, s ->
-            lexiconByString.putIfAbsent(s,index + lastIndex+  1) ?: lexiconByKey.putIfAbsent(lastIndex + index + 1, s)
-        }
-
         val accessRulesBySecondNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessRulesByFirstNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessChainRulesByNtRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessRulesByTerminal = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
 
         this.pRules.forEach { (rule, ruleProbability) ->
-            val lhsHash : Int = lexiconByString[rule.lhs] ?: throw Exception("Internal Error")
-            val rhsHashList: IntArray = rule.rhs.map {
-                lexiconByString[it] ?: throw Exception("Internal Error")
+            val lhsHash = lexiconByString.getOrPut(rule.lhs) {
+                lastIndex += 1
+                lexiconByKey[lastIndex] = rule.lhs
+                lastIndex
+            }
+            val rhsHashList = rule.rhs.map {
+                lexiconByString.getOrPut(it) {
+                    lastIndex += 1
+                    lexiconByKey[lastIndex] = it
+                    lastIndex
+                }
             }.toIntArray()
+
             val newTuple = Tuple3(lhsHash, rhsHashList, ruleProbability)
 
             when (rule.rhs.size) {

@@ -13,7 +13,6 @@ class DeductiveParser(
     val lexicon: Map<Int, String>
 ) {
 
-
     val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
     val accessFoundItemsFromLeft =
         hashMapOf<Pair<Int, Int>, MutableMap<Int, Item>>()
@@ -97,7 +96,7 @@ class DeductiveParser(
             accessFoundItemsFromLeft[Pair(
                 selectedItem.j,
                rhs.component2()
-            )]?.forEach { _, combinationItem -> // --> j == i2
+            )]?.forEach { (_, combinationItem) -> // --> j == i2
                 if (rhs.component2() == combinationItem.nt && selectedItem.j < combinationItem.j && combinationItem.wt > 0.0) {
                     queue.add(
                         Item(
@@ -153,11 +152,13 @@ class DeductiveParser(
         accessFoundItemsFromLeft.forEach {
             it.value.onEach { entry ->
                 entry.value.wt = 0.0
+                entry.value.bt = Backtrace(-1, null)
             }
         }
         accessFoundItemsFromRight.forEach {
             it.value.onEach { entry ->
                 entry.value.wt = 0.0
+                entry.value.bt = Backtrace(-1, null)
             }
         }
     }
