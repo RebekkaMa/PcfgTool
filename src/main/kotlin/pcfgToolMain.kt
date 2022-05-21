@@ -167,12 +167,15 @@ class Parse : CliktCommand() {
                     accessChainRulesByNtRhs,
                     accessRulesByTerminal
                 )
-
+                val time = System.currentTimeMillis()
                 val resultPairs = generateSequence(readNotEmptyLnOrNull)
                     .map {
-                        parser.weightedDeductiveParsing(
+                        val time2 = System.currentTimeMillis()
+                       val res = parser.weightedDeductiveParsing(
                             it.split(" ")
                         )
+                        echo(System.currentTimeMillis() - time2)
+                        res
                     }
 
                 resultPairs.forEach { (sentence, resultTuple)  ->
@@ -182,6 +185,7 @@ class Parse : CliktCommand() {
                         echo("(NOPARSE " + sentence.joinToString(" ") + ")")
                     }
                 }
+                echo(System.currentTimeMillis() - time)
             }
         } catch (e: ParseException) {
             System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
