@@ -4,7 +4,6 @@ import com.github.h0tk3y.betterParse.utils.Tuple3
 import java.util.*
 
 class DeductiveParser(
-
     val initial: Int,
     private val accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
@@ -149,16 +148,10 @@ class DeductiveParser(
     fun clearAll() {
         queue.clear()
         accessFoundItemsFromLeft.forEach {
-            it.value.onEach { entry ->
-                entry.value.wt = 0.0
-                entry.value.bt = Backtrace(-1, null)
-            }
+            it.value.clear()
         }
         accessFoundItemsFromRight.forEach {
-            it.value.onEach { entry ->
-                entry.value.wt = 0.0
-                entry.value.bt = Backtrace(-1, null)
-            }
+            it.value.clear()
         }
     }
 }
