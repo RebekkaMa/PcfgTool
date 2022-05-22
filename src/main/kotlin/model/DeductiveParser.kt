@@ -6,11 +6,10 @@ import java.util.*
 class DeductiveParser(
 
     val initial: Int,
-    val accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
-    val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
-    val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
-    val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
-    val lexicon: Map<Int, String>
+    private val accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>
 ) {
 
     val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())

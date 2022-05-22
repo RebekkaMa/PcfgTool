@@ -1,4 +1,3 @@
-
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
@@ -31,7 +30,10 @@ import java.util.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
+    PcfgTool().subcommands(
+        Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(),
+        Outside()
+    ).main(args)
 }
 
 class PcfgTool : CliktCommand() {
@@ -130,14 +132,14 @@ class Parse : CliktCommand() {
         }
     }
 
-    val rules by argument().file(mustExist = true)
-    val lexicon by argument().file(mustExist = true)
-
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
 
+    val rules by argument().file(mustExist = true)
+    val lexicon by argument().file(mustExist = true)
+
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
-    val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
+    private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
 
     private fun CoroutineScope.launchProcessor(
         channel: ReceiveChannel<Pair<Int, String>>,
@@ -146,25 +148,24 @@ class Parse : CliktCommand() {
         accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
         accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
         accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>,
-        lexicon: Map<Int, String>,
-        lexicon2: Map<String, Int>
+        lexiconByInt: Map<Int, String>,
+        lexiconByString: Map<String, Int>
     ) =
         launch {
             val parser = DeductiveParser(
-                lexicon2[initial] ?: 0,
+                lexiconByString[initial] ?: 0,
                 accessRulesBySecondNtOnRhs,
                 accessRulesByFirstNtOnRhs,
                 accessChainRulesByNtRhs,
-                accessRulesByTerminal,
-                lexicon
+                accessRulesByTerminal
             )
             for (line in channel) {
                 val startTime = System.currentTimeMillis()
                 val tokensAsString = line.second.split(" ")
                 val tokensAsInt = tokensAsString.map {
-                    lexicon2[it] ?: -1
+                    lexiconByString[it] ?: -1
                 }.toIntArray()
-                if (tokensAsInt.any { it < 0 }){
+                if (tokensAsInt.any { it < 0 }) {
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
@@ -172,7 +173,12 @@ class Parse : CliktCommand() {
                 System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
 
                 if (result.second != null) {
-                    outputChannel.send(line.first to result.second!!.bt.getParseTreeAsString(tokensAsString, lexicon))//TODO
+                    outputChannel.send(
+                        line.first to result.second!!.bt.getParseTreeAsString(
+                            tokensAsString,
+                            lexiconByInt
+                        )
+                    )//TODO
                 } else {
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                 }
@@ -182,11 +188,10 @@ class Parse : CliktCommand() {
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce(context = Dispatchers.Default, capacity = 10) {
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
         generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
             send(Pair(i + 1, sentence))
         }
-        println("End2")
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -237,7 +242,9 @@ class Parse : CliktCommand() {
                             lexiconByInt,
                             lexiconByString
                         )
-                    }
+
+                }}.invokeOnCompletion {
+                    outputChannel.close()
                 }
 
                 launch {
@@ -255,8 +262,6 @@ class Parse : CliktCommand() {
                         } else {
                             queue.add(parseResult)
                         }
-                        println(parser.isCompleted.toString() + queue.isEmpty() + outputChannel.isEmpty)
-                        if (parser.isCompleted && queue.isEmpty() && outputChannel.isEmpty) break
                     }
                     System.out.println(System.currentTimeMillis() - startTime)
                 }
