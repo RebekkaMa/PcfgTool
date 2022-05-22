@@ -48,7 +48,14 @@ class DeductiveParserTest : ShouldSpec({
                 )
 
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
                 parser.fillQueueWithItemsFromLexicalRules(listOf("Fruit", "flies", "like", "bananas"))
                 parser.queue shouldContain Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null))
                 parser.queue shouldContain Tuple5(
@@ -96,7 +103,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
                 parser.addSelectedItemProbabilityToSavedItems(Tuple5(0, "NN", 1, 1.0, Backtrace(rule8, 1.0, null)))
                 parser.accessFoundItemsFromLeft shouldBe mutableMapOf(
                     Pair(
@@ -133,7 +147,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
                 parser.accessFoundItemsFromLeft[Pair(0, "NN")] =
                     mutableMapOf(1 to Tuple5(0, "NN", 1, 0.0, Backtrace(rule8, 1.0, null)))
                 parser.accessFoundItemsFromRight[Pair("NN", 1)] =
@@ -177,7 +198,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
                 parser.accessFoundItemsFromLeft[Pair(0, "NN")] = mutableMapOf(2 to Tuple5(0, "NN", 2, 0.5, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.5, backtrace))
                 parser.accessFoundItemsFromRight[Pair("NN", 2)] = mutableMapOf(0 to Tuple5(0, "NN", 2, 0.5, backtrace))
@@ -273,7 +301,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
                 parser.accessFoundItemsFromLeft[Pair(0, "NN")] = mutableMapOf(2 to Tuple5(0, "NN", 2, 0.5, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.5, backtrace))
                 parser.accessFoundItemsFromRight[Pair("NN", 2)] = mutableMapOf(0 to Tuple5(0, "NN", 2, 0.5, backtrace))
@@ -357,7 +392,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
 
                 parser.accessFoundItemsFromLeft[Pair(3, "NN")] = mutableMapOf(4 to Tuple5(3, "NN", 4, 0.5, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
@@ -458,7 +500,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
 
                 parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(0, "NP")] = mutableMapOf(3 to Tuple5(0, "NP", 3, 0.4, backtrace))
@@ -557,7 +606,14 @@ class DeductiveParserTest : ShouldSpec({
                         )
                     )
                     val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                    val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                    val parser = DeductiveParser(
+                        grammar.initial,
+                        grammarRhs,
+                        grammarLhs,
+                        grammarChain,
+                        grammarLexical,
+                        lexicon2
+                    )
 
                     parser.accessFoundItemsFromLeft[Pair(2, "NNS")] =
                         mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
@@ -694,7 +750,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
 
                 parser.accessFoundItemsFromLeft[Pair(3, "NN")] = mutableMapOf(4 to Tuple5(3, "NN", 4, 0.5, backtrace))
                 parser.accessFoundItemsFromLeft[Pair(2, "NNS")] = mutableMapOf(3 to Tuple5(2, "NNS", 3, 0.6, backtrace))
@@ -741,7 +804,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
                 val tupel = parser.weightedDeductiveParsing(listOf("Fruit", "flies", "like", "bananas"))
                 tupel.second?.t1 shouldBe 0
                 tupel.second?.t2 shouldBe "S"
@@ -769,7 +839,14 @@ class DeductiveParserTest : ShouldSpec({
                     )
                 )
                 val (grammarRhs, grammarLhs, grammarChain, grammarLexical) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(grammar.initial, grammarRhs, grammarLhs, grammarChain, grammarLexical)
+                val parser = DeductiveParser(
+                    grammar.initial,
+                    grammarRhs,
+                    grammarLhs,
+                    grammarChain,
+                    grammarLexical,
+                    lexicon2
+                )
 
                 parser.weightedDeductiveParsing(
                     listOf(

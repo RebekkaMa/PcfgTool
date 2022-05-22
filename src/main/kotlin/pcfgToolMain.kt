@@ -11,6 +11,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
+import com.github.h0tk3y.betterParse.utils.Tuple3
 import evaluators.ExpressionEvaluator
 import evaluators.LexiconExpressionEvaluator
 import evaluators.RulesExpressionEvaluator
@@ -18,14 +19,21 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.toList
 import model.DeductiveParser
 import model.Grammar
 import model.Rule
+import java.util.*
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    PcfgTool().subcommands(Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(), Outside()).main(args)
+    PcfgTool().subcommands(
+        Induce(), Parse(), Binarise(), Debinarise(), Unk(), Smooth(),
+        Outside()
+    ).main(args)
 }
 
 class PcfgTool : CliktCommand() {
@@ -43,11 +51,14 @@ class Induce : CliktCommand() {
 
     private val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
 
-    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+    private val readNotEmptyLnOrNull = {
+        val line = readlnOrNull()
+        if (line.isNullOrEmpty()) null else line
+    }
     private val rulesChannel = Channel<ArrayList<Rule>>(capacity = Channel.UNLIMITED)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 10) {
+    fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 5) {
         var line = readNotEmptyLnOrNull()
         while (line != null && isActive) {
             send(line)
@@ -60,7 +71,6 @@ class Induce : CliktCommand() {
             val expressionEvaluator = ExpressionEvaluator()
             for (expression in channel) {
                 rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())
-
             }
         }
 
@@ -122,14 +132,69 @@ class Parse : CliktCommand() {
         }
     }
 
-    val rules by argument().file(mustExist = true)
-    val lexicon by argument().file(mustExist = true)
-
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
 
-    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+    val rules by argument().file(mustExist = true)
+    val lexicon by argument().file(mustExist = true)
 
+    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
+    private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
+
+    private fun CoroutineScope.launchProcessor(
+        channel: ReceiveChannel<Pair<Int, String>>,
+        initial: String,
+        accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+        accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+        accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+        accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>,
+        lexiconByInt: Map<Int, String>,
+        lexiconByString: Map<String, Int>
+    ) =
+        launch {
+            val parser = DeductiveParser(
+                lexiconByString[initial] ?: 0,
+                accessRulesBySecondNtOnRhs,
+                accessRulesByFirstNtOnRhs,
+                accessChainRulesByNtRhs,
+                accessRulesByTerminal
+            )
+            for (line in channel) {
+                val startTime = System.currentTimeMillis()
+                val tokensAsString = line.second.split(" ")
+                val tokensAsInt = tokensAsString.map {
+                    lexiconByString[it] ?: -1
+                }.toIntArray()
+                if (tokensAsInt.any { it < 0 }) {
+                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
+                    continue
+                }
+                val result = parser.weightedDeductiveParsing(tokensAsInt)
+                System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
+
+                if (result.second != null) {
+                    outputChannel.send(
+                        line.first to result.second!!.getParseTreeAsString(
+                            tokensAsString,
+                            lexiconByInt
+                        )
+                    )//TODO
+                } else {
+                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
+                }
+
+            }
+        }
+
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
+            send(Pair(i + 1, sentence))
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
@@ -139,19 +204,21 @@ class Parse : CliktCommand() {
                 }
 
                 val getRulesFromRulesFile = async {
-                    val rulesBr = rules.bufferedReader(); generateSequence { rulesBr.readLine() }.map {
-                    RulesExpressionEvaluator().parseToEnd(
-                        it
-                    )
-                }
+                    val rulesBr = rules.bufferedReader()
+                    generateSequence { rulesBr.readLine() }.map {
+                        RulesExpressionEvaluator().parseToEnd(
+                            it
+                        )
+                    }
                 }
 
                 val getRulesFromLexiconFile = async {
-                    val lexiconBr = lexicon.bufferedReader(); generateSequence { lexiconBr.readLine() }.map {
-                    LexiconExpressionEvaluator().parseToEnd(
-                        it
-                    )
-                }
+                    val lexiconBr = lexicon.bufferedReader()
+                    generateSequence { lexiconBr.readLine() }.map {
+                        LexiconExpressionEvaluator().parseToEnd(
+                            it
+                        )
+                    }
                 }
 
                 val grammar = Grammar.create(
@@ -159,33 +226,45 @@ class Parse : CliktCommand() {
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
 
-                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal) = grammar.getGrammarDataStructuresForParsing()
-                val parser = DeductiveParser(
-                    grammar.initial,
-                    accessRulesBySecondNtOnRhs,
-                    accessRulesByFirstNtOnRhs,
-                    accessChainRulesByNtRhs,
-                    accessRulesByTerminal
-                )
-                val time = System.currentTimeMillis()
-                val resultPairs = generateSequence(readNotEmptyLnOrNull)
-                    .map {
-                        val time2 = System.currentTimeMillis()
-                       val res = parser.weightedDeductiveParsing(
-                            it.split(" ")
-                        )
-                        echo(System.currentTimeMillis() - time2)
-                        res
-                    }
+                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString) = grammar.getGrammarDataStructuresForParsing()
 
-                resultPairs.forEach { (sentence, resultTuple)  ->
-                    if (resultTuple != null) {
-                        echo(resultTuple.t5.getParseTreeAsString())
-                    } else {
-                        echo("(NOPARSE " + sentence.joinToString(" ") + ")")
-                    }
+                val producer = produceString()
+
+                val parser = launch {
+                    repeat(2) {
+                        launchProcessor(
+                            producer,
+                            grammar.initial,
+                            accessRulesBySecondNtOnRhs,
+                            accessRulesByFirstNtOnRhs,
+                            accessChainRulesByNtRhs,
+                            accessRulesByTerminal,
+                            lexiconByInt,
+                            lexiconByString
+                        )
+
+                }}.invokeOnCompletion {
+                    outputChannel.close()
                 }
-                echo(System.currentTimeMillis() - time)
+
+                launch {
+                    val startTime = System.currentTimeMillis()
+                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
+                    var i = 1
+                    for (parseResult in outputChannel) {
+                        if (parseResult.first == i) {
+                            echo(parseResult.second)
+                            i++
+                            while ((queue.peek()?.first ?: 0) == i) {
+                                echo(queue.poll().second)
+                                i++
+                            }
+                        } else {
+                            queue.add(parseResult)
+                        }
+                    }
+                    System.out.println(System.currentTimeMillis() - startTime)
+                }
             }
         } catch (e: ParseException) {
             System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")

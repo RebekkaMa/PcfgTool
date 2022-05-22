@@ -1,34 +1,29 @@
 package model
 
-import com.github.h0tk3y.betterParse.utils.Tuple5
-import java.util.SortedMap
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.PriorityBlockingQueue
-import kotlin.system.measureTimeMillis
+import com.github.h0tk3y.betterParse.utils.Tuple3
+import java.util.*
 
 class DeductiveParser(
-
-    val initial: String,
-    val accessRulesBySecondNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-    val accessRulesByFirstNtOnRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-    val accessChainRulesByNtRhs: Map<String, MutableList<Pair<Rule, Double>>>,
-    val accessRulesByTerminal: Map<String, MutableList<Pair<Rule, Double>>>
+    val initial: Int,
+    private val accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>
 ) {
 
-    val queue = PriorityBlockingQueue(100, compareBy<Tuple5<Int, String, Int, Double, Backtrace>> { it.t4 }.reversed())
+    val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
     val accessFoundItemsFromLeft =
-        hashMapOf<Pair<Int, String>, MutableMap<Int, Tuple5<Int, String, Int, Double, Backtrace>>>()
+        hashMapOf<Pair<Int, Int>, MutableMap<Int, Item>>()
     val accessFoundItemsFromRight =
-        hashMapOf<Pair<String, Int>, MutableMap<Int, Tuple5<Int, String, Int, Double, Backtrace>>>()
+        hashMapOf<Pair<Int, Int>, MutableMap<Int, Item>>()
 
 
-    fun weightedDeductiveParsing(sentence: List<String>): Pair<List<String>, Tuple5<Int, String, Int, Double, Backtrace>?> {
-
+    fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
         try {
             fillQueueWithItemsFromLexicalRules(sentence)
             while (queue.isNotEmpty()) {
-                val selectedItem: Tuple5<Int, String, Int, Double, Backtrace> = queue.poll()
-                if (selectedItem.t1 == 0 && selectedItem.t2 == initial && selectedItem.t3 == sentence.size) return sentence to selectedItem
+                val selectedItem: Item = queue.poll()
+                if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) return sentence to selectedItem
                 if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
                 findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
@@ -41,27 +36,28 @@ class DeductiveParser(
     }
 
     fun fillQueueWithItemsFromLexicalRules(
-        sentence: List<String>
+        sentence: IntArray
     ) {
         sentence.forEachIndexed { index, word ->
-            accessRulesByTerminal[word]?.forEach { (rule, ruleProbability) ->
-                queue.add(Tuple5(index, rule.lhs, index + 1, ruleProbability, Backtrace(rule, ruleProbability, null)))
+            accessRulesByTerminal[word]?.forEach { (lhs, rhs, ruleProbability) ->
+                queue.add(Item(index, lhs, index + 1, ruleProbability, null))
             }
         }
     }
 
 
     //Zeile 8
-    fun addSelectedItemProbabilityToSavedItems(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>): Boolean {
+    fun addSelectedItemProbabilityToSavedItems(selectedItem: Item): Boolean {
         var notNullProbabilityEntryLhs = false
         var notNullProbabilityEntryRhs = false
-        accessFoundItemsFromLeft.compute(Pair(selectedItem.t1, selectedItem.t2)) outerCompute@{ _, v ->
+
+        accessFoundItemsFromLeft.compute(Pair(selectedItem.i, selectedItem.nt)) outerCompute@{ _, v ->
             if (v == null) {
-                mutableMapOf(selectedItem.t3 to selectedItem)
+                mutableMapOf(selectedItem.j to selectedItem)
             } else {
-                v.compute(selectedItem.t3) { _, presentItem ->
+                v.compute(selectedItem.j) { _, presentItem ->
                     when {
-                        (presentItem?.t4 ?: 0.0) >= selectedItem.t4 -> {
+                        (presentItem?.wt ?: 0.0) >= selectedItem.wt -> {
                             notNullProbabilityEntryLhs = true
                             return@compute presentItem
                         }
@@ -72,13 +68,13 @@ class DeductiveParser(
             }
         }
         if (notNullProbabilityEntryLhs) return true
-        accessFoundItemsFromRight.compute(Pair(selectedItem.t2, selectedItem.t3)) outerCompute@ { _, v ->
+        accessFoundItemsFromRight.compute(Pair(selectedItem.nt, selectedItem.j)) outerCompute@ { _, v ->
             if (v == null) {
-                mutableMapOf(selectedItem.t1 to selectedItem)
+                mutableMapOf(selectedItem.i to selectedItem)
             } else {
-                v.compute(selectedItem.t1) { _, presentItem ->
+                v.compute(selectedItem.i) { _, presentItem ->
                     when {
-                        (presentItem?.t4 ?: 0.0) >= selectedItem.t4 -> {
+                        (presentItem?.wt ?: 0.0) >= selectedItem.wt -> {
                             notNullProbabilityEntryRhs = true
                             return@compute presentItem
                         }
@@ -93,20 +89,16 @@ class DeductiveParser(
     }
 
     //Zeile 9
-    fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>) {
-        val (i, nt, j, wt, bt) = selectedItem
-        accessRulesByFirstNtOnRhs[nt]?.forEach { (rule, ruleProbability) ->
+    fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Item) {
+        accessRulesByFirstNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromLeft[Pair(
-                j,
-                rule.rhs.component2()
-            )]?.forEach { _, (i2, nt2, j2, wt2, bt2) -> // --> j == i2
-                if (rule.rhs.component2() == nt2 && j < j2) {
+                selectedItem.j,
+               rhs.component2()
+            )]?.forEach { (_, combinationItem) -> // --> j == i2
+                if (rhs.component2() == combinationItem.nt && selectedItem.j < combinationItem.j && combinationItem.wt > 0.0) {
                     queue.add(
-                        Tuple5(
-                            i, rule.lhs, j2, ruleProbability * wt * wt2, Backtrace(
-                                rule, ruleProbability * wt * wt2,
-                                Pair(bt, bt2)
-                            )
+                        Item(
+                            selectedItem.i, lhs, combinationItem.j, ruleProbability * selectedItem.wt * combinationItem.wt, listOf(selectedItem, combinationItem)
                         )
                     )
                 }
@@ -115,21 +107,20 @@ class DeductiveParser(
     }
 
     //Zeile 10
-    fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>) {
-        val (i, nt, j, wt, bt) = selectedItem
-        accessRulesBySecondNtOnRhs[nt]?.forEach { (rule, ruleProbability) ->
+    fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Item) {
+        accessRulesBySecondNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromRight[Pair(
-                rule.rhs.component1(),
-                i
-            )]?.forEach { _, (i0, nt0, j0, wt0, bt0) ->    // --> j0 = i
-                if (rule.rhs.component1() == nt0 && i0 < i) {
+                rhs.component1(),
+                selectedItem.i
+            )]?.forEach { (_, combinationItem) ->    // --> j0 = i
+                if (rhs.component1() == combinationItem.nt && combinationItem.i < selectedItem.i && combinationItem.wt > 0.0) {
                     queue.add(
-                        Tuple5(
-                            i0,
-                            rule.lhs,
-                            j,
-                            ruleProbability * wt0 * wt,
-                            Backtrace(rule, ruleProbability * wt0 * wt, Pair(bt0, bt))
+                        Item(
+                            combinationItem.i,
+                            lhs,
+                            selectedItem.j,
+                            ruleProbability * combinationItem.wt * selectedItem.wt,
+                            listOf(combinationItem, selectedItem)
                         )
                     )
                 }
@@ -138,16 +129,15 @@ class DeductiveParser(
     }
 
     //Zeile 11
-    fun findRulesAddItemsToQueueChain(selectedItem: Tuple5<Int, String, Int, Double, Backtrace>) {
-        val (i, nt, j, wt, bt) = selectedItem
-        accessChainRulesByNtRhs[nt]?.forEach { (rule, ruleProbability) ->
+    fun findRulesAddItemsToQueueChain(selectedItem: Item) {
+        accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             queue.add(
-                Tuple5(
-                    i,
-                    rule.lhs,
-                    j,
-                    ruleProbability * wt,
-                    Backtrace(rule, ruleProbability * wt, Pair(bt, null))
+                Item(
+                    selectedItem.i,
+                    lhs,
+                    selectedItem.j,
+                    ruleProbability * selectedItem.wt,
+                    listOf(selectedItem)
                 )
             )
         }
@@ -155,7 +145,11 @@ class DeductiveParser(
 
     fun clearAll() {
         queue.clear()
-        accessFoundItemsFromLeft.clear()
-        accessFoundItemsFromRight.clear()
+        accessFoundItemsFromLeft.forEach {
+            it.value.clear()
+        }
+        accessFoundItemsFromRight.forEach {
+            it.value.clear()
+        }
     }
 }

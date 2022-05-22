@@ -26,7 +26,7 @@ class RulesExpressionEvaluator : Grammar<Pair<Rule, Double>>() {
             Rule(
                 lexical = false,
                 lhs = lhs,
-                rhs = rhs as List<String>
+                rhs = rhs
             ), probability
         )
     }
