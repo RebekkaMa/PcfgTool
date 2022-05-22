@@ -40,7 +40,7 @@ class DeductiveParser(
     ) {
         sentence.forEachIndexed { index, word ->
             accessRulesByTerminal[word]?.forEach { (lhs, rhs, ruleProbability) ->
-                queue.add(Item(index, lhs, index + 1, ruleProbability, Backtrace(lhs, null)))
+                queue.add(Item(index, lhs, index + 1, ruleProbability, null))
             }
         }
     }
@@ -98,9 +98,7 @@ class DeductiveParser(
                 if (rhs.component2() == combinationItem.nt && selectedItem.j < combinationItem.j && combinationItem.wt > 0.0) {
                     queue.add(
                         Item(
-                            selectedItem.i, lhs, combinationItem.j, ruleProbability * selectedItem.wt * combinationItem.wt, Backtrace(lhs,
-                                Pair(selectedItem.bt, combinationItem.bt)
-                            )
+                            selectedItem.i, lhs, combinationItem.j, ruleProbability * selectedItem.wt * combinationItem.wt, listOf(selectedItem, combinationItem)
                         )
                     )
                 }
@@ -122,7 +120,7 @@ class DeductiveParser(
                             lhs,
                             selectedItem.j,
                             ruleProbability * combinationItem.wt * selectedItem.wt,
-                            Backtrace(lhs, Pair(combinationItem.bt, selectedItem.bt))
+                            listOf(combinationItem, selectedItem)
                         )
                     )
                 }
@@ -139,7 +137,7 @@ class DeductiveParser(
                     lhs,
                     selectedItem.j,
                     ruleProbability * selectedItem.wt,
-                    Backtrace(lhs, Pair(selectedItem.bt, null))
+                    listOf(selectedItem)
                 )
             )
         }

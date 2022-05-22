@@ -174,7 +174,7 @@ class Parse : CliktCommand() {
 
                 if (result.second != null) {
                     outputChannel.send(
-                        line.first to result.second!!.bt.getParseTreeAsString(
+                        line.first to result.second!!.getParseTreeAsString(
                             tokensAsString,
                             lexiconByInt
                         )
