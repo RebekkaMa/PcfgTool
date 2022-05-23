@@ -4,24 +4,27 @@ import com.github.h0tk3y.betterParse.utils.Tuple3
 import java.util.*
 
 class DeductiveParser(
-    val initial: Int,
+    private val initial: Int,
     private val accessRulesBySecondNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
-    private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>
+    private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    initialArraySize: Int = 100_000,
 ) {
+
     val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
     val accessFoundItemsFromLeft =
-        HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(10_000)
+        HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     val accessFoundItemsFromRight =
-        kotlin.collections.HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(10_000)
-
+        HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
 
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
-            fillQueueWithItemsFromLexicalRules(sentence)
+        fillQueueWithItemsFromLexicalRules(sentence)
             while (queue.isNotEmpty()) {
                 val selectedItem: Item = queue.poll()
-                if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) return sentence to selectedItem
+                if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size){
+                    return sentence to selectedItem
+                }
                 if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
                 findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
@@ -30,9 +33,7 @@ class DeductiveParser(
             return sentence to null
     }
 
-    fun fillQueueWithItemsFromLexicalRules(
-        sentence: IntArray
-    ) {
+    fun fillQueueWithItemsFromLexicalRules(sentence: IntArray) {
         sentence.forEachIndexed { index, word ->
             accessRulesByTerminal[word]?.forEach { (lhs, rhs, ruleProbability) ->
                 queue.add(Item(index, lhs, index + 1, ruleProbability, null))

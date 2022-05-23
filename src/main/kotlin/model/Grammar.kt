@@ -1,7 +1,7 @@
 package model
 
 import com.github.h0tk3y.betterParse.utils.Tuple3
-import com.github.h0tk3y.betterParse.utils.Tuple6
+import com.github.h0tk3y.betterParse.utils.Tuple7
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.text.DecimalFormat
@@ -42,7 +42,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
-    fun getGrammarDataStructuresForParsing(): Tuple6<MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, Map<Int, String>, Map<String, Int>> {
+    fun getGrammarDataStructuresForParsing(): Tuple7<MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>, Map<Int, String>, Map<String, Int>, Int> {
 
         val lexiconByKey = kotlin.collections.HashMap<Int, String>()
         val lexiconByString = kotlin.collections.HashMap<String, Int>()
@@ -50,24 +50,26 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         lexiconByKey[0] = initial
         lexiconByString[initial] = 0
 
-        var lastIndex = 0
+        var index = 0
+        var numberOfTerminals = 0
 
         val accessRulesBySecondNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessRulesByFirstNtOnRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessChainRulesByNtRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessRulesByTerminal = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
 
+
         this.pRules.forEach { (rule, ruleProbability) ->
             val lhsHash = lexiconByString.getOrPut(rule.lhs) {
-                lastIndex += 1
-                lexiconByKey[lastIndex] = rule.lhs
-                lastIndex
+                index += 1
+                lexiconByKey[index] = rule.lhs
+                index
             }
             val rhsHashList = rule.rhs.map {
                 lexiconByString.getOrPut(it) {
-                    lastIndex += 1
-                    lexiconByKey[lastIndex] = it
-                    lastIndex
+                    index += 1
+                    lexiconByKey[index] = it
+                    index
                 }
             }.toIntArray()
 
@@ -104,6 +106,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                                 mutableListOf(newTuple)
                             }
                         }
+                        numberOfTerminals += 1
                     } else {
                         accessRulesByTerminal.compute(rhsHashList[0]) { _, v ->
                             if (v != null) {
@@ -119,13 +122,14 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                 }
             }
         }
-        return Tuple6(
+        return Tuple7(
             accessRulesBySecondNtOnRhs,
             accessRulesByFirstNtOnRhs,
             accessChainRulesByNtRhs,
             accessRulesByTerminal,
             lexiconByKey,
-            lexiconByString
+            lexiconByString,
+            index + 1 - numberOfTerminals
         )
     }
 

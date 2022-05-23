@@ -136,7 +136,7 @@ class Parse : CliktCommand() {
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
-    val coroutines by option("-c", "--number-coroutines").int().default(2).validate { it > 0 }
+    val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).validate { it > 0 }
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -152,7 +152,8 @@ class Parse : CliktCommand() {
         accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
         accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>,
         lexiconByInt: Map<Int, String>,
-        lexiconByString: Map<String, Int>
+        lexiconByString: Map<String, Int>,
+        numberNonTerminals : Int
     ) =
         launch {
             for (line in channel) {
@@ -172,7 +173,8 @@ class Parse : CliktCommand() {
                     accessRulesBySecondNtOnRhs,
                     accessRulesByFirstNtOnRhs,
                     accessChainRulesByNtRhs,
-                    accessRulesByTerminal
+                    accessRulesByTerminal,
+                    (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
                 System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
 
@@ -230,12 +232,12 @@ class Parse : CliktCommand() {
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
 
-                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString) = grammar.getGrammarDataStructuresForParsing()
+                val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString, numberNonTerminals) = grammar.getGrammarDataStructuresForParsing()
 
                 val producer = produceString()
 
                 val parser = launch {
-                    repeat(coroutines) {
+                    repeat(numberOfParallelParsers) {
                         launchProcessor(
                             producer,
                             grammar.initial,
@@ -244,7 +246,8 @@ class Parse : CliktCommand() {
                             accessChainRulesByNtRhs,
                             accessRulesByTerminal,
                             lexiconByInt,
-                            lexiconByString
+                            lexiconByString,
+                            numberNonTerminals
                         )
 
                 }}.invokeOnCompletion {
