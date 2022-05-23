@@ -157,7 +157,6 @@ class Parse : CliktCommand() {
     ) =
         launch {
             for (line in channel) {
-                val startTime = System.currentTimeMillis()
                 val tokensAsString = line.second.split(" ")
                 val tokensAsInt = tokensAsString.map {
                     lexiconByString[it] ?: -1
@@ -167,7 +166,6 @@ class Parse : CliktCommand() {
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
-
                 val result = DeductiveParser(
                     lexiconByString[initial] ?: 0,
                     accessRulesBySecondNtOnRhs,
@@ -176,7 +174,6 @@ class Parse : CliktCommand() {
                     accessRulesByTerminal,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
-                System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
 
                 if (result.second != null) {
                     outputChannel.send(
@@ -184,7 +181,7 @@ class Parse : CliktCommand() {
                             tokensAsString,
                             lexiconByInt
                         )
-                    )//TODO
+                    )
                 } else {
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                 }
@@ -255,7 +252,6 @@ class Parse : CliktCommand() {
                 }
 
                 launch {
-                    val startTime = System.currentTimeMillis()
                     val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
                     var i = 1
                     for (parseResult in outputChannel) {
@@ -270,7 +266,6 @@ class Parse : CliktCommand() {
                             queue.add(parseResult)
                         }
                     }
-                    System.out.println(System.currentTimeMillis() - startTime)
                 }
             }
         } catch (e: ParseException) {

@@ -12,10 +12,10 @@ class DeductiveParser(
     initialArraySize: Int = 100_000,
 ) {
 
-    val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
-    val accessFoundItemsFromLeft =
+    private val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
+    private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
-    val accessFoundItemsFromRight =
+    private val accessFoundItemsFromRight =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
 
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
