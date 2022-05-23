@@ -10,16 +10,14 @@ class DeductiveParser(
     private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>
 ) {
-
     val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
     val accessFoundItemsFromLeft =
-        hashMapOf<Pair<Int, Int>, MutableMap<Int, Item>>()
+        HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(10_000)
     val accessFoundItemsFromRight =
-        hashMapOf<Pair<Int, Int>, MutableMap<Int, Item>>()
+        kotlin.collections.HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(10_000)
 
 
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
-        try {
             fillQueueWithItemsFromLexicalRules(sentence)
             while (queue.isNotEmpty()) {
                 val selectedItem: Item = queue.poll()
@@ -30,9 +28,6 @@ class DeductiveParser(
                 findRulesAddItemsToQueueChain(selectedItem)
             }
             return sentence to null
-        } finally {
-            clearAll()
-        }
     }
 
     fun fillQueueWithItemsFromLexicalRules(
@@ -44,7 +39,6 @@ class DeductiveParser(
             }
         }
     }
-
 
     //Zeile 8
     fun addSelectedItemProbabilityToSavedItems(selectedItem: Item): Boolean {
@@ -127,7 +121,6 @@ class DeductiveParser(
             }
         }
     }
-
     //Zeile 11
     fun findRulesAddItemsToQueueChain(selectedItem: Item) {
         accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
@@ -140,16 +133,6 @@ class DeductiveParser(
                     listOf(selectedItem)
                 )
             )
-        }
-    }
-
-    fun clearAll() {
-        queue.clear()
-        accessFoundItemsFromLeft.forEach {
-            it.value.clear()
-        }
-        accessFoundItemsFromRight.forEach {
-            it.value.clear()
         }
     }
 }

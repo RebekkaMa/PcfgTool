@@ -1,3 +1,4 @@
+
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
@@ -6,6 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.eagerOption
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
@@ -134,6 +136,7 @@ class Parse : CliktCommand() {
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
+    val coroutines by option("-c", "--number-coroutines").int().default(2).validate { it > 0 }
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -152,24 +155,25 @@ class Parse : CliktCommand() {
         lexiconByString: Map<String, Int>
     ) =
         launch {
-            val parser = DeductiveParser(
-                lexiconByString[initial] ?: 0,
-                accessRulesBySecondNtOnRhs,
-                accessRulesByFirstNtOnRhs,
-                accessChainRulesByNtRhs,
-                accessRulesByTerminal
-            )
             for (line in channel) {
                 val startTime = System.currentTimeMillis()
                 val tokensAsString = line.second.split(" ")
                 val tokensAsInt = tokensAsString.map {
                     lexiconByString[it] ?: -1
                 }.toIntArray()
-                if (tokensAsInt.any { it < 0 }) {
+
+                if(-1 in tokensAsInt){
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
-                val result = parser.weightedDeductiveParsing(tokensAsInt)
+
+                val result = DeductiveParser(
+                    lexiconByString[initial] ?: 0,
+                    accessRulesBySecondNtOnRhs,
+                    accessRulesByFirstNtOnRhs,
+                    accessChainRulesByNtRhs,
+                    accessRulesByTerminal
+                ).weightedDeductiveParsing(tokensAsInt)
                 System.out.println(line.first.toString() + " " + (System.currentTimeMillis() - startTime).toString())
 
                 if (result.second != null) {
@@ -231,7 +235,7 @@ class Parse : CliktCommand() {
                 val producer = produceString()
 
                 val parser = launch {
-                    repeat(2) {
+                    repeat(coroutines) {
                         launchProcessor(
                             producer,
                             grammar.initial,

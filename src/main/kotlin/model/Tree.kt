@@ -28,14 +28,12 @@ class Tree(val atom: String, val children: ArrayList<Tree> = ArrayList()) {
     @OptIn(ExperimentalStdlibApi::class)
     fun parseToRules(): ArrayList<Rule> {
         val rules: ArrayList<Rule> = ArrayList()
-        val even: DeepRecursiveFunction<Tree, Unit> = DeepRecursiveFunction {
+        val depth = DeepRecursiveFunction<Tree, Unit> {
             if (it.children.isEmpty()) return@DeepRecursiveFunction
             rules.add(parseToRule(it))
             it.children.map { child -> callRecursive(child) }
         }
-
-
-        even.invoke(this)
+        depth(this)
         return rules
     }
 }
