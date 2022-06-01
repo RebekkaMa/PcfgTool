@@ -8,15 +8,19 @@ class Tree(var atom: String, val children: ArrayList<Tree> = ArrayList()) {
         children.add(expression)
     }
 
-    fun printExpressionTree(tree: Tree = this): String {
-        return when (tree.children.size){
-            0 -> atom
-            1 ->  "(" + tree.atom + " " + printExpressionTree(tree.children.first()) + ")"
-            else -> {
-                val partOfTreeAsString = tree.children.fold("(" + tree.atom) { acc, child -> acc + " " + printExpressionTree(child) }
-                "$partOfTreeAsString)"
+    override fun toString(): String {
+        fun getPartOfTree(tree: Tree = this): String {
+            return when (tree.children.size) {
+                0 -> tree.atom
+                1 -> "(" + tree.atom + " " + getPartOfTree(tree.children.first()) + ")"
+                else -> {
+                    val partOfTreeAsString =
+                        tree.children.fold("(" + tree.atom) { acc, child -> acc + " " + getPartOfTree(child) }
+                    "$partOfTreeAsString)"
+                }
             }
         }
+        return getPartOfTree()
     }
 
 

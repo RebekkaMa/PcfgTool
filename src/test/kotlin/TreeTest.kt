@@ -83,7 +83,7 @@ class TreeTest {
         val child1_right =  Tree(atom = "FRAG", arrayListOf(child2, child4_right, child10) )
         val tree_right = Tree(atom = "ROOT",  arrayListOf(child1_right))
 
-        tree.debinarize().printExpressionTree() shouldBe tree_right.printExpressionTree()
+        tree.debinarize().toString() shouldBe tree_right.toString()
     }
 
 

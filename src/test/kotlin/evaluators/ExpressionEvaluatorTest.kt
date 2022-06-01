@@ -38,7 +38,7 @@ class ExpressionEvaluatorTest {
         val tree1 = Tree("ROOT", arrayListOf(tree2))
 
         expressionEvaluator.parseToEnd(expression)
-            .printExpressionTree() shouldBeEqualComparingTo tree1.printExpressionTree()
+            .toString() shouldBeEqualComparingTo tree1.toString()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -51,7 +51,7 @@ class ExpressionEvaluatorTest {
 
 
         expressionEvaluator.parseToEnd(expression)
-            .printExpressionTree() shouldBeEqualComparingTo tree1.printExpressionTree()
+            .toString() shouldBeEqualComparingTo tree1.toString()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -136,7 +136,7 @@ class Parse : CliktCommand() {
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
-    val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(2).validate { it > 0 }
+    val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).validate { it > 0 }
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -257,7 +257,7 @@ class Parse : CliktCommand() {
                     for (parseResult in outputChannel) {
                         if (parseResult.first == i) {
                             echo(parseResult.second)
-                            i++
+                                               i++
                             while ((queue.peek()?.first ?: 0) == i) {
                                 echo(queue.poll().second)
                                 i++
@@ -290,54 +290,60 @@ class Binarise : CliktCommand() {
 
 class Debinarise : CliktCommand() {
 
+    private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6).validate { it > 0 }
+
+
     private val readNotEmptyLnOrNull = {
         val line = readlnOrNull()
         if (line.isNullOrEmpty()) null else line
     }
-    private val rulesChannel = Channel<String>(capacity = Channel.UNLIMITED)
+    private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce<String>(context = Dispatchers.IO, capacity = 5) {
-        var line = readNotEmptyLnOrNull()
-        while (line != null && isActive) {
-            send(line)
-            line = readNotEmptyLnOrNull()
-        }
-    }
-
-    private fun CoroutineScope.launchProcessor(channel: ReceiveChannel<String>) =
-        launch(context = Dispatchers.Default) {
+    private fun CoroutineScope.launchProcessor(
+        channel: ReceiveChannel<Pair<Int, String>>
+    ) =
+        launch {
             val expressionEvaluator = ExpressionEvaluator()
-            for (expression in channel) {
-                rulesChannel.send(expressionEvaluator.parseToEnd(expression).debinarize().printExpressionTree())
+            for (line in channel) {
+                outputChannel.send(line.first to expressionEvaluator.parseToEnd(line.second).debinarize().toString())
             }
         }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
+            send(Pair(i + 1, sentence))
+        }
+    }
 
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
                 val producer = produceString()
 
-                launch {
-                    try {
-                        coroutineScope {
-                            repeat(8) {
-                                launchProcessor(producer)
+                val parser = launch {
+                    repeat(numberOfParallelParsers) {
+                        launchProcessor(
+                            producer
+                        )
+                    }}.invokeOnCompletion {
+                    outputChannel.close()
+                }
+                launch{
+                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
+                    var i = 1
+                    for (parseResult in outputChannel) {
+                        if (parseResult.first == i) {
+                            echo(parseResult.second)
+                            i++
+                            while ((queue.peek()?.first ?: 0) == i) {
+                                echo(queue.poll().second)
+                                i++
                             }
+                        } else {
+                            queue.add(parseResult)
                         }
-                        rulesChannel.close()
-                    } catch (e: ParseException) {
-                        System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
-                        exitProcess(5)
                     }
                 }
-                val rules = rulesChannel.receiveAsFlow()
-                    .toList()
-        //        if (grammar == null) {
-                rules.forEach { echo(it) }
-  //              } else {
-    //                writeToFiles(Grammar.createFromRules(rules), grammar.toString())
-      //          }
             }
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
