@@ -1,3 +1,4 @@
+
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,4 +57,34 @@ class TreeTest {
 
         tree.parseToRule() shouldBe Rule(false, lhs = "NP", rhs = listOf("ART-NK", "NP-SB", "VP"))
     }
+
+
+    //------------------debinarise-------------------------------------------------
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun shouldReturnADebinarisedTree() = runTest {
+
+
+        val child11 = Tree(atom = ".", arrayListOf())
+        val child10 = Tree(atom = ".", arrayListOf(child11))
+        val child9 = Tree(atom = "year", arrayListOf())
+        val child8 = Tree(atom = "NN", arrayListOf(child9))
+        val child7 =Tree(atom = "this", arrayListOf())
+        val child6 = Tree(atom = "DT", arrayListOf(child7))
+        val child5 = Tree(atom = "NP-TMP^<FRAG,ROOT>", arrayListOf(child6, child8))
+        val child4 = Tree(atom = "FRAG|<NP-TMP,.>^<ROOT>", arrayListOf(child5, child10))
+        val child3 = Tree(atom = "Not", arrayListOf())
+        val child2 = Tree(atom = "RB", arrayListOf(child3))
+        val child1 = Tree(atom = "FRAG^<ROOT>", arrayListOf(child2, child4) )
+        val tree = Tree(atom = "ROOT",  arrayListOf(child1))
+
+        val child4_right = Tree("NP-TMP", arrayListOf(child6, child8))
+        val child1_right =  Tree(atom = "FRAG", arrayListOf(child2, child4_right, child10) )
+        val tree_right = Tree(atom = "ROOT",  arrayListOf(child1_right))
+
+        tree.debinarize().printExpressionTree() shouldBe tree_right.printExpressionTree()
+    }
+
+
 }
