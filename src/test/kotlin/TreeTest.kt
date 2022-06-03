@@ -91,8 +91,6 @@ class TreeTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun shouldReturnABinarisedTree() = runTest {
-
-
         val child11 = Tree(atom = ".", arrayListOf())
         val child10 = Tree(atom = ".", arrayListOf(child11))
         val child9 = Tree(atom = "year", arrayListOf())
@@ -112,5 +110,4 @@ class TreeTest {
 
         tree_right.binarise(3,999).toString() shouldBe tree.toString()
     }
-
 }

@@ -274,8 +274,8 @@ class Parse : CliktCommand() {
 }
 
 class Binarise : CliktCommand() {
-    val horizontal by option("-h", "--horizontal").int().default(999)
-    val vertical by option("-v", "--vertical").int().default(1)
+    val horizontal by option("-h", "--horizontal").int().default(999).validate { it > 0 }
+    val vertical by option("-v", "--vertical").int().default(1).validate { it > 0 }
     private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
         .validate { it > 0 }
 
