@@ -276,9 +276,70 @@ class Parse : CliktCommand() {
 class Binarise : CliktCommand() {
     val horizontal by option("-h", "--horizontal").int().default(999)
     val vertical by option("-v", "--vertical").int().default(1)
+    private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
+        .validate { it > 0 }
+
+
+    private val readNotEmptyLnOrNull = {
+        val line = readlnOrNull()
+        if (line.isNullOrEmpty()) null else line
+    }
+    private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
+
+    private fun CoroutineScope.launchProcessor(
+        channel: ReceiveChannel<Pair<Int, String>>
+    ) =
+        launch {
+            val expressionEvaluator = ExpressionEvaluator()
+            for (line in channel) {
+                outputChannel.send(line.first to expressionEvaluator.parseToEnd(line.second).binarise(vertical, horizontal).toString())
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
+            send(Pair(i + 1, sentence))
+        }
+    }
 
     override fun run() {
-        throw ProgramResult(22)
+        try {
+            runBlocking(Dispatchers.Default) {
+                val producer = produceString()
+
+                launch {
+                    repeat(numberOfParallelParsers) {
+                        launchProcessor(
+                            producer
+                        )
+                    }
+                }.invokeOnCompletion {
+                    outputChannel.close()
+                }
+                launch {
+                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
+                    var i = 1
+                    for (parseResult in outputChannel) {
+                        if (parseResult.first == i) {
+                            echo(parseResult.second)
+                            i++
+                            while ((queue.peek()?.first ?: 0) == i) {
+                                echo(queue.poll().second)
+                                i++
+                            }
+                        } else {
+                            queue.add(parseResult)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            System.err.println("Ein Fehler ist aufgetreten!")
+            System.err.println(e.message)
+            System.err.println(e.stackTrace)
+            throw ProgramResult(1)
+        }
     }
 }
 
