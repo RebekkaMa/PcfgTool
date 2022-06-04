@@ -38,7 +38,6 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
         return leaves
     }
 
-
     fun setLeaves(leaves: List<String>) {
         var i = 0
         fun setLeavesPartOfTree(tree: Tree = this) {

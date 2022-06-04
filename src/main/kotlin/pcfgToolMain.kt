@@ -150,12 +150,20 @@ class Parse : CliktCommand() {
         launch {
             for (line in channel) {
                 val tokensAsString = line.second.split(" ")
-                val unkValue = lexiconByString["Unk"] ?: throw Exception("Internal Error: UNK not in lexicon")
+                val unkAsInt = lexiconByString["UNK"]
+
                 val tokensAsInt = tokensAsString.map {
-                    lexiconByString[it] ?: unkValue
+                    val wordAsInt = lexiconByString[it]
+                    when {
+                        wordAsInt != null -> return@map wordAsInt
+                        unking && unkAsInt != null -> unkAsInt
+                        else -> -1
+                    }
                 }.toIntArray()
 
-                if (!unking && unkValue in tokensAsInt) {
+
+                if (-1 in tokensAsInt) {
+                    if (unking)
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
@@ -440,9 +448,8 @@ class Unk : CliktCommand() {
     ) =
         launch {
             val expressionEvaluator = ExpressionEvaluator()
-            val unking = Unking()
             for (tree in treeWithUnkChannel) {
-                unking.replaceRareWordsInTree(wordcount, threshold, tree.second)
+                replaceRareWordsInTree(smooth = false, wordcount, threshold, tree.second)
                 treeAsStringChannel.send(tree.first to tree.second.toString())
             }
         }
@@ -461,9 +468,9 @@ class Unk : CliktCommand() {
                 val trees = generateSequence(readNotEmptyLnOrNull).map{
                     sentence -> expressionEvaluator.parseToEnd(sentence)
                 }.toList()
-                val wordcount = Unking().getTerminalCountFromCorpus(trees)
+                val wordcount = getTerminalCountFromCorpus(trees)
                 trees.onEach {
-                    Unking().replaceRareWordsInTree(wordcount, threshold, it)
+                    replaceRareWordsInTree(smooth = false, wordcount, threshold, it)
                     echo(it)
                 }
 
@@ -527,18 +534,38 @@ class Unk : CliktCommand() {
             System.err.println(e.stackTrace)
             throw ProgramResult(1)
         }
-
-
-
-        throw ProgramResult(22)
     }
 }
 
 class Smooth : CliktCommand() {
-    val threshold by option("-t", "--threshold")
+    val threshold by option("-t", "--threshold").int().default(3)
+    private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
+        .validate { it > 0 }
+
+    private val readNotEmptyLnOrNull = {
+        val line = readlnOrNull()
+        if (line.isNullOrEmpty()) null else line
+    }
 
     override fun run() {
-        throw ProgramResult(22)
+        try {
+            runBlocking(Dispatchers.Default) {
+                val expressionEvaluator = ExpressionEvaluator()
+                val trees = generateSequence(readNotEmptyLnOrNull).map{
+                        sentence -> expressionEvaluator.parseToEnd(sentence)
+                }.toList()
+                val wordcount = getTerminalCountFromCorpus(trees)
+                trees.onEach {
+                    replaceRareWordsInTree(smooth = true, wordcount, threshold, it)
+                    echo(it)
+                }
+            }
+        } catch (e: Exception) {
+            System.err.println("Ein Fehler ist aufgetreten!")
+            System.err.println(e.message)
+            System.err.println(e.stackTrace)
+            throw ProgramResult(1)
+        }
     }
 }
 
