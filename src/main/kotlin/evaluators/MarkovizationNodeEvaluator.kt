@@ -9,9 +9,9 @@ import com.github.h0tk3y.betterParse.utils.Tuple3
 
 class MarkovizationNodeEvaluator : Grammar<Tuple3<String, List<String>, List<String>>>() {
 
-    val lab by regexToken("[\\w\\p{Punct}&&[^\\s\\(\\)\\<\\>\\^\\|]]+")
+    val lab by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)\\<\\>\\^\\|]]+")
     val label by lab use { this.text}
-    val labelWithOutComma by regexToken("[\\w\\p{Punct}&&[^\\s\\(\\)\\<\\>\\^\\|,]]+") use {this.text}
+    val labelWithOutComma by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)\\<\\>\\^\\|,]]+") use {this.text}
     val lessThan by literalToken("<")
     val greaterThan by literalToken(">")
     val verticalBar by literalToken("|")

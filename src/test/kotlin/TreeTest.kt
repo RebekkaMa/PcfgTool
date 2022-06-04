@@ -1,5 +1,4 @@
 
-import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -27,16 +26,16 @@ class TreeTest {
         tree.parseToRule() shouldBe Rule(true, lhs = "NP", rhs = listOf("ART-NK"))
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun shouldReturnAnException() = runTest {
-        val child1 = Tree(atom = "ART-NK", arrayListOf() )
-
-        shouldThrowAny {
-            child1.parseToRule()
-        }
-
-    }
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    @Test
+//    fun shouldReturnAnException() = runTest {
+//        val child1 = Tree(atom = "ART-NK", arrayListOf() )
+//
+//        shouldThrowAny {
+//            child1.parseToRule()
+//        }
+//
+//    }
 
     //--------------------parseToRules---------------------------------------------
 

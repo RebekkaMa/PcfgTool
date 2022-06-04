@@ -108,9 +108,7 @@ class Induce : CliktCommand() {
 
 class Parse : CliktCommand() {
     init {
-        eagerOption("-s", "--smoothing") {
-            throw ProgramResult(22)
-        }
+
         eagerOption("-t", "--threshold-beam") {
             throw ProgramResult(22)
         }
@@ -129,6 +127,7 @@ class Parse : CliktCommand() {
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
     val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).validate { it > 0 }
     val unking by option("-u", "--unking").flag(default = false)
+    val smoothing by option("-s", "--smoothing").flag(default = false)
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -150,20 +149,9 @@ class Parse : CliktCommand() {
         launch {
             for (line in channel) {
                 val tokensAsString = line.second.split(" ")
-                val unkAsInt = lexiconByString["UNK"]
-
-                val tokensAsInt = tokensAsString.map {
-                    val wordAsInt = lexiconByString[it]
-                    when {
-                        wordAsInt != null -> return@map wordAsInt
-                        unking && unkAsInt != null -> unkAsInt
-                        else -> -1
-                    }
-                }.toIntArray()
-
+                val tokensAsInt = replaceTokensByInts(lexiconByString, tokensAsString,unking,smoothing)
 
                 if (-1 in tokensAsInt) {
-                    if (unking)
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }

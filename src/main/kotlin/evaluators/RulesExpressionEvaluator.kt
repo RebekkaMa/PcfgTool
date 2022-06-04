@@ -13,7 +13,7 @@ class RulesExpressionEvaluator : Grammar<Pair<Rule, Double>>() {
 
     val arrow by literalToken("->")
     val number by regexToken("[01]([\\.\\,]\\d*)?(\\s)*$")
-    val nonlexical by regexToken("[\\w\\p{Punct}&&[^\\s\\(\\)]]+")
+    val nonlexical by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)]]+")
     val space by literalToken(" ", ignore = true)
 
     val probability by number use { this.text.dropLastWhile { it.isWhitespace() }.replace(",", ".").toDouble() }

@@ -1,8 +1,9 @@
 package evaluators
 
-import com.github.h0tk3y.betterParse.combinators.*
+import com.github.h0tk3y.betterParse.combinators.and
+import com.github.h0tk3y.betterParse.combinators.map
+import com.github.h0tk3y.betterParse.combinators.use
 import com.github.h0tk3y.betterParse.grammar.Grammar
-
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
@@ -12,7 +13,7 @@ import model.Rule
 class LexiconExpressionEvaluator : Grammar<Pair<Rule, Double>>() {
 
     val number by regexToken("[01]([\\.\\,]\\d*)?(\\s)*$")
-    val text by regexToken("[\\w\\p{Punct}&&[^\\s\\(\\)]]+")
+    val text by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)]]+")
     val space by literalToken(" ", ignore = true)
 
     val probability by number use {this.text.dropLastWhile{ it.isWhitespace() }.replace(",",".").toDouble()}
