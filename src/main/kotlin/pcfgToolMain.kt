@@ -125,7 +125,7 @@ class Parse : CliktCommand() {
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
-    val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).validate { it > 0 }
+    val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).check("value must be greater than null") { it > 0 }
     val unking by option("-u", "--unking").flag(default = false)
     val smoothing by option("-s", "--smoothing").flag(default = false)
 
@@ -270,8 +270,8 @@ class Parse : CliktCommand() {
 }
 
 class Binarise : CliktCommand() {
-    val horizontal by option("-h", "--horizontal").int().default(999).validate { it > 0 }
-    val vertical by option("-v", "--vertical").int().default(1).validate { it > 0 }
+    val horizontal by option("-h", "--horizontal").int().default(999).check("value must be greater than null") { it > 0 }
+    val vertical by option("-v", "--vertical").int().default(1).check("value must be greater than null") { it > 0 }
     private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
         .validate { it > 0 }
 
