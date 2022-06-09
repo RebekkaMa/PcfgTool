@@ -24,7 +24,7 @@ class GrammarTest {
     @Test
     fun init_shouldReturnASimpleGrammar() = runTest {
         val grammar = Grammar.createFromRules(
-            arrayListOf(
+            rules = arrayListOf(
                 rule1,
                 rule2,
                 rule3,
@@ -84,7 +84,7 @@ class GrammarTest {
     @Test
     fun getLexicon_shouldReturnLexicon() = runTest {
         val grammar = Grammar.createFromRules(
-            arrayListOf(
+            rules = arrayListOf(
                 rule1,
                 rule2,
                 rule3,
@@ -112,7 +112,7 @@ class GrammarTest {
     @Test
     fun getTerminals_shouldReturnTerminals() = runTest {
         val grammar = Grammar.createFromRules(
-            arrayListOf(
+           rules =  arrayListOf(
                 rule1,
                 rule2,
                 rule3,
@@ -133,7 +133,7 @@ class GrammarTest {
     @Test
     fun getRules_shouldReturnRules() = runTest {
         val grammar = Grammar.createFromRules(
-            arrayListOf(
+           rules = arrayListOf(
                 rule1,
                 rule2,
                 rule3,

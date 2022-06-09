@@ -92,9 +92,9 @@ class Induce : CliktCommand() {
                 val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
                     .toList()
                 if (grammar == null) {
-                    echo(Grammar.createFromRules(rules).toString())
+                    echo(Grammar.createFromRules(rules = rules).toString())
                 } else {
-                    writeToFiles(Grammar.createFromRules(rules), grammar.toString())
+                    writeGrammarToFiles(Grammar.createFromRules(rules = rules), grammar.toString())
                 }
             }
         } catch (e: Exception) {
@@ -559,8 +559,57 @@ class Smooth : CliktCommand() {
 
 class Outside : CliktCommand() {
     val initial by option("-i", "--initial-nonterminal").default("ROOT")
+    val rules by argument().file(mustExist = true)
+    val lexicon by argument().file(mustExist = true)
+    private val outputFileName by argument(name = "grammar").optional()
+
+
+    private val readNotEmptyLnOrNull = {
+        val line = readlnOrNull()
+        if (line.isNullOrEmpty()) null else line
+    }
+
 
     override fun run() {
+        try {
+            runBlocking(Dispatchers.Default) {
+
+                val getRulesFromRulesFile = async {
+                    val rulesBr = rules.bufferedReader()
+                    generateSequence { rulesBr.readLine() }.map {
+                        RulesExpressionEvaluator().parseToEnd(
+                            it
+                        )
+                    }
+                }
+
+                val getRulesFromLexiconFile = async {
+                    val lexiconBr = lexicon.bufferedReader()
+                    generateSequence { lexiconBr.readLine() }.map {
+                        LexiconExpressionEvaluator().parseToEnd(
+                            it
+                        )
+                    }
+                }
+                val grammar = Grammar.create(
+                    initial,
+                    (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
+                )
+                val outSideWeights = grammar.viterbiOutsideScore()
+                if (outputFileName.isNullOrEmpty()) {
+                    outSideWeights.forEach {
+                        echo(it.key + " " + it.value)
+                    }
+                } else {
+                    writeOutsideScoreToFiles(outSideWeights, outputFileName!!)
+                }
+            }
+        } catch (e: Exception) {
+            System.err.println("Ein Fehler ist aufgetreten!")
+            System.err.println(e.message)
+            System.err.println(e.stackTrace)
+            throw ProgramResult(1)
+        }
         throw ProgramResult(22)
     }
 }

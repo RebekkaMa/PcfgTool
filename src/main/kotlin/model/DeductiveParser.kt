@@ -1,5 +1,6 @@
 package model
 
+import Util.getWindow
 import com.github.h0tk3y.betterParse.utils.Tuple3
 import java.util.*
 
@@ -12,7 +13,7 @@ class DeductiveParser(
     initialArraySize: Int = 100_000,
 ) {
 
-    private val queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
+    private var queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =
@@ -136,4 +137,15 @@ class DeductiveParser(
             )
         }
     }
-}
+
+    fun prune(thresholdBeam : Int?, rankBeam : Int?){
+        if (thresholdBeam != null){
+            val m = queue.peek().wt
+            queue.filter { item -> item.wt > thresholdBeam * m }
+        }
+        if (rankBeam != null){
+            queue = queue.getWindow(PriorityQueue(rankBeam), limit =  rankBeam)
+            //queue.filterIndexed{ index, _ ->  index < rankBeam} //TODO Was ist schneller?
+            }
+        }
+    }

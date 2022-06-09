@@ -11,12 +11,12 @@ import java.util.*
 class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
     companion object {
-        suspend fun createFromRules(rules: List<Rule>): Grammar = coroutineScope {
+        suspend fun createFromRules(initial: String = "ROOT", rules: List<Rule>): Grammar = coroutineScope {
             val absoluteRules = async { rules.groupingBy { it }.eachCount() }
             val lhsCount = async { rules.groupingBy { it.lhs }.eachCount() }
             val pcfgRules = absoluteRules.await()
                 .mapValues { (rule, count) -> (count.toDouble() / (lhsCount.await().getOrElse(rule.lhs) { 1 })) }
-            Grammar(pRules = pcfgRules)
+            Grammar(initial, pRules = pcfgRules)
         }
 
         suspend fun create(initial: String?, rules: Map<Rule, Double>): Grammar = coroutineScope {
@@ -77,45 +77,15 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
             when (rule.rhs.size) {
                 2 -> {
-                    accessRulesByFirstNtOnRhs.compute(rhsHashList[0]) { _, v ->
-                        if (v != null) {
-                            v.add(
-                                newTuple
-                            )
-                            v
-                        } else {
-                            mutableListOf(newTuple)
-                        }
-                    }
-                    accessRulesBySecondNtOnRhs.compute(rhsHashList[1]) { _, v ->
-                        if (v != null) {
-                            v.add(Tuple3(lhsHash, rhsHashList, ruleProbability))
-                            v
-                        } else {
-                            mutableListOf(newTuple)
-                        }
-                    }
+                    accessRulesByFirstNtOnRhs.addTuple(rhsHashList[0], newTuple)
+                    accessRulesBySecondNtOnRhs.addTuple(rhsHashList[1], newTuple)
                 }
                 1 -> {
                     if (!rule.lexical) {
-                        accessChainRulesByNtRhs.compute(rhsHashList[0]) { _, v ->
-                            if (v != null) {
-                                v.add(newTuple)
-                                v
-                            } else {
-                                mutableListOf(newTuple)
-                            }
-                        }
+                        accessChainRulesByNtRhs.addTuple(rhsHashList[0], newTuple)
                         numberOfTerminals += 1
                     } else {
-                        accessRulesByTerminal.compute(rhsHashList[0]) { _, v ->
-                            if (v != null) {
-                                v.add(newTuple)
-                                v
-                            } else {
-                                mutableListOf(newTuple)
-                            }
-                        }
+                        accessRulesByTerminal.addTuple(rhsHashList[0], newTuple)
                     }
                 }
                 else -> {
@@ -132,6 +102,105 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             index + 1 - numberOfTerminals
         )
     }
+
+    fun <K, V> MutableMap<K, MutableList<V>>.addTuple(key: K, tuple: V) {
+        this.compute(key) { _, v ->
+            if (v != null) {
+                v.add(
+                    tuple
+                )
+                v
+            } else {
+                mutableListOf(tuple)
+            }
+        }
+    }
+
+    fun inside(
+        accessRulesFromLhsNonLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
+        accessRulesFromLhsLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>
+    ): MutableMap<String, Double> {
+
+        val ins = mutableMapOf<String, Double>()
+        accessRulesFromLhsLexical.forEach { (label, list) ->
+            ins[label] = list.maxOf { it.second }
+        }
+        //Verwendet man pro Iteration die alten Werte, oder schon die neuen?
+        for (i in 0..20){
+            accessRulesFromLhsNonLexical.forEach { (label, list) ->
+                ins.compute(label) { _, oldIns ->
+                    val whk = list.maxOf { (rule, probability) ->
+                        rule.rhs.fold(probability) { acc, s ->
+                            acc * ins.getOrDefault(s, 0.0)
+                        }
+                    }
+                    maxOf(oldIns ?: 0.0, whk)
+                }
+            }
+        }
+        return ins
+    }
+
+    fun outside(
+        insideValues: MutableMap<String, Double>,
+        accessRulesFromRhs: MutableMap<String, MutableList<Pair<Rule, Double>>>,
+        accessRulesFromLhsLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
+        accessRulesFromLhsNonLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
+        nonTerminals: MutableSet<String>
+    ): MutableMap<String, Double> {
+        val out = mutableMapOf<String, Double>()
+        nonTerminals.forEach { out[it] = if (it == initial) 1.0 else 0.0 }
+        //TODO Statt nonTerminals accesRulesFromLhs verwenden
+
+        //Verwendet man pro Iteration die alten Werte, oder schon die neuen?
+        for (i in 0..20){
+            nonTerminals.forEach { nonTerminal ->
+                out.compute(nonTerminal) { _, oldOut ->
+                    val max = accessRulesFromRhs[nonTerminal]?.maxOf { (rule, probability) ->
+                        val wht = rule.rhs.fold(1.0) { acc, label ->
+                            if (label == nonTerminal) {
+                                acc
+                            } else {
+                                acc * insideValues.getOrDefault(label, 0.0)
+                            }
+                        }
+                        (out[rule.lhs] ?: 0.0) * probability * wht
+                    }
+                   maxOf(oldOut ?: 0.0, max ?: 0.0)
+                }
+            }
+        }
+        return out
+    }
+
+    fun viterbiOutsideScore(): MutableMap<String, Double> {
+        val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesFromRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val nonTerminals = mutableSetOf<String>()
+
+        pRules.forEach { (rule, ruleProbability) ->
+            if (rule.lexical) {
+                accessRulesFromLhsLexical.addTuple(rule.lhs, rule to ruleProbability)
+            } else {
+                accessRulesFromLhsNonLexical.addTuple(rule.lhs, rule to ruleProbability)
+                rule.rhs.forEach {
+                    accessRulesFromRhs.addTuple(it, rule to ruleProbability)
+                    nonTerminals.add(it)
+                }
+            }
+            nonTerminals.add(rule.lhs)
+        }
+        val insideValues = inside(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
+        return outside(
+            insideValues,
+            accessRulesFromRhs,
+            accessRulesFromLhsLexical,
+            accessRulesFromLhsNonLexical,
+            nonTerminals
+        )
+    }
+
 
     override fun toString(): String {
         return pRules.map { (rule, p) -> rule.toString() + " " + p.format(15) }.joinToString("\n")

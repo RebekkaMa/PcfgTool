@@ -1,7 +1,7 @@
 package Util
 
 
-fun <T, A : MutableCollection<T>> Iterable<T>.getWindow(buffer : A , startIndex : Int = 0, limit: Int = -1, transform: ((T) -> A)? = null): A {
+fun <T, A : MutableCollection<T>> Iterable<T>.getWindow(buffer : A, startIndex : Int = 0, limit: Int = -1, transform: ((T) -> A)? = null): A {
     var count = 0
     for (element in this) {
         if (startIndex + 1 > ++count) continue
