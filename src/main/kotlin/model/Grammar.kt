@@ -1,12 +1,10 @@
 package model
 
+import Util.format
 import com.github.h0tk3y.betterParse.utils.Tuple3
 import com.github.h0tk3y.betterParse.utils.Tuple7
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.text.DecimalFormat
-import java.text.NumberFormat
-import java.util.*
 
 class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
@@ -28,16 +26,16 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         }
     }
 
-    fun getTerminals(): List<String> {
+    fun getTerminalsAsStrings(): List<String> {
         return pRules.keys.filter { it.lexical }.map { it.rhs.first() }.distinct()
     }
 
-    fun getLexicon(): List<String> {
+    fun getLexiconAsStrings(): List<String> {
         return pRules.filterKeys { it.lexical }
             .map { (rule, p) -> rule.lhs + " " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
 
-    fun getRules(): List<String> {
+    fun getRulesAsStrings(): List<String> {
         return pRules.filterKeys { !it.lexical }
             .map { (rule, p) -> rule.lhs + " -> " + rule.rhs.joinToString(" ") + " " + p.format(15) }
     }
@@ -121,41 +119,43 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         accessRulesFromLhsLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>
     ): MutableMap<String, Double> {
 
-        val ins = mutableMapOf<String, Double>()
+        val insideValues = mutableMapOf<String, Double>()
         accessRulesFromLhsLexical.forEach { (label, list) ->
-            ins[label] = list.maxOf { it.second }
+            insideValues[label] = list.maxOf { it.second }
         }
         //Verwendet man pro Iteration die alten Werte, oder schon die neuen?
-        for (i in 0..20){
+        var converged :Boolean
+        do {
+            converged = true
             accessRulesFromLhsNonLexical.forEach { (label, list) ->
-                ins.compute(label) { _, oldIns ->
+                insideValues.compute(label) { _, oldInValue ->
                     val whk = list.maxOf { (rule, probability) ->
                         rule.rhs.fold(probability) { acc, s ->
-                            acc * ins.getOrDefault(s, 0.0)
+                            acc * insideValues.getOrDefault(s, 0.0)
                         }
                     }
-                    maxOf(oldIns ?: 0.0, whk)
+                    val newInValue = maxOf(oldInValue ?: 0.0, whk)
+                    converged = newInValue == oldInValue  && converged
+                    newInValue
                 }
             }
-        }
-        return ins
+        } while (!converged)
+        return insideValues
     }
 
     fun outside(
         insideValues: MutableMap<String, Double>,
         accessRulesFromRhs: MutableMap<String, MutableList<Pair<Rule, Double>>>,
-        accessRulesFromLhsLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
-        accessRulesFromLhsNonLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
         nonTerminals: MutableSet<String>
     ): MutableMap<String, Double> {
-        val out = mutableMapOf<String, Double>()
-        nonTerminals.forEach { out[it] = if (it == initial) 1.0 else 0.0 }
-        //TODO Statt nonTerminals accesRulesFromLhs verwenden
-
-        //Verwendet man pro Iteration die alten Werte, oder schon die neuen?
-        for (i in 0..20){
-            nonTerminals.forEach { nonTerminal ->
-                out.compute(nonTerminal) { _, oldOut ->
+        val outsideValues = mutableMapOf<String, Double>()
+        outsideValues[initial] = 1.0
+        val nonTerminalsWithoutInitial = nonTerminals.minus(initial)
+        var converged :Boolean
+        do {
+            converged = true
+            nonTerminalsWithoutInitial.forEach { nonTerminal ->
+                outsideValues.compute(nonTerminal) { _, oldOutValue ->
                     val max = accessRulesFromRhs[nonTerminal]?.maxOf { (rule, probability) ->
                         val wht = rule.rhs.fold(1.0) { acc, label ->
                             if (label == nonTerminal) {
@@ -164,52 +164,43 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                                 acc * insideValues.getOrDefault(label, 0.0)
                             }
                         }
-                        (out[rule.lhs] ?: 0.0) * probability * wht
+                        (outsideValues[rule.lhs] ?: 0.0) * probability * wht
                     }
-                   maxOf(oldOut ?: 0.0, max ?: 0.0)
+                    val newOutValue = maxOf(oldOutValue ?: 0.0, max ?: 0.0)
+                    converged = newOutValue == oldOutValue && converged
+                    newOutValue
                 }
             }
-        }
-        return out
-    }
-
-    fun viterbiOutsideScore(): MutableMap<String, Double> {
-        val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val accessRulesFromRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-        val nonTerminals = mutableSetOf<String>()
-
-        pRules.forEach { (rule, ruleProbability) ->
-            if (rule.lexical) {
-                accessRulesFromLhsLexical.addTuple(rule.lhs, rule to ruleProbability)
-            } else {
-                accessRulesFromLhsNonLexical.addTuple(rule.lhs, rule to ruleProbability)
-                rule.rhs.forEach {
-                    accessRulesFromRhs.addTuple(it, rule to ruleProbability)
-                    nonTerminals.add(it)
-                }
-            }
-            nonTerminals.add(rule.lhs)
-        }
-        val insideValues = inside(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
-        return outside(
-            insideValues,
-            accessRulesFromRhs,
-            accessRulesFromLhsLexical,
-            accessRulesFromLhsNonLexical,
-            nonTerminals
-        )
-    }
-
-
-    override fun toString(): String {
-        return pRules.map { (rule, p) -> rule.toString() + " " + p.format(15) }.joinToString("\n")
-    }
+        } while (!converged)
+    return outsideValues
 }
 
-fun Double.format(fracDigits: Int): String {
-    val nf = NumberFormat.getNumberInstance(Locale.UK)
-    val df = nf as DecimalFormat
-    df.maximumFractionDigits = fracDigits
-    return df.format(this)
+fun viterbiOutsideScore(): MutableMap<String, Double> {
+    val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+    val accessRulesFromRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+    val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+    val nonTerminals = mutableSetOf<String>()
+
+    pRules.forEach { (rule, ruleProbability) ->
+        if (rule.lexical) {
+            accessRulesFromLhsLexical.addTuple(rule.lhs, rule to ruleProbability)
+        } else {
+            accessRulesFromLhsNonLexical.addTuple(rule.lhs, rule to ruleProbability)
+            rule.rhs.forEach {
+                accessRulesFromRhs.addTuple(it, rule to ruleProbability)
+                nonTerminals.add(it)
+            }
+        }
+        nonTerminals.add(rule.lhs)
+    }
+    val insideValues = inside(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
+    return outside(
+        insideValues,
+        accessRulesFromRhs,
+        nonTerminals
+    )
+}
+override fun toString(): String {
+    return pRules.map { (rule, p) -> rule.toString() + " " + p.format(15) }.joinToString("\n")
+}
 }

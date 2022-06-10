@@ -10,10 +10,11 @@ class DeductiveParser(
     private val accessRulesByFirstNtOnRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
+    private val outsideScores: Map<Int, Double>?,
     initialArraySize: Int = 100_000,
 ) {
 
-    private var queue = PriorityQueue(100, compareBy<Item> {  it.wt }.reversed())
+    private var queue = PriorityQueue(100, compareBy<Item> {  it.wt * (outsideScores?.get(it.nt) ?: 1.0)}.reversed())
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =

@@ -1,5 +1,9 @@
 package Util
 
+import java.text.DecimalFormat
+import java.text.NumberFormat
+import java.util.*
+
 
 fun <T, A : MutableCollection<T>> Iterable<T>.getWindow(buffer : A, startIndex : Int = 0, limit: Int = -1, transform: ((T) -> A)? = null): A {
     var count = 0
@@ -26,6 +30,13 @@ fun <T> Iterable<T>.joinToStringWithStartAndEnd(separator: CharSequence = ", ", 
     }
     buffer.append(postfix)
     return buffer.toString()
+}
+
+fun Double.format(fracDigits: Int): String {
+    val nf = NumberFormat.getNumberInstance(Locale.UK)
+    val df = nf as DecimalFormat
+    df.maximumFractionDigits = fracDigits
+    return df.format(this)
 }
 
 //fun <T> Iterable<T>.joinToString(separator: CharSequence = ", ", prefix: String = "", postfix: String = "", startIndex : Int = 0, limit: Int = -1, transform: ((T) -> String)? = null): String {

@@ -1,9 +1,10 @@
+
+import Util.format
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import model.Grammar
 import model.Rule
-import model.format
 import kotlin.test.Test
 
 class GrammarTest {
@@ -98,7 +99,7 @@ class GrammarTest {
                 rule11
             )
         )
-        grammar.getLexicon() shouldBe listOf(
+        grammar.getLexiconAsStrings() shouldBe listOf(
             "NP John 0.333333333333333",
             "V hit 1",
             "DET the 1",
@@ -126,7 +127,7 @@ class GrammarTest {
                 rule11
             )
         )
-        grammar.getTerminals() shouldBe listOf("John", "hit", "the", "ball", "ground")
+        grammar.getTerminalsAsStrings() shouldBe listOf("John", "hit", "the", "ball", "ground")
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -148,7 +149,7 @@ class GrammarTest {
             )
         )
 
-        grammar.getRules() shouldBe listOf("S -> NP VP 1", "VP -> V NP 1", "NP -> DET N 0.666666666666667")
+        grammar.getRulesAsStrings() shouldBe listOf("S -> NP VP 1", "VP -> V NP 1", "NP -> DET N 0.666666666666667")
     }
 
 }

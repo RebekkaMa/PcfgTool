@@ -1,3 +1,4 @@
+import Util.format
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
@@ -118,9 +119,7 @@ class Parse : CliktCommand() {
         eagerOption("-k", "--kbest") {
             throw ProgramResult(22)
         }
-        eagerOption("-a", "--astar") {
-            throw ProgramResult(22)
-        }
+
     }
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
@@ -128,6 +127,7 @@ class Parse : CliktCommand() {
     val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).check("value must be greater than null") { it > 0 }
     val unking by option("-u", "--unking").flag(default = false)
     val smoothing by option("-s", "--smoothing").flag(default = false)
+    val astar by option("-a", "--astar").flag(default = false)
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -144,7 +144,8 @@ class Parse : CliktCommand() {
         accessRulesByTerminal: MutableMap<Int, MutableList<Tuple3<Int, IntArray, Double>>>,
         lexiconByInt: Map<Int, String>,
         lexiconByString: Map<String, Int>,
-        numberNonTerminals: Int
+        numberNonTerminals: Int,
+        outsideScores: Map<Int, Double>?
     ) =
         launch {
             for (line in channel) {
@@ -162,6 +163,7 @@ class Parse : CliktCommand() {
                     accessRulesByFirstNtOnRhs,
                     accessChainRulesByNtRhs,
                     accessRulesByTerminal,
+                    outsideScores,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
 
@@ -220,9 +222,11 @@ class Parse : CliktCommand() {
 
                 val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString, numberNonTerminals) = grammar.getGrammarDataStructuresForParsing()
 
+                val outsideScores = if (astar) grammar.viterbiOutsideScore().mapKeys { lexiconByString[it.key] ?: throw Exception("Internal Error: Missing Nonterminal in OutsideScoreMap") } else null
+
                 val producer = produceString()
 
-                val parser = launch {
+                launch {
                     repeat(numberOfParallelParsers) {
                         launchProcessor(
                             producer,
@@ -233,7 +237,8 @@ class Parse : CliktCommand() {
                             accessRulesByTerminal,
                             lexiconByInt,
                             lexiconByString,
-                            numberNonTerminals
+                            numberNonTerminals,
+                            outsideScores
                         )
 
                     }
@@ -598,7 +603,7 @@ class Outside : CliktCommand() {
                 val outSideWeights = grammar.viterbiOutsideScore()
                 if (outputFileName.isNullOrEmpty()) {
                     outSideWeights.forEach {
-                        echo(it.key + " " + it.value)
+                        echo(it.key + " " + it.value.format(15))
                     }
                 } else {
                     writeOutsideScoreToFiles(outSideWeights, outputFileName!!)
@@ -610,7 +615,6 @@ class Outside : CliktCommand() {
             System.err.println(e.stackTrace)
             throw ProgramResult(1)
         }
-        throw ProgramResult(22)
     }
 }
 
