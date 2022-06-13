@@ -9,9 +9,9 @@ fun replaceTokensByInts(
     return tokensAsString.mapIndexed { index, word ->
         val wordAsInt = lexiconByString[word]
         return@mapIndexed when {
-            wordAsInt != null -> wordAsInt
+            wordAsInt != null -> wordAsInt //TODO
             smoothing -> lexiconByString[getSignature(word, index + 1)] ?: -1
-            unking -> lexiconByString["UNK"] ?: -1
+            unking -> lexiconByString["UNK"] ?: -1 //TODO ist UNK in Lexicon?
             else -> -1
         }
     }.toIntArray()

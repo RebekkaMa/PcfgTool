@@ -11,10 +11,12 @@ class DeductiveParser(
     private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val outsideScores: Map<Int, Double>?,
+    private val thresholdBeam: Double?,
+    private val rankBeam: Int?,
     initialArraySize: Int = 100_000,
 ) {
 
-    private var queue = PriorityQueue(100, compareBy<Item> {  it.wt * (outsideScores?.get(it.nt) ?: 1.0)}.reversed())
+    private var queue = PriorityQueue(rankBeam ?: 100, compareBy<Item> {  it.wt * (outsideScores?.get(it.nt) ?: 1.0)}.reversed())
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =
@@ -31,6 +33,7 @@ class DeductiveParser(
                 findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
                 findRulesAddItemsToQueueChain(selectedItem)
+                prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
             }
             return sentence to null
     }
@@ -139,14 +142,13 @@ class DeductiveParser(
         }
     }
 
-    fun prune(thresholdBeam : Int?, rankBeam : Int?){
+    fun prune(thresholdBeam : Double?, rankBeam : Int?){
         if (thresholdBeam != null){
             val m = queue.peek().wt
-            queue.filter { item -> item.wt > thresholdBeam * m }
+            queue.retainAll {  item -> item.wt > thresholdBeam * m }
         }
         if (rankBeam != null){
             queue = queue.getWindow(PriorityQueue(rankBeam), limit =  rankBeam)
-            //queue.filterIndexed{ index, _ ->  index < rankBeam} //TODO Was ist schneller?
             }
         }
     }

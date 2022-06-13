@@ -1,3 +1,4 @@
+
 import Util.format
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
@@ -6,6 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.double
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
@@ -109,17 +111,9 @@ class Induce : CliktCommand() {
 
 class Parse : CliktCommand() {
     init {
-
-        eagerOption("-t", "--threshold-beam") {
-            throw ProgramResult(22)
-        }
-        eagerOption("-r", "--rank-beam") {
-            throw ProgramResult(22)
-        }
         eagerOption("-k", "--kbest") {
             throw ProgramResult(22)
         }
-
     }
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
@@ -131,6 +125,9 @@ class Parse : CliktCommand() {
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
+
+    private val thresholdBeam by option("-t", "--threshold-beam").double().check { it in 0.0..1.0 }
+    private val rankBeam by option("-r", "--rank-beam").int().check {it in 1..Int.MAX_VALUE}
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
     private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
@@ -145,7 +142,7 @@ class Parse : CliktCommand() {
         lexiconByInt: Map<Int, String>,
         lexiconByString: Map<String, Int>,
         numberNonTerminals: Int,
-        outsideScores: Map<Int, Double>?
+        outsideScores: Map<Int, Double>?,
     ) =
         launch {
             for (line in channel) {
@@ -164,6 +161,8 @@ class Parse : CliktCommand() {
                     accessChainRulesByNtRhs,
                     accessRulesByTerminal,
                     outsideScores,
+                    thresholdBeam = thresholdBeam,
+                    rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
 
@@ -421,38 +420,6 @@ class Unk : CliktCommand() {
         val line = readlnOrNull()
         if (line.isNullOrEmpty()) null else line
     }
-    private val treeChannel = Channel<Pair<Int, Tree>>(Channel.UNLIMITED)
-    private val treeWithUnkChannel = Channel<Pair<Int, Tree>>(Channel.UNLIMITED)
-    private val treeAsStringChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
-
-    private fun CoroutineScope.transformExpressionToTreeJob(
-        channel: ReceiveChannel<Pair<Int, String>>
-    ) =
-        launch {
-            val expressionEvaluator = ExpressionEvaluator()
-            for (line in channel) {
-                treeChannel.send(line.first to expressionEvaluator.parseToEnd(line.second))
-            }
-        }
-
-    private fun CoroutineScope.transformTreeToTreeWithUnkJob(
-        wordcount: MutableMap<String, Int>,
-        threshold: Int,
-    ) =
-        launch {
-            val expressionEvaluator = ExpressionEvaluator()
-            for (tree in treeWithUnkChannel) {
-                replaceRareWordsInTree(smooth = false, wordcount, threshold, tree.second)
-                treeAsStringChannel.send(tree.first to tree.second.toString())
-            }
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
-        generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
-            send(Pair(i + 1, sentence))
-        }
-    }
 
     override fun run() {
         try {
@@ -467,59 +434,6 @@ class Unk : CliktCommand() {
                     echo(it)
                 }
 
-
-
-//                val producer = produceString()
-//
-//                launch {
-//                    repeat(numberOfParallelParsers) {
-//                        transformExpressionToTreeJob(
-//                            producer
-//                        )
-//                    }
-//                }.invokeOnCompletion {
-//                    treeChannel.close()
-//                }
-//                val job = launch(start = CoroutineStart.LAZY) {
-//                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
-//                    var i = 1
-//                    for (parseResult in treeAsStringChannel) {
-//                        if (parseResult.first == i) {
-//                            echo(parseResult.second)
-//                            i++
-//                            while ((queue.peek()?.first ?: 0) == i) {
-//                                echo(queue.poll().second)
-//                                i++
-//                            }
-//                        } else {
-//                            queue.add(parseResult)
-//                        }
-//                    }
-//                }
-//
-//                launch {
-//                    val trees = mutableMapOf<Int,Tree>()
-//                    val treeList = mutableListOf<Tree>()
-//                    for (tree in treeChannel) {
-//                        trees[tree.first] = tree.second
-//                        treeList.add(tree.second)
-//                    }
-//                    val wordcount = Unking().getTerminalCountFromCorpus(treeList)
-//                    trees.forEach { (i, tree) ->
-//                        treeWithUnkChannel.send(i to tree)
-//                    }
-//                    launch {
-//                        repeat(numberOfParallelParsers){
-//                            transformTreeToTreeWithUnkJob(wordcount, threshold)
-//                        }
-//                    }.invokeOnCompletion {
-//                        treeAsStringChannel.close()
-//                    }
-//                    job.start()
-//                }
-
-
-
             }
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
@@ -532,8 +446,6 @@ class Unk : CliktCommand() {
 
 class Smooth : CliktCommand() {
     val threshold by option("-t", "--threshold").int().default(3)
-    private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
-        .validate { it > 0 }
 
     private val readNotEmptyLnOrNull = {
         val line = readlnOrNull()
@@ -567,12 +479,6 @@ class Outside : CliktCommand() {
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
     private val outputFileName by argument(name = "grammar").optional()
-
-
-    private val readNotEmptyLnOrNull = {
-        val line = readlnOrNull()
-        if (line.isNullOrEmpty()) null else line
-    }
 
 
     override fun run() {
