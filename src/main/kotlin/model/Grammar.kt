@@ -101,15 +101,15 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         )
     }
 
-    fun <K, V> MutableMap<K, MutableList<V>>.addTuple(key: K, tuple: V) {
+    fun <K, V> MutableMap<K, MutableList<V>>.addTuple(key: K, item: V) {
         this.compute(key) { _, v ->
             if (v != null) {
                 v.add(
-                    tuple
+                    item
                 )
                 v
             } else {
-                mutableListOf(tuple)
+                mutableListOf(item)
             }
         }
     }
@@ -123,7 +123,6 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         accessRulesFromLhsLexical.forEach { (label, list) ->
             insideValues[label] = list.maxOf { it.second }
         }
-        //Verwendet man pro Iteration die alten Werte, oder schon die neuen?
         var converged :Boolean
         do {
             converged = true
@@ -145,7 +144,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
     fun outside(
         insideValues: MutableMap<String, Double>,
-        accessRulesFromRhs: MutableMap<String, MutableList<Pair<Rule, Double>>>,
+        accessRulesFromRhs: MutableMap<String, MutableList<Tuple3<String, List<String>, Double>>>,
         nonTerminals: MutableSet<String>
     ): MutableMap<String, Double> {
         val outsideValues = mutableMapOf<String, Double>()
@@ -156,15 +155,8 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             converged = true
             nonTerminalsWithoutInitial.forEach { nonTerminal ->
                 outsideValues.compute(nonTerminal) { _, oldOutValue ->
-                    val max = accessRulesFromRhs[nonTerminal]?.maxOf { (rule, probability) ->
-                        val wht = rule.rhs.fold(1.0) { acc, label ->
-                            if (label == nonTerminal) {
-                                acc
-                            } else {
-                                acc * insideValues.getOrDefault(label, 0.0)
-                            }
-                        }
-                        (outsideValues[rule.lhs] ?: 0.0) * probability * wht
+                    val max = accessRulesFromRhs[nonTerminal]?.maxOf { (lhs, rhs, probability) ->
+                        (outsideValues[lhs] ?: 0.0) * probability * (rhs.firstOrNull()?.let { insideValues.getOrDefault(it,0.0) } ?: 1.0)
                     }
                     val newOutValue = maxOf(oldOutValue ?: 0.0, max ?: 0.0)
                     converged = newOutValue == oldOutValue && converged
@@ -173,11 +165,11 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             }
         } while (!converged)
     return outsideValues
-}
+} //TODO Immer nur binarisierte Grammatiken?
 
 fun viterbiOutsideScore(): MutableMap<String, Double> {
     val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-    val accessRulesFromRhs = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+    val accessRulesFromRhs = mutableMapOf<String, MutableList<Tuple3<String,List<String>, Double>>>()
     val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
     val nonTerminals = mutableSetOf<String>()
 
@@ -187,7 +179,7 @@ fun viterbiOutsideScore(): MutableMap<String, Double> {
         } else {
             accessRulesFromLhsNonLexical.addTuple(rule.lhs, rule to ruleProbability)
             rule.rhs.forEach {
-                accessRulesFromRhs.addTuple(it, rule to ruleProbability)
+                accessRulesFromRhs.addTuple(it, Tuple3(rule.lhs, rule.rhs.minus(it), ruleProbability))
                 nonTerminals.add(it)
             }
         }

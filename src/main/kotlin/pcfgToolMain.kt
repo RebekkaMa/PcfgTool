@@ -1,4 +1,3 @@
-
 import Util.format
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
@@ -15,6 +14,7 @@ import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.h0tk3y.betterParse.utils.Tuple3
 import evaluators.ExpressionEvaluator
 import evaluators.LexiconExpressionEvaluator
+import evaluators.OutsideScoreEvaluator
 import evaluators.RulesExpressionEvaluator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -118,16 +118,17 @@ class Parse : CliktCommand() {
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
-    val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2).check("value must be greater than null") { it > 0 }
+    val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2)
+        .check("value must be greater than null") { it > 0 }
     val unking by option("-u", "--unking").flag(default = false)
     val smoothing by option("-s", "--smoothing").flag(default = false)
-    val astar by option("-a", "--astar").flag(default = false)
+    val astar by option("-a", "--astar").file(mustExist = true)
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
 
     private val thresholdBeam by option("-t", "--threshold-beam").double().check { it in 0.0..1.0 }
-    private val rankBeam by option("-r", "--rank-beam").int().check {it in 1..Int.MAX_VALUE}
+    private val rankBeam by option("-r", "--rank-beam").int().check { it in 1..Int.MAX_VALUE }
 
     private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
     private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
@@ -147,13 +148,13 @@ class Parse : CliktCommand() {
         launch {
             for (line in channel) {
                 val tokensAsString = line.second.split(" ")
-                val tokensAsInt = replaceTokensByInts(lexiconByString, tokensAsString,unking,smoothing)
+                val tokensAsInt = replaceTokensByInts(lexiconByString, tokensAsString, unking, smoothing)
 
                 if (-1 in tokensAsInt) {
                     outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
-
+                val start = System.currentTimeMillis()
                 val result = DeductiveParser(
                     lexiconByString[initial] ?: 0,
                     accessRulesBySecondNtOnRhs,
@@ -165,7 +166,7 @@ class Parse : CliktCommand() {
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
-
+                println(System.currentTimeMillis() - start)
                 if (result.second != null) {
                     outputChannel.send(
                         line.first to result.second!!.getParseTreeAsString(
@@ -221,7 +222,23 @@ class Parse : CliktCommand() {
 
                 val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString, numberNonTerminals) = grammar.getGrammarDataStructuresForParsing()
 
-                val outsideScores = if (astar) grammar.viterbiOutsideScore().mapKeys { lexiconByString[it.key] ?: throw Exception("Internal Error: Missing Nonterminal in OutsideScoreMap") } else null
+                val outsideScoreEvaluator = OutsideScoreEvaluator()
+                var outsideScores: MutableMap<Int, Double>? = null
+
+                try {
+                    if (astar != null) {
+                        outsideScores = mutableMapOf()
+                        astar?.forEachLine {
+                            val result = outsideScoreEvaluator.parseToEnd(it)
+                            outsideScores[lexiconByString[result.first]
+                                ?: throw Exception("Missing Nonterminal in Outside Score File")] =
+                                result.second
+                        }
+                    }
+                } catch (e: ParseException) {
+                    System.err.println("Ungültige Eingabe! Bitte geben Sie Outside Scores im richtigen Format ein!")
+                    exitProcess(5)
+                }
 
                 val producer = produceString()
 
@@ -274,7 +291,8 @@ class Parse : CliktCommand() {
 }
 
 class Binarise : CliktCommand() {
-    val horizontal by option("-h", "--horizontal").int().default(999).check("value must be greater than null") { it > 0 }
+    val horizontal by option("-h", "--horizontal").int().default(999)
+        .check("value must be greater than null") { it > 0 }
     val vertical by option("-v", "--vertical").int().default(1).check("value must be greater than null") { it > 0 }
     private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
         .validate { it > 0 }
@@ -292,7 +310,9 @@ class Binarise : CliktCommand() {
         launch {
             val expressionEvaluator = ExpressionEvaluator()
             for (line in channel) {
-                outputChannel.send(line.first to expressionEvaluator.parseToEnd(line.second).binarise(vertical, horizontal).toString())
+                outputChannel.send(
+                    line.first to expressionEvaluator.parseToEnd(line.second).binarise(vertical, horizontal).toString()
+                )
             }
         }
 
@@ -425,8 +445,8 @@ class Unk : CliktCommand() {
         try {
             runBlocking(Dispatchers.Default) {
                 val expressionEvaluator = ExpressionEvaluator()
-                val trees = generateSequence(readNotEmptyLnOrNull).map{
-                    sentence -> expressionEvaluator.parseToEnd(sentence)
+                val trees = generateSequence(readNotEmptyLnOrNull).map { sentence ->
+                    expressionEvaluator.parseToEnd(sentence)
                 }.toList()
                 val wordcount = getTerminalCountFromCorpus(trees)
                 trees.onEach {
@@ -456,14 +476,21 @@ class Smooth : CliktCommand() {
         try {
             runBlocking(Dispatchers.Default) {
                 val expressionEvaluator = ExpressionEvaluator()
-                val trees = generateSequence(readNotEmptyLnOrNull).map{
-                        sentence -> expressionEvaluator.parseToEnd(sentence)
+                val trees = generateSequence(readNotEmptyLnOrNull).map { sentence ->
+                    expressionEvaluator.parseToEnd(sentence)
                 }.toList()
                 val wordcount = getTerminalCountFromCorpus(trees)
-                trees.onEach {
-                    replaceRareWordsInTree(smooth = true, wordcount, threshold, it)
-                    echo(it)
+
+                val smoothedTree = trees.map {
+                    async { //TODO
+                        replaceRareWordsInTree(smooth = true, wordcount, threshold, it)
+                    }
                 }
+
+                smoothedTree.forEach {
+                    echo(it.await())
+                }
+
             }
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
@@ -515,6 +542,9 @@ class Outside : CliktCommand() {
                     writeOutsideScoreToFiles(outSideWeights, outputFileName!!)
                 }
             }
+        } catch (e: ParseException) {
+            System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
+            throw ProgramResult(5)
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
             System.err.println(e.message)

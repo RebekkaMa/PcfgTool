@@ -29,7 +29,7 @@ fun getTerminalCountFromCorpus(corpus: List<Tree>): MutableMap<String, Int> {
     return wordcount
 }
 
-fun replaceRareWordsInTree(smooth: Boolean, wordcount: MutableMap<String, Int>, threshold: Int, tree: Tree) {
+fun replaceRareWordsInTree(smooth: Boolean, wordcount: MutableMap<String, Int>, threshold: Int, tree: Tree): Tree {
     val newLeaves = mutableListOf<String>()
     tree.getLeaves().forEachIndexed { index, leave ->
         val newLeave = when {
@@ -43,6 +43,7 @@ fun replaceRareWordsInTree(smooth: Boolean, wordcount: MutableMap<String, Int>, 
         newLeaves.add(newLeave)
     }
     tree.setLeaves(newLeaves)
+    return tree
 }
 
 fun getSignature(word: String, positionInSentence: Int): String {
