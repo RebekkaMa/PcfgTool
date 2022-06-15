@@ -144,8 +144,8 @@ class DeductiveParser(
 
     fun prune(thresholdBeam : Double?, rankBeam : Int?){
         if (thresholdBeam != null){
-            val m = queue.peek().wt
-            queue.retainAll {  item -> item.wt > thresholdBeam * m }
+           // val m = queue.peek().wt
+           // queue.retainAll {  item -> item.wt > thresholdBeam * m }
         }
         if (rankBeam != null){
             queue = queue.getWindow(PriorityQueue(rankBeam), limit =  rankBeam)

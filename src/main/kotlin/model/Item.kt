@@ -1,6 +1,6 @@
 package model
 
-class Item(val i: Int, val nt: Int, val j: Int, var wt: Double, var bt: List<Item>?){
+class Item(val i: Int, val nt: Int, val j: Int, var wt: Double, var bt: List<Item>?) : Comparable<Item>{
 
     fun getParseTreeAsString(sentence : List<String>, lexicon: Map<Int, String>): String {
         var i = -1
@@ -13,4 +13,8 @@ class Item(val i: Int, val nt: Int, val j: Int, var wt: Double, var bt: List<Ite
         }
         return getPartOfTree(this)
     }
+
+    override fun compareTo(other: Item): Int =
+        compareValuesBy(this, other) { it.wt }
+
 }
