@@ -1,10 +1,8 @@
-
+package model
 import Util.format
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import model.Grammar
-import model.Rule
 import kotlin.test.Test
 
 class GrammarTest {

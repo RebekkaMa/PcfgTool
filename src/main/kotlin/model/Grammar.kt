@@ -120,15 +120,15 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
     ): MutableMap<String, Double> {
 
         val insideValues = mutableMapOf<String, Double>()
-        accessRulesFromLhsLexical.forEach { (label, list) ->
-            insideValues[label] = list.maxOf { it.second }
+        accessRulesFromLhsLexical.forEach { (lhs, rules) ->
+            insideValues[lhs] = rules.maxOf { it.second }
         }
         var converged :Boolean
         do {
             converged = true
-            accessRulesFromLhsNonLexical.forEach { (label, list) ->
-                insideValues.compute(label) { _, oldInValue ->
-                    val whk = list.maxOf { (rule, probability) ->
+            accessRulesFromLhsNonLexical.forEach { (lhs, rules) ->
+                insideValues.compute(lhs) { _, oldInValue ->
+                    val whk = rules.maxOf { (rule, probability) ->
                         rule.rhs.fold(probability) { acc, s ->
                             acc * insideValues.getOrDefault(s, 0.0)
                         }
@@ -141,6 +141,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         } while (!converged)
         return insideValues
     }
+
 
     fun outside(
         insideValues: MutableMap<String, Double>,

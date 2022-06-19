@@ -166,7 +166,7 @@ class Parse : CliktCommand() {
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
-                println(System.currentTimeMillis() - start)
+                //println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
                 if (result.second != null) {
                     outputChannel.send(
                         line.first to result.second!!.getParseTreeAsString(
@@ -263,6 +263,7 @@ class Parse : CliktCommand() {
                 }
 
                 launch {
+                    val start = System.currentTimeMillis()
                     val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
                     var i = 1
                     for (parseResult in outputChannel) {
@@ -277,6 +278,7 @@ class Parse : CliktCommand() {
                             queue.add(parseResult)
                         }
                     }
+                    //println("Gesamtzeit: " + (System.currentTimeMillis() - start))
                 }
             }
         } catch (e: ParseException) {

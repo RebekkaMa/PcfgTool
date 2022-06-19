@@ -1,8 +1,7 @@
 package model
 
-import Util.getWindow
 import com.github.h0tk3y.betterParse.utils.Tuple3
-import java.util.*
+import org.jetbrains.kotlin.com.google.common.collect.MinMaxPriorityQueue
 
 class DeductiveParser(
     private val initial: Int,
@@ -15,8 +14,8 @@ class DeductiveParser(
     private val rankBeam: Int?,
     initialArraySize: Int = 100_000,
 ) {
-
-    private var queue = PriorityQueue(rankBeam ?: 100, compareBy<Item> {  it.wt * (outsideScores?.get(it.nt) ?: 1.0)}.reversed())
+    private var queue =
+        MinMaxPriorityQueue.orderedBy(compareBy<Item> { it.wt }).expectedSize(rankBeam ?: 100).create<Item>()
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =
@@ -24,24 +23,27 @@ class DeductiveParser(
 
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
         fillQueueWithItemsFromLexicalRules(sentence)
-            while (queue.isNotEmpty()) {
-                val selectedItem: Item = queue.poll()
-                if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size){
-                    return sentence to selectedItem
-                }
-                if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
-                findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
-                findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
-                findRulesAddItemsToQueueChain(selectedItem)
-                prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
+        while (queue.isNotEmpty()) {
+            val selectedItem: Item = queue.pollLast()
+            selectedItem.wt =
+                if (outsideScores.isNullOrEmpty()) selectedItem.wt else selectedItem.wt / (outsideScores[selectedItem.nt]
+                    ?: 1.0)
+            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
+                return sentence to selectedItem
             }
-            return sentence to null
+            if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
+            findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
+            findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
+            findRulesAddItemsToQueueChain(selectedItem)
+            //prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
+        }
+        return sentence to null
     }
 
     fun fillQueueWithItemsFromLexicalRules(sentence: IntArray) {
         sentence.forEachIndexed { index, word ->
             accessRulesByTerminal[word]?.forEach { (lhs, rhs, ruleProbability) ->
-                queue.add(Item(index, lhs, index + 1, ruleProbability, null))
+                queue.offer(Item(index, lhs, index + 1, ruleProbability * (outsideScores?.get(lhs) ?: 1.0), null))
             }
         }
     }
@@ -68,7 +70,7 @@ class DeductiveParser(
             }
         }
         if (notNullProbabilityEntryLhs) return true
-        accessFoundItemsFromRight.compute(Pair(selectedItem.nt, selectedItem.j)) outerCompute@ { _, v ->
+        accessFoundItemsFromRight.compute(Pair(selectedItem.nt, selectedItem.j)) outerCompute@{ _, v ->
             if (v == null) {
                 mutableMapOf(selectedItem.i to selectedItem)
             } else {
@@ -93,13 +95,17 @@ class DeductiveParser(
         accessRulesByFirstNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromLeft[Pair(
                 selectedItem.j,
-               rhs.component2()
+                rhs.component2()
             )]?.forEach { (_, combinationItem) -> // --> j == i2
                 if (rhs.component2() == combinationItem.nt && selectedItem.j < combinationItem.j && combinationItem.wt > 0.0) {
-                    queue.add(
+                    insertItemToQueue(
                         Item(
-                            selectedItem.i, lhs, combinationItem.j, ruleProbability * selectedItem.wt * combinationItem.wt, listOf(selectedItem, combinationItem)
-                        )
+                            selectedItem.i,
+                            lhs,
+                            combinationItem.j,
+                            ruleProbability * selectedItem.wt * combinationItem.wt * (outsideScores?.get(lhs) ?: 1.0),
+                            listOf(selectedItem, combinationItem)
+                        ), thresholdBeam, rankBeam
                     )
                 }
             }
@@ -114,41 +120,89 @@ class DeductiveParser(
                 selectedItem.i
             )]?.forEach { (_, combinationItem) ->    // --> j0 = i
                 if (rhs.component1() == combinationItem.nt && combinationItem.i < selectedItem.i && combinationItem.wt > 0.0) {
-                    queue.add(
+                    val newProbability = ruleProbability * combinationItem.wt * selectedItem.wt * (outsideScores?.get(
+                        lhs
+                    ) ?: 1.0)
+                    insertItemToQueue(
                         Item(
                             combinationItem.i,
                             lhs,
                             selectedItem.j,
-                            ruleProbability * combinationItem.wt * selectedItem.wt,
+                            newProbability,
                             listOf(combinationItem, selectedItem)
-                        )
+                        ), thresholdBeam, rankBeam
                     )
                 }
             }
         }
     }
+
     //Zeile 11
     fun findRulesAddItemsToQueueChain(selectedItem: Item) {
         accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
-            queue.add(
+            insertItemToQueue(
                 Item(
                     selectedItem.i,
                     lhs,
                     selectedItem.j,
-                    ruleProbability * selectedItem.wt,
+                    ruleProbability * selectedItem.wt * (outsideScores?.get(lhs) ?: 1.0),
                     listOf(selectedItem)
-                )
+                ), thresholdBeam, rankBeam
             )
         }
     }
 
-    fun prune(thresholdBeam : Double?, rankBeam : Int?){
-        if (thresholdBeam != null){
-           // val m = queue.peek().wt
-           // queue.retainAll {  item -> item.wt > thresholdBeam * m }
+    fun prune(thresholdBeam: Double?, rankBeam: Int?) {
+        if (thresholdBeam != null && !queue.isEmpty()) {
+            val m = queue.peekLast()!!.wt
+            while (queue.peekFirst().wt > thresholdBeam * m){
+                queue.pollFirst()
+            }
         }
-        if (rankBeam != null){
-            queue = queue.getWindow(PriorityQueue(rankBeam), limit =  rankBeam)
+        if (rankBeam != null && !queue.isEmpty()) {
+            while (queue.size > rankBeam){
+                queue.pollFirst()
             }
         }
     }
+
+    fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
+
+        fun thresholdBeam() {
+            if (item.wt > ((queue.peekLast()?.wt ?: 0.0) * thresholdBeam!!)) {
+                queue.offer(
+                    item
+                )
+            }
+        }
+
+        fun rankBeam() {
+            if (queue.size < rankBeam!!) {
+                queue.offer(
+                    item
+                )
+            } else
+                if ((queue.peekFirst()?.wt ?: 0.0) < item.wt) {
+                    queue.pollFirst()
+                    queue.offer(
+                        item
+                    )
+                }
+        }
+
+        when {
+            thresholdBeam != null && rankBeam != null -> {
+                if (item.wt > ((queue.peekLast()?.wt ?: 0.0) * thresholdBeam)) {
+                    rankBeam()
+                }
+            }
+            thresholdBeam != null -> thresholdBeam()
+            rankBeam != null -> rankBeam()
+            else -> {
+                queue.offer(
+                    item
+                )
+            }
+        }
+    }
+}

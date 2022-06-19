@@ -141,7 +141,7 @@ class UnkingTest : ShouldSpec({
                     replaceTokensByInts(
                         lexiconByString,
                         tokensAsString,
-                        unking = false,
+                        unking = true,
                         smoothing = false
                     ) shouldBe intArrayOf(3, 4, 55, 7, 8, 55, 30)
                 }

@@ -14,7 +14,14 @@ class Item(val i: Int, val nt: Int, val j: Int, var wt: Double, var bt: List<Ite
         return getPartOfTree(this)
     }
 
-    override fun compareTo(other: Item): Int =
-        compareValuesBy(this, other) { it.wt }
+//    override fun compareTo(other: Item): Int =
+//        compareValues(this.wt, other.wt)
 
+    override fun compareTo(other: Item): Int {
+        return when {
+           this.wt > other.wt -> 1
+            this.wt < other.wt -> -1
+            else -> 0
+        }
+    }
 }
