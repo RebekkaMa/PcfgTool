@@ -21,7 +21,8 @@ class DeductiveParser(
     private val accessFoundItemsFromRight =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
 
-    fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
+    fun weightedDeductiveParsing(sentence: IntArray, kbest: Int): Pair<IntArray, List<Item?>> {
+        val resultItems = mutableListOf<Item?>()
         fillQueueWithItemsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
             val selectedItem: Item = queue.pollLast()
@@ -29,7 +30,10 @@ class DeductiveParser(
                 if (outsideScores.isNullOrEmpty()) selectedItem.wt else selectedItem.wt / (outsideScores[selectedItem.nt]
                     ?: 1.0)
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
-                return sentence to selectedItem
+                resultItems.add(selectedItem)
+                if (resultItems.size == kbest){
+                    return sentence to resultItems
+                }
             }
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
@@ -37,7 +41,10 @@ class DeductiveParser(
             findRulesAddItemsToQueueChain(selectedItem)
             //prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
         }
-        return sentence to null
+        while (resultItems.size < kbest){
+            resultItems.add(null)
+        }
+        return sentence to resultItems
     }
 
     fun fillQueueWithItemsFromLexicalRules(sentence: IntArray) {

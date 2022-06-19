@@ -1,3 +1,4 @@
+
 import Util.format
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
@@ -110,11 +111,6 @@ class Induce : CliktCommand() {
 }
 
 class Parse : CliktCommand() {
-    init {
-        eagerOption("-k", "--kbest") {
-            throw ProgramResult(22)
-        }
-    }
 
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
@@ -123,6 +119,7 @@ class Parse : CliktCommand() {
     val unking by option("-u", "--unking").flag(default = false)
     val smoothing by option("-s", "--smoothing").flag(default = false)
     val astar by option("-a", "--astar").file(mustExist = true)
+    val kbest by option("-k", "--kbest").int().default(1).check { it > 0 }
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -151,7 +148,7 @@ class Parse : CliktCommand() {
                 val tokensAsInt = replaceTokensByInts(lexiconByString, tokensAsString, unking, smoothing)
 
                 if (-1 in tokensAsInt) {
-                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
+                    outputChannel.send(line.first to "(NOPARSE ${line.second})" + "\n(NOPARSE ${line.second})".repeat(kbest - 1))
                     continue
                 }
                 val start = System.currentTimeMillis()
@@ -165,18 +162,13 @@ class Parse : CliktCommand() {
                     thresholdBeam = thresholdBeam,
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
-                ).weightedDeductiveParsing(tokensAsInt)
+                ).weightedDeductiveParsing(tokensAsInt, kbest)
                 //println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
-                if (result.second != null) {
                     outputChannel.send(
-                        line.first to result.second!!.getParseTreeAsString(
-                            tokensAsString,
-                            lexiconByInt
-                        )
+                        line.first to result.second.joinToString(separator = "\n") {
+                            it?.getParseTreeAsString(tokensAsString, lexiconByInt) ?: "(NOPARSE ${line.second})"
+                        }
                     )
-                } else {
-                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
-                }
             }
         }
 
