@@ -3,8 +3,6 @@ import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import model.Rule
-import model.Tree
 import kotlin.test.Test
 
 class TreeTest {
@@ -227,9 +225,6 @@ class TreeTest {
         val tree_1_22 = Tree("S", mutableListOf(tree_1_14, treeComma15, treeCC16, tree_17_21, treePoint22))
 
         val root = Tree("ROOT", mutableListOf(tree_1_22))
-
-        println(root_b.debinarise().toString())
-        println(root.toString())
 
         root_b.debinarise().toString() shouldBeEqualComparingTo "(ROOT (S (S (NP-SBJ (PRP It)) (VP (VBZ gets) (NP (JJR more) (NN mail)) (PP-TMP (IN in) (NP (DT a) (NN month))) (SBAR (IN than) (S (NP-SBJ (NNP McCall) (POS 's)) (VP (VBD got) (PP-TMP (IN in) (NP (DT a) (NN year)))))))) (, ,) (CC and) (S (NP-SBJ (PRP it)) (VP (VBZ 's) (RB not) (PP-PRD (IN from) (NP (NNS mothers))))) (. .)))"
     }

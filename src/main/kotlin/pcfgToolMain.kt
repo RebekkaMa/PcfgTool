@@ -163,7 +163,7 @@ class Parse : CliktCommand() {
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt, kbest)
-                //println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
+                println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
                     outputChannel.send(
                         line.first to result.second.joinToString(separator = "\n") {
                             it?.getParseTreeAsString(tokensAsString, lexiconByInt) ?: "(NOPARSE ${line.second})"
@@ -270,7 +270,7 @@ class Parse : CliktCommand() {
                             queue.add(parseResult)
                         }
                     }
-                    //println("Gesamtzeit: " + (System.currentTimeMillis() - start))
+                    println("Gesamtzeit: " + (System.currentTimeMillis() - start))
                 }
             }
         } catch (e: ParseException) {
