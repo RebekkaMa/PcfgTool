@@ -33,7 +33,7 @@ fun replaceRareWordsInTree(smooth: Boolean, wordcount: MutableMap<String, Int>, 
     val newLeaves = mutableListOf<String>()
     tree.getLeaves().forEachIndexed { index, leave ->
         val newLeave = when {
-            (wordcount[leave] ?: 0) < threshold -> {
+            (wordcount[leave] ?: 0) <= threshold -> {
                 if (smooth) getSignature(leave, index + 1) else "UNK"
             }
             else -> {
