@@ -200,7 +200,7 @@ class UnkingTest : ShouldSpec({
     }
     //replaceRareWordsInTree
     context("smooth = false") {
-        context("threshold = 3") {
+        context("threshold = 2") {
             should {
                 val wordcount = mutableMapOf("A" to 1, "B" to 2, "C" to 3, "D" to 4, "E" to 5, "F" to 6, "G" to 2)
                 val tree1 = Tree(
@@ -220,8 +220,8 @@ class UnkingTest : ShouldSpec({
                     )
                 )
 
-                replaceRareWordsInTree(false, wordcount, threshold = 3, tree1)
-                replaceRareWordsInTree(false, wordcount, threshold = 3, tree2)
+                replaceRareWordsInTree(false, wordcount, threshold = 2, tree1)
+                replaceRareWordsInTree(false, wordcount, threshold = 2, tree2)
 
                 tree1.toString() shouldBe Tree(
                     "S",
@@ -243,7 +243,7 @@ class UnkingTest : ShouldSpec({
         }
     }
     context("smooth = true") {
-        context("threshold = 3") {
+        context("threshold = 2") {
             should {
                 val wordcount =
                     mutableMapOf("Aber" to 1, "Baber" to 2, "C" to 3, "D" to 4, "E" to 5, "faultier" to 6, "G" to 2)
@@ -264,8 +264,8 @@ class UnkingTest : ShouldSpec({
                     )
                 )
 
-                replaceRareWordsInTree(true, wordcount, threshold = 3, tree1)
-                replaceRareWordsInTree(true, wordcount, threshold = 3, tree2)
+                replaceRareWordsInTree(true, wordcount, threshold = 2, tree1)
+                replaceRareWordsInTree(true, wordcount, threshold = 2, tree2)
 
                 tree1.toString() shouldBe Tree(
                     "S",
