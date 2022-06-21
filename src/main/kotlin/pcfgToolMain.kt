@@ -112,6 +112,12 @@ class Induce : CliktCommand() {
 
 class Parse : CliktCommand() {
 
+    init {
+        eagerOption("-k", "--kbest"){
+            exitProcess(22)
+        }
+    }
+
     val paradigma by option("-p", "--paradigma").choice("cyk", "deductive").default("deductive")
     val initialNonterminal by option("-i", "--initial-nonterminal").default("ROOT")
     val numberOfParallelParsers by option("-c", "--number-parallel-parsers").int().default(2)
@@ -119,7 +125,6 @@ class Parse : CliktCommand() {
     val unking by option("-u", "--unking").flag(default = false)
     val smoothing by option("-s", "--smoothing").flag(default = false)
     val astar by option("-a", "--astar").file(mustExist = true)
-    val kbest by option("-k", "--kbest").int().default(1).check { it > 0 }
 
     val rules by argument().file(mustExist = true)
     val lexicon by argument().file(mustExist = true)
@@ -148,7 +153,7 @@ class Parse : CliktCommand() {
                 val tokensAsInt = replaceTokensByInts(lexiconByString, tokensAsString, unking, smoothing)
 
                 if (-1 in tokensAsInt) {
-                    outputChannel.send(line.first to "(NOPARSE ${line.second})" + "\n(NOPARSE ${line.second})".repeat(kbest - 1))
+                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
                     continue
                 }
                 val start = System.currentTimeMillis()
@@ -162,12 +167,10 @@ class Parse : CliktCommand() {
                     thresholdBeam = thresholdBeam,
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
-                ).weightedDeductiveParsing(tokensAsInt, kbest)
+                ).weightedDeductiveParsing(tokensAsInt)
                 //println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
                     outputChannel.send(
-                        line.first to result.second.joinToString(separator = "\n") {
-                            it?.getParseTreeAsString(tokensAsString, lexiconByInt) ?: "(NOPARSE ${line.second})"
-                        }
+                        line.first to (result.second?.getParseTreeAsString(tokensAsString, lexiconByInt) ?: "(NOPARSE ${line.second})")
                     )
             }
         }
