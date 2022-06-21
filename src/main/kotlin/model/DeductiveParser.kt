@@ -39,7 +39,7 @@ class DeductiveParser(
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
             findRulesAddItemsToQueueChain(selectedItem)
-            //prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
+            prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
         }
         while (resultItems.size < kbest){
             resultItems.add(null)
