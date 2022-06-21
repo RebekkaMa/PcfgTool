@@ -60,24 +60,24 @@ fun getSignature(word: String, positionInSentence: Int): String {
         word.all { it.isDigit() } -> "-N"
         word.any { it.isDigit() } -> "-n"
         else -> {
-            "ε"
+            ""
         }
     }
     val dashSuffix = when {
         word.any { it == '-' } -> "-H"
-        else -> "ε"
+        else -> ""
     }
     val periodSuffix = when {
         word.any { it == '.' } -> "-P"
-        else -> "ε"
+        else -> ""
     }
     val commaSuffix = when {
         word.any { it == ',' } -> "-C"
-        else -> "ε"
+        else -> ""
     }
     val wordSuffix = when {
         word.count() > 3 && word.last().isLetter() -> word.last().lowercase()
-        else -> "ε"
+        else -> ""
     }
     return "UNK$letterSuffix$numberSuffix$dashSuffix$periodSuffix$commaSuffix$wordSuffix"
 }

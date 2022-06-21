@@ -64,7 +64,7 @@ class UnkingTest : ShouldSpec({
                         this.put("red", 33)
                         this.put("man", 7)
                         this.put("with", 8)
-                        this.put("UNK-Lεεεεe", 30)
+                        this.put("UNK-Le", 30)
                         this.put("blue", 44)
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
@@ -157,7 +157,7 @@ class UnkingTest : ShouldSpec({
                         this.put("red", 33)
                         this.put("man", 7)
                         this.put("with", 8)
-                        this.put("UNK-Lεεεεe", 30)
+                        this.put("UNK-Le", 30)
                         this.put("blue", 44)
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
@@ -270,8 +270,8 @@ class UnkingTest : ShouldSpec({
                 tree1.toString() shouldBe Tree(
                     "S",
                     mutableListOf(
-                        Tree("UNK-SCεεεεr", mutableListOf()),
-                        Tree("LB", mutableListOf(Tree("UNK-Cεεεεr", mutableListOf()))),
+                        Tree("UNK-SCr", mutableListOf()),
+                        Tree("LB", mutableListOf(Tree("UNK-Cr", mutableListOf()))),
                         Tree("C", mutableListOf())
                     )
                 ).toString()
@@ -280,7 +280,7 @@ class UnkingTest : ShouldSpec({
                     mutableListOf(
                         Tree("E", mutableListOf()),
                         Tree("RB", mutableListOf(Tree("faultier", mutableListOf()))),
-                        Tree("UNK-ACεεεεε", mutableListOf())
+                        Tree("UNK-AC", mutableListOf())
                     )
                 ).toString()
             }
