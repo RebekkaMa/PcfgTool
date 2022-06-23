@@ -1,4 +1,3 @@
-
 import Util.format
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
@@ -113,7 +112,7 @@ class Induce : CliktCommand() {
 class Parse : CliktCommand() {
 
     init {
-        eagerOption("-k", "--kbest"){
+        eagerOption("-k", "--kbest") {
             exitProcess(22)
         }
     }
@@ -168,10 +167,11 @@ class Parse : CliktCommand() {
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
-                //println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
-                    outputChannel.send(
-                        line.first to (result.second?.getParseTreeAsString(tokensAsString, lexiconByInt) ?: "(NOPARSE ${line.second})")
-                    )
+                println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
+                outputChannel.send(
+                    line.first to (result.second?.getParseTreeAsString(tokensAsString, lexiconByInt)
+                        ?: "(NOPARSE ${line.second})")
+                )
             }
         }
 
@@ -221,13 +221,13 @@ class Parse : CliktCommand() {
                 var outsideScores: MutableMap<Int, Double>? = null
 
                 try {
-                    if (astar != null) {
+                    astar?.apply {
                         outsideScores = mutableMapOf()
-                        astar?.forEachLine {
-                            val result = outsideScoreEvaluator.parseToEnd(it)
-                            outsideScores[lexiconByString[result.first]
-                                ?: throw Exception("Missing Nonterminal in Outside Score File")] =
-                                result.second
+                        this.forEachLine {
+                            val (nonTerminal, score) = outsideScoreEvaluator.parseToEnd(it)
+                            val nonTerminalAsInt =
+                                lexiconByString[nonTerminal] ?: throw Exception("Missing Nonterminal in Outside Score File")
+                            outsideScores!![nonTerminalAsInt] = score
                         }
                     }
                 } catch (e: ParseException) {
@@ -273,7 +273,7 @@ class Parse : CliktCommand() {
                             queue.add(parseResult)
                         }
                     }
-                    //println("Gesamtzeit: " + (System.currentTimeMillis() - start))
+                    println("Gesamtzeit: " + (System.currentTimeMillis() - start))
                 }
             }
         } catch (e: ParseException) {

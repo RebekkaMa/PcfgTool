@@ -14,8 +14,8 @@ class DeductiveParser(
     private val rankBeam: Int?,
     initialArraySize: Int = 100_000,
 ) {
-    private var queue =
-        MinMaxPriorityQueue.orderedBy(compareBy<Item> { it.wt }).expectedSize(rankBeam ?: 100).create<Item>()
+    private var queue = MinMaxPriorityQueue.orderedBy(compareBy<Pair<Item, Double>> { (_, weight) -> weight })
+        .expectedSize(rankBeam ?: 100).create<Pair<Item, Double>>()
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =
@@ -23,20 +23,21 @@ class DeductiveParser(
 
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
         fillQueueWithItemsFromLexicalRules(sentence)
+        var long : Long = 0
         while (queue.isNotEmpty()) {
-            val selectedItem: Item = queue.pollLast()
-            selectedItem.wt =
-                if (outsideScores.isNullOrEmpty()) selectedItem.wt else selectedItem.wt / (outsideScores[selectedItem.nt]
-                    ?: 1.0)
+            val (selectedItem, _) = queue.pollLast()
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
-                    return sentence to selectedItem
+                println("Long " + long)
+                return sentence to selectedItem
             }
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
             findRulesAddItemsToQueueChain(selectedItem)
             prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
+            long++
         }
+        println("Long " + long)
 
         return sentence to null
     }
@@ -44,7 +45,9 @@ class DeductiveParser(
     fun fillQueueWithItemsFromLexicalRules(sentence: IntArray) {
         sentence.forEachIndexed { index, word ->
             accessRulesByTerminal[word]?.forEach { (lhs, rhs, ruleProbability) ->
-                queue.offer(Item(index, lhs, index + 1, ruleProbability * (outsideScores?.get(lhs) ?: 1.0), null))
+                queue.offer(
+                    Item(index, lhs, index + 1, ruleProbability, null) to (outsideScores?.let { ruleProbability * (it[lhs] ?: throw Exception())} ?: ruleProbability)
+                )
             }
         }
     }
@@ -104,7 +107,7 @@ class DeductiveParser(
                             selectedItem.i,
                             lhs,
                             combinationItem.j,
-                            ruleProbability * selectedItem.wt * combinationItem.wt * (outsideScores?.get(lhs) ?: 1.0),
+                            ruleProbability * selectedItem.wt * combinationItem.wt,
                             listOf(selectedItem, combinationItem)
                         ), thresholdBeam, rankBeam
                     )
@@ -121,9 +124,7 @@ class DeductiveParser(
                 selectedItem.i
             )]?.forEach { (_, combinationItem) ->    // --> j0 = i
                 if (rhs.component1() == combinationItem.nt && combinationItem.i < selectedItem.i && combinationItem.wt > 0.0) {
-                    val newProbability = ruleProbability * combinationItem.wt * selectedItem.wt * (outsideScores?.get(
-                        lhs
-                    ) ?: 1.0)
+                    val newProbability = ruleProbability * combinationItem.wt * selectedItem.wt
                     insertItemToQueue(
                         Item(
                             combinationItem.i,
@@ -146,7 +147,7 @@ class DeductiveParser(
                     selectedItem.i,
                     lhs,
                     selectedItem.j,
-                    ruleProbability * selectedItem.wt * (outsideScores?.get(lhs) ?: 1.0),
+                    ruleProbability * selectedItem.wt,
                     listOf(selectedItem)
                 ), thresholdBeam, rankBeam
             )
@@ -155,13 +156,13 @@ class DeductiveParser(
 
     fun prune(thresholdBeam: Double?, rankBeam: Int?) {
         if (thresholdBeam != null && !queue.isEmpty()) {
-            val m = queue.peekLast()!!.wt
-            while (!queue.isEmpty() && queue.peekFirst()!!.wt <= thresholdBeam * m){
+            val m = queue.peekLast()!!.second
+            while (!queue.isEmpty() && queue.peekFirst()!!.second <= m) {
                 queue.pollFirst()
             }
         }
         if (rankBeam != null && !queue.isEmpty()) {
-            while (queue.size > rankBeam){
+            while (queue.size > rankBeam) {
                 queue.pollFirst()
             }
         }
@@ -170,9 +171,9 @@ class DeductiveParser(
     fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
 
         fun thresholdBeam() {
-            if (item.wt > ((queue.peekLast()?.wt ?: 0.0) * thresholdBeam!!)) {
+            if (item.wt > ((queue.peekLast()?.second ?: 0.0) * thresholdBeam!!)) {
                 queue.offer(
-                    item
+                    item to (outsideScores?.let { item.wt * (it[item.nt] ?: throw Exception())} ?: item.wt)
                 )
             }
         }
@@ -180,20 +181,23 @@ class DeductiveParser(
         fun rankBeam() {
             if (queue.size < rankBeam!!) {
                 queue.offer(
-                    item
+                    item to (outsideScores?.let { item.wt * (it[item.nt] ?: throw Exception())} ?: item.wt)
                 )
             } else
-                if ((queue.peekFirst()?.wt ?: 0.0) < item.wt) {
+                if ((queue.peekFirst()?.second ?: 0.0) < item.wt) {
                     queue.pollFirst()
                     queue.offer(
-                        item
+                        item to (outsideScores?.let { item.wt * (it[item.nt] ?: throw Exception())} ?: item.wt)
                     )
                 }
         }
 
         when {
+            queue.isEmpty() -> queue.offer(
+                item to (outsideScores?.let { item.wt * (it[item.nt] ?: throw Exception())} ?: item.wt)
+            ) //TODO
             thresholdBeam != null && rankBeam != null -> {
-                if (item.wt > ((queue.peekLast()?.wt ?: 0.0) * thresholdBeam)) {
+                if (item.wt > queue.peekLast()?.second!!) {
                     rankBeam()
                 }
             }
@@ -201,7 +205,7 @@ class DeductiveParser(
             rankBeam != null -> rankBeam()
             else -> {
                 queue.offer(
-                    item
+                    item to (outsideScores?.let { item.wt * (it[item.nt] ?: throw Exception())} ?: item.wt)
                 )
             }
         }

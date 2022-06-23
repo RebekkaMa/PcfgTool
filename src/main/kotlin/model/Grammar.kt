@@ -139,6 +139,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                 }
             }
         } while (!converged)
+        insideValues.forEach { println(it) }
         return insideValues
     }
 
