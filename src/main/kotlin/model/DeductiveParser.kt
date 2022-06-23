@@ -178,8 +178,10 @@ class DeductiveParser(
 
     fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
 
+        val isItemOverThresholdBeam = {item.comparisonValue > ((queue.peekLast()?.comparisonValue ?: 0.0))}
+
         fun thresholdBeam() {
-            if (item.comparisonValue > ((queue.peekLast()?.comparisonValue ?: 0.0))) {
+            if (isItemOverThresholdBeam()) {
                 queue.offer(
                     item
                 )
@@ -192,7 +194,7 @@ class DeductiveParser(
                     item
                 )
             } else
-                if ((queue.peekFirst()?.comparisonValue ?: 0.0) < item.comparisonValue) {
+                if ((queue.peekFirst()?.comparisonValue ?: throw Exception("Internal Error")) < item.comparisonValue) {
                     queue.pollFirst()
                     queue.offer(
                         item
@@ -205,7 +207,7 @@ class DeductiveParser(
                 item
             ) //TODO
             thresholdBeam != null && rankBeam != null -> {
-                if (item.comparisonValue > queue.peekLast()?.comparisonValue!!) {
+                if (isItemOverThresholdBeam()) {
                     rankBeam()
                 }
             }
