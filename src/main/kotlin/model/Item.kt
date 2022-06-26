@@ -14,8 +14,6 @@ class Item(val i: Int, val nt: Int, val j: Int, var wt: Double, val comparisonVa
         return getPartOfTree(this)
     }
 
-//    override fun compareTo(other: Item): Int =
-//        compareValues(this.wt, other.wt)
 override fun compareTo(other: Item): Int {
     return when {
         this.comparisonValue > other.comparisonValue -> 1
