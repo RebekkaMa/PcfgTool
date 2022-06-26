@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.toList
 import model.*
+import java.io.File
 import java.util.*
 import kotlin.system.exitProcess
 
@@ -50,10 +51,6 @@ class Induce : CliktCommand() {
 
     private val grammar by argument(help = "PCFG wird in den Dateien GRAMMAR.rules, GRAMMAR.lexicon und GRAMMAR.words gespeichert").optional()
 
-    private val readNotEmptyLnOrNull = {
-        val line = readlnOrNull()
-        if (line.isNullOrEmpty()) null else line
-    }
     private val rulesChannel = Channel<ArrayList<Rule>>(capacity = Channel.UNLIMITED)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -131,7 +128,6 @@ class Parse : CliktCommand() {
     private val thresholdBeam by option("-t", "--threshold-beam").double().check { it in 0.0..1.0 }
     private val rankBeam by option("-r", "--rank-beam").int().check { it in 1..Int.MAX_VALUE }
 
-    private val readNotEmptyLnOrNull = { val line = readlnOrNull(); if (line.isNullOrEmpty()) null else line }
     private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
 
     private fun CoroutineScope.launchProcessor(
@@ -192,23 +188,8 @@ class Parse : CliktCommand() {
                     exitProcess(22)
                 }
 
-                val getRulesFromRulesFile = async {
-                    val rulesBr = rules.bufferedReader()
-                    generateSequence { rulesBr.readLine() }.map {
-                        RulesExpressionEvaluator().parseToEnd(
-                            it
-                        )
-                    }
-                }
-
-                val getRulesFromLexiconFile = async {
-                    val lexiconBr = lexicon.bufferedReader()
-                    generateSequence { lexiconBr.readLine() }.map {
-                        LexiconExpressionEvaluator().parseToEnd(
-                            it
-                        )
-                    }
-                }
+                val getRulesFromRulesFile = async { getRulesFromFile(rules, RulesExpressionEvaluator()) }
+                val getRulesFromLexiconFile = async { getRulesFromFile(lexicon, LexiconExpressionEvaluator()) }
 
                 val grammar = Grammar.create(
                     initialNonterminal,
@@ -226,7 +207,8 @@ class Parse : CliktCommand() {
                         this.forEachLine {
                             val (nonTerminal, score) = outsideScoreEvaluator.parseToEnd(it)
                             val nonTerminalAsInt =
-                                lexiconByString[nonTerminal] ?: throw Exception("Missing Nonterminal in Outside Score File")
+                                lexiconByString[nonTerminal]
+                                    ?: throw Exception("Missing Nonterminal in Outside Score File")
                             outsideScores!![nonTerminalAsInt] = score
                         }
                     }
@@ -257,24 +239,8 @@ class Parse : CliktCommand() {
                     outputChannel.close()
                 }
 
-                launch {
-                    val start = System.currentTimeMillis()
-                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
-                    var i = 1
-                    for (parseResult in outputChannel) {
-                        if (parseResult.first == i) {
-                            echo(parseResult.second)
-                            i++
-                            while ((queue.peek()?.first ?: 0) == i) {
-                                echo(queue.poll().second)
-                                i++
-                            }
-                        } else {
-                            queue.add(parseResult)
-                        }
-                    }
-                    println("Gesamtzeit: " + (System.currentTimeMillis() - start))
-                }
+                printTreesInOrder(outputChannel)
+
             }
         } catch (e: ParseException) {
             System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
@@ -295,10 +261,6 @@ class Binarise : CliktCommand() {
         .validate { it > 0 }
 
 
-    private val readNotEmptyLnOrNull = {
-        val line = readlnOrNull()
-        if (line.isNullOrEmpty()) null else line
-    }
     private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
 
     private fun CoroutineScope.launchProcessor(
@@ -334,22 +296,8 @@ class Binarise : CliktCommand() {
                 }.invokeOnCompletion {
                     outputChannel.close()
                 }
-                launch {
-                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
-                    var i = 1
-                    for (parseResult in outputChannel) {
-                        if (parseResult.first == i) {
-                            echo(parseResult.second)
-                            i++
-                            while ((queue.peek()?.first ?: 0) == i) {
-                                echo(queue.poll().second)
-                                i++
-                            }
-                        } else {
-                            queue.add(parseResult)
-                        }
-                    }
-                }
+
+                printTreesInOrder(outputChannel)
             }
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
@@ -365,10 +313,6 @@ class Debinarise : CliktCommand() {
     private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
         .validate { it > 0 }
 
-    private val readNotEmptyLnOrNull = {
-        val line = readlnOrNull()
-        if (line.isNullOrEmpty()) null else line
-    }
     private val outputChannel = Channel<Pair<Int, String>>(Channel.UNLIMITED)
 
     private fun CoroutineScope.launchProcessor(
@@ -402,22 +346,8 @@ class Debinarise : CliktCommand() {
                 }.invokeOnCompletion {
                     outputChannel.close()
                 }
-                launch {
-                    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
-                    var i = 1
-                    for (parseResult in outputChannel) {
-                        if (parseResult.first == i) {
-                            echo(parseResult.second)
-                            i++
-                            while ((queue.peek()?.first ?: 0) == i) {
-                                echo(queue.poll().second)
-                                i++
-                            }
-                        } else {
-                            queue.add(parseResult)
-                        }
-                    }
-                }
+
+                printTreesInOrder(outputChannel)
             }
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
@@ -432,11 +362,6 @@ class Unk : CliktCommand() {
     val threshold by option("-t", "--threshold").int().default(2).validate { it > 0 }
     private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
         .validate { it > 0 }
-
-    private val readNotEmptyLnOrNull = {
-        val line = readlnOrNull()
-        if (line.isNullOrEmpty()) null else line
-    }
 
     override fun run() {
         try {
@@ -463,11 +388,6 @@ class Unk : CliktCommand() {
 
 class Smooth : CliktCommand() {
     val threshold by option("-t", "--threshold").int().default(3)
-
-    private val readNotEmptyLnOrNull = {
-        val line = readlnOrNull()
-        if (line.isNullOrEmpty()) null else line
-    }
 
     override fun run() {
         try {
@@ -509,23 +429,9 @@ class Outside : CliktCommand() {
         try {
             runBlocking(Dispatchers.Default) {
 
-                val getRulesFromRulesFile = async {
-                    val rulesBr = rules.bufferedReader()
-                    generateSequence { rulesBr.readLine() }.map {
-                        RulesExpressionEvaluator().parseToEnd(
-                            it
-                        )
-                    }
-                }
+                val getRulesFromRulesFile = async { getRulesFromFile(rules, RulesExpressionEvaluator()) }
+                val getRulesFromLexiconFile = async { getRulesFromFile(lexicon, LexiconExpressionEvaluator()) }
 
-                val getRulesFromLexiconFile = async {
-                    val lexiconBr = lexicon.bufferedReader()
-                    generateSequence { lexiconBr.readLine() }.map {
-                        LexiconExpressionEvaluator().parseToEnd(
-                            it
-                        )
-                    }
-                }
                 val grammar = Grammar.create(
                     initial,
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
@@ -551,4 +457,32 @@ class Outside : CliktCommand() {
     }
 }
 
+fun CoroutineScope.printTreesInOrder(outputChannel: ReceiveChannel<Pair<Int, String>>) = launch {
+    val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
+    var i = 1
+    for (parseResult in outputChannel) {
+        if (parseResult.first == i) {
+            println(parseResult.second)
+            i++
+            while ((queue.peek()?.first ?: 0) == i) {
+                println(queue.poll().second)
+                i++
+            }
+        } else {
+            queue.add(parseResult)
+        }
+    }
+}
+
+fun getRulesFromFile(
+    file: File,
+    evaluator: com.github.h0tk3y.betterParse.grammar.Grammar<Pair<Rule, Double>>
+): Sequence<Pair<Rule, Double>> {
+    val rulesBr = file.bufferedReader()
+    return generateSequence { rulesBr.readLine() }.map {
+        evaluator.parseToEnd(
+            it
+        )
+    }
+}
 

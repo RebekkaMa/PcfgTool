@@ -10,3 +10,8 @@ fun writeGrammarToFiles(grammar: Grammar, grammarFileName: String){
 fun writeOutsideScoreToFiles(outsideWeights: Map<String, Double>, fileName: String){
     File("$fileName.outside").writeText(outsideWeights.map { it.key + " " + it.value}.joinToString("\n") )
 }
+
+val readNotEmptyLnOrNull = {
+    val line = readlnOrNull()
+    if (line.isNullOrEmpty()) null else line
+}
