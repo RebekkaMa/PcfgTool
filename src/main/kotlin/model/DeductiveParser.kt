@@ -26,7 +26,7 @@ class DeductiveParser(
         while (queue.isNotEmpty()) {
             val selectedItem = queue.pollLast()
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
-                println("Long " + long)
+                println("Long $long")
                 return sentence to selectedItem
             }
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
@@ -53,7 +53,7 @@ class DeductiveParser(
     }
 
     //Zeile 8
-    fun addSelectedItemProbabilityToSavedItems(selectedItem: Item): Boolean {
+    private fun addSelectedItemProbabilityToSavedItems(selectedItem: Item): Boolean {
         var notNullProbabilityEntryLhs = false
         var notNullProbabilityEntryRhs = false
 
@@ -95,7 +95,7 @@ class DeductiveParser(
     }
 
     //Zeile 9
-    fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Item) {
+    private fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Item) {
         accessRulesByFirstNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromLeft[Pair(
                 selectedItem.j,
@@ -121,7 +121,7 @@ class DeductiveParser(
     }
 
     //Zeile 10
-    fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Item) {
+    private fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Item) {
         accessRulesBySecondNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromRight[Pair(
                 rhs.component1(),
@@ -147,7 +147,7 @@ class DeductiveParser(
     }
 
     //Zeile 11
-    fun findRulesAddItemsToQueueChain(selectedItem: Item) {
+    private fun findRulesAddItemsToQueueChain(selectedItem: Item) {
         accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             val newProbability = ruleProbability * selectedItem.wt
             val comparisonValue =
@@ -199,26 +199,26 @@ class DeductiveParser(
         }
 
         fun rankBeam() {
-            if (isQueueSizeUnderRankBeam()) {
+            if (isQueueSizeUnderRankBeam()) queue.offer(item)
+            else if (isMinItemOfQueueLessThanSelectedItem()) {
+                queue.pollFirst()
                 queue.offer(item)
-            } else
-                if (isMinItemOfQueueLessThanSelectedItem()) {
-                    queue.pollFirst()
-                    queue.offer(item)
-                }
+            }
         }
 
         when {
             queue.isEmpty() -> queue.offer(item) //TODO
-            thresholdBeam != null && rankBeam != null -> {
-                if (isItemOverThresholdBeam()) {
-                    rankBeam()
-                }
-            }
+            thresholdBeam != null && rankBeam != null -> if (isItemOverThresholdBeam()) rankBeam()
             thresholdBeam != null -> thresholdBeam()
             rankBeam != null -> rankBeam()
             else -> queue.offer(item)
         }
+    }
+
+    fun clearAll() {
+        queue.clear()
+        accessFoundItemsFromRight.clear()
+        accessFoundItemsFromLeft.clear()
     }
 
 }

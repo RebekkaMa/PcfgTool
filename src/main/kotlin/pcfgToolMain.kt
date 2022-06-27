@@ -296,7 +296,6 @@ class Binarise : CliktCommand() {
                 }.invokeOnCompletion {
                     outputChannel.close()
                 }
-
                 printTreesInOrder(outputChannel)
             }
         } catch (e: Exception) {
