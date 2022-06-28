@@ -484,4 +484,3 @@ fun getRulesFromFile(
         )
     }
 }
-

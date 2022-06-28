@@ -36,7 +36,6 @@ class DeductiveParser(
             prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
             long++
         }
-
         return sentence to null
     }
 
@@ -166,13 +165,14 @@ class DeductiveParser(
     }
 
     fun prune(thresholdBeam: Double?, rankBeam: Int?) {
-        if (thresholdBeam != null && !queue.isEmpty()) {
+        if (queue.isEmpty()) return
+        if (thresholdBeam != null) {
             val m = queue.peekLast()!!.comparisonValue
             while (queue.isNotEmpty() && queue.peekFirst()!!.comparisonValue <= m * thresholdBeam) {
                 queue.pollFirst()
             }
         }
-        if (rankBeam != null && !queue.isEmpty()) {
+        if (rankBeam != null) {
             while (queue.size > rankBeam) {
                 queue.pollFirst()
             }

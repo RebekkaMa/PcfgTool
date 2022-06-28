@@ -57,5 +57,4 @@ class ParseTest {
 
         File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
     }
-
 }
