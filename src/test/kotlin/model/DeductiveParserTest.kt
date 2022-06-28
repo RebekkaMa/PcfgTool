@@ -6,13 +6,6 @@ import org.junit.jupiter.api.Test
 
 class DeductiveParserTest {
 
-    val item1 = Item(1, 2, 3, 0.3, 0.3, listOf())
-    val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
-    val item3 = Item(4, 5, 6, 0.6, 0.6, listOf())
-    val item4 = Item(3, 2, 4, 1.0, 1.0, listOf())
-    val item5 = Item(2, 3, 4, 0.4, 0.4, listOf())
-    val item6 = Item(2, 3, 4, 0.8, 0.8, listOf())
-
     @Test
     fun insertItem_thresHoldBeam() {
         val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, null)
@@ -122,8 +115,16 @@ class DeductiveParserTest {
     }
 
     @Test
-    fun rankBeam() {
+    fun insretItemToQueue_rankBeam() {
         val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), rankBeam = 3, thresholdBeam = null)
+
+
+        val item1 = Item(1, 2, 3, 0.3, 0.3, listOf())
+        val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
+        val item3 = Item(4, 5, 6, 0.6, 0.6, listOf())
+        val item4 = Item(3, 2, 4, 1.0, 1.0, listOf())
+        val item5 = Item(2, 3, 4, 0.4, 0.4, listOf())
+        val item6 = Item(2, 3, 4, 0.8, 0.8, listOf())
 
         parser.insertItemToQueue(item3, parser.thresholdBeam, parser.rankBeam)
         parser.insertItemToQueue(item1, parser.thresholdBeam, parser.rankBeam)

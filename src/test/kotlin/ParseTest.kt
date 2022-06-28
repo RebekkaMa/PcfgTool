@@ -13,13 +13,10 @@ class ParseTest {
         val standardOut = System.out
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
-        val data = "Pierre Vinken , 61 years old , will join the board as a nonexecutive director Nov. 29 .\n\n"
         val sentences = sentencesFile.inputStream()
         System.setIn(sentences)
 
-        val startTime = System.currentTimeMillis()
         Parse().parse(listOf("src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-        standardOut.println("Gesamtzeit: " + (System.currentTimeMillis()-startTime))
 
         File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
     }
@@ -30,13 +27,10 @@ class ParseTest {
         val standardOut = System.out
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
-        val data = "Pierre Vinken , 61 years old , will join the board as a nonexecutive director Nov. 29 .\n\n"
         val sentences = sentencesFile.inputStream()
         System.setIn(sentences)
 
-        val startTime = System.currentTimeMillis()
         Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-        standardOut.println("Gesamtzeit: " + (System.currentTimeMillis()-startTime))
 
         File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
     }
@@ -51,9 +45,7 @@ class ParseTest {
         val sentences = sentencesFile.inputStream()
         System.setIn(sentences)
 
-        val startTime = System.currentTimeMillis()
         Parse().parse(listOf("-a" , "src/test/resources/outsideShort.txt","-r", "300", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-        standardOut.println("Gesamtzeit: " + (System.currentTimeMillis()-startTime))
 
         File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
     }

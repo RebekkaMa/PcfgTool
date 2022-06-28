@@ -91,11 +91,9 @@ class Induce : CliktCommand() {
                 }
                 val rules = rulesChannel.receiveAsFlow().flatMapConcat { it.asFlow() }
                     .toList()
-                if (grammar == null) {
-                    echo(Grammar.createFromRules(rules = rules).toString())
-                } else {
-                    writeGrammarToFiles(Grammar.createFromRules(rules = rules), grammar.toString())
-                }
+
+                grammar?.let { writeGrammarToFiles(Grammar.createFromRules(rules = rules), grammar.toString()) }
+                    ?: println(Grammar.createFromRules(rules = rules).toString())
             }
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
@@ -143,16 +141,17 @@ class Parse : CliktCommand() {
         outsideScores: Map<Int, Double>?,
     ) =
         launch {
-            for (line in channel) {
-                val tokensAsString = line.second.split(" ")
+            for ((sentenceNumber, sentence) in channel) {
+                val tokensAsString = sentence.split(" ")
                 val tokensAsInt = replaceTokensByInts(lexiconByString, tokensAsString, unking, smoothing)
 
                 if (-1 in tokensAsInt) {
-                    outputChannel.send(line.first to "(NOPARSE ${line.second})")
+                    outputChannel.send(sentenceNumber to "(NOPARSE ${sentence})")
                     continue
                 }
+
                 val start = System.currentTimeMillis()
-                val result = DeductiveParser(
+                val (_, parsedTreeItem) = DeductiveParser(
                     lexiconByString[initial] ?: 0,
                     accessRulesBySecondNtOnRhs,
                     accessRulesByFirstNtOnRhs,
@@ -163,10 +162,10 @@ class Parse : CliktCommand() {
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
-                println(line.first.toString() + "--" + (System.currentTimeMillis() - start))
+                //println(sentenceNumber.toString() + "--" + (System.currentTimeMillis() - start))
                 outputChannel.send(
-                    line.first to (result.second?.getParseTreeAsString(tokensAsString, lexiconByInt)
-                        ?: "(NOPARSE ${line.second})")
+                    sentenceNumber to (parsedTreeItem?.getParseTreeAsString(tokensAsString, lexiconByInt)
+                        ?: "(NOPARSE ${sentence})")
                 )
             }
         }
@@ -219,6 +218,22 @@ class Parse : CliktCommand() {
 
                 val producer = produceString()
 
+//                startProcessor(numberOfParallelParsers, outputChannel) {
+//                    launchProcessor(
+//                        producer,
+//                        grammar.initial,
+//                        accessRulesBySecondNtOnRhs,
+//                        accessRulesByFirstNtOnRhs,
+//                        accessChainRulesByNtRhs,
+//                        accessRulesByTerminal,
+//                        lexiconByInt,
+//                        lexiconByString,
+//                        numberNonTerminals,
+//                        outsideScores
+//                    )
+//                }
+
+
                 launch {
                     repeat(numberOfParallelParsers) {
                         launchProcessor(
@@ -238,7 +253,6 @@ class Parse : CliktCommand() {
                 }.invokeOnCompletion {
                     outputChannel.close()
                 }
-
                 printTreesInOrder(outputChannel)
 
             }
@@ -268,9 +282,9 @@ class Binarise : CliktCommand() {
     ) =
         launch {
             val expressionEvaluator = ExpressionEvaluator()
-            for (line in channel) {
+            for ((sentenceNumber, sentence) in channel) {
                 outputChannel.send(
-                    line.first to expressionEvaluator.parseToEnd(line.second).binarise(vertical, horizontal).toString()
+                    sentenceNumber to expressionEvaluator.parseToEnd(sentence).binarise(vertical, horizontal).toString()
                 )
             }
         }
@@ -319,8 +333,8 @@ class Debinarise : CliktCommand() {
     ) =
         launch {
             val expressionEvaluator = ExpressionEvaluator()
-            for (line in channel) {
-                outputChannel.send(line.first to expressionEvaluator.parseToEnd(line.second).debinarise().toString())
+            for ((sentenceNumber, sentence) in channel) {
+                outputChannel.send(sentenceNumber to expressionEvaluator.parseToEnd(sentence).debinarise().toString())
             }
         }
 
@@ -372,7 +386,7 @@ class Unk : CliktCommand() {
                 val wordcount = getTerminalCountFromCorpus(trees)
                 trees.onEach {
                     replaceRareWordsInTree(smooth = false, wordcount, threshold, it)
-                    echo(it)
+                    println(it)
                 }
 
             }
@@ -404,7 +418,7 @@ class Smooth : CliktCommand() {
                 }
 
                 smoothedTree.forEach {
-                    echo(it.await())
+                    println(it.await())
                 }
 
             }
@@ -438,7 +452,7 @@ class Outside : CliktCommand() {
                 val outSideWeights = grammar.viterbiOutsideScore()
                 if (outputFileName.isNullOrEmpty()) {
                     outSideWeights.forEach {
-                        echo(it.key + " " + it.value.format(15))
+                        println(it.key + " " + it.value.format(15))
                     }
                 } else {
                     writeOutsideScoreToFiles(outSideWeights, outputFileName!!)
@@ -459,16 +473,16 @@ class Outside : CliktCommand() {
 fun CoroutineScope.printTreesInOrder(outputChannel: ReceiveChannel<Pair<Int, String>>) = launch {
     val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
     var i = 1
-    for (parseResult in outputChannel) {
-        if (parseResult.first == i) {
-            println(parseResult.second)
+    for ((lineNumber, treeAsString) in outputChannel) {
+        if (lineNumber == i) {
+            println(treeAsString)
             i++
             while ((queue.peek()?.first ?: 0) == i) {
                 println(queue.poll().second)
                 i++
             }
         } else {
-            queue.add(parseResult)
+            queue.add(lineNumber to treeAsString)
         }
     }
 }
@@ -484,3 +498,14 @@ fun getRulesFromFile(
         )
     }
 }
+
+
+fun CoroutineScope.startProcessor(
+    numberOfParallelParsers: Int,
+    outputChannel: Channel<Pair<Int, String>>,
+    processor: () -> Job
+) = launch {
+    repeat(numberOfParallelParsers) {
+        processor()
+    }
+}.invokeOnCompletion { outputChannel.close() }

@@ -26,7 +26,7 @@ class DeductiveParser(
         while (queue.isNotEmpty()) {
             val selectedItem = queue.pollLast()
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
-                println("Long $long")
+                //println("Long $long")
                 return sentence to selectedItem
             }
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
