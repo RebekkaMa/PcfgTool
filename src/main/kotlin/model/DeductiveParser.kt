@@ -10,11 +10,11 @@ class DeductiveParser(
     private val accessChainRulesByNtRhs: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val accessRulesByTerminal: Map<Int, List<Tuple3<Int, IntArray, Double>>>,
     private val outsideScores: Map<Int, Double>?,
-    private val thresholdBeam: Double?,
-    private val rankBeam: Int?,
+    val thresholdBeam: Double?,
+    val rankBeam: Int?,
     initialArraySize: Int = 100_000,
 ) {
-    private var queue = MinMaxPriorityQueue.expectedSize(rankBeam ?: 100).create<Item>()
+    var queue = MinMaxPriorityQueue.expectedSize(rankBeam ?: 100).create<Item>()
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =
@@ -26,7 +26,7 @@ class DeductiveParser(
         while (queue.isNotEmpty()) {
             val selectedItem = queue.pollLast()
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
-                println("Long " + long)
+                //println("Long $long")
                 return sentence to selectedItem
             }
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
@@ -36,8 +36,6 @@ class DeductiveParser(
             prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
             long++
         }
-        println("Long " + long)
-
         return sentence to null
     }
 
@@ -54,7 +52,7 @@ class DeductiveParser(
     }
 
     //Zeile 8
-    fun addSelectedItemProbabilityToSavedItems(selectedItem: Item): Boolean {
+    private fun addSelectedItemProbabilityToSavedItems(selectedItem: Item): Boolean {
         var notNullProbabilityEntryLhs = false
         var notNullProbabilityEntryRhs = false
 
@@ -96,7 +94,7 @@ class DeductiveParser(
     }
 
     //Zeile 9
-    fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Item) {
+    private fun findRulesAddItemsToQueueSecondNtOnRhs(selectedItem: Item) {
         accessRulesByFirstNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromLeft[Pair(
                 selectedItem.j,
@@ -122,7 +120,7 @@ class DeductiveParser(
     }
 
     //Zeile 10
-    fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Item) {
+    private fun findRulesAddItemsToQueueFirstNtOnRhs(selectedItem: Item) {
         accessRulesBySecondNtOnRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             accessFoundItemsFromRight[Pair(
                 rhs.component1(),
@@ -148,7 +146,7 @@ class DeductiveParser(
     }
 
     //Zeile 11
-    fun findRulesAddItemsToQueueChain(selectedItem: Item) {
+    private fun findRulesAddItemsToQueueChain(selectedItem: Item) {
         accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
             val newProbability = ruleProbability * selectedItem.wt
             val comparisonValue =
@@ -167,56 +165,60 @@ class DeductiveParser(
     }
 
     fun prune(thresholdBeam: Double?, rankBeam: Int?) {
-        if (queue.isNotEmpty()) {
-            if (thresholdBeam != null) {
-                val m = queue.peekLast()!!.comparisonValue
-                while (!queue.isEmpty() && queue.peekFirst()!!.comparisonValue <= m) {
-                    queue.pollFirst()
-                }
-            }
-            if (rankBeam != null) {
-                while (queue.size > rankBeam) {
-                    queue.pollFirst()
-                }
+        if (queue.isEmpty()) return
+        if (thresholdBeam != null) {
+            val m = queue.peekLast()!!.comparisonValue
+            while (queue.isNotEmpty() && queue.peekFirst()!!.comparisonValue <= m * thresholdBeam) {
+                queue.pollFirst()
             }
         }
-
+        if (rankBeam != null) {
+            while (queue.size > rankBeam) {
+                queue.pollFirst()
+            }
+        }
     }
 
-    fun insertItemToQueue(newItem: Item, thresholdBeam: Double?, rankBeam: Int?) {
+    fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
 
-        val isItemOverThresholdBeam = { newItem.comparisonValue > ((queue.peekLast()?.comparisonValue ?: 0.0)) }
-        val isMinOfQueueLessThanNewItem =
-            {
-                (queue.peekFirst()?.comparisonValue
-                    ?: throw Exception("Internal Error: insertItemToQueue function - 1")) < newItem.comparisonValue
-            }
+        val isItemOverThresholdBeam = {
+            item.comparisonValue > ((queue.peekLast()?.comparisonValue?.let { it * thresholdBeam!! }
+                ?: throw Exception("Internal Error: isItemOverThresholdBeam -> peekLast() -> No ComparisonValue")))
+        }
+        val isQueueSizeUnderRankBeam =
+            { queue.size < (rankBeam ?: throw Exception("Internal Error: isQueueNotFull -> rankbeam is Null")) }
+        val isMinItemOfQueueLessThanSelectedItem = {
+            (queue.peekFirst()?.comparisonValue
+                ?: throw Exception("Internal Error: isMinItemOfQueueLessThanSelectedItem -> peekFirst() -> No ComparisonValue")) < item.comparisonValue
+        }
 
         fun thresholdBeam() {
-            if (isItemOverThresholdBeam()) queue.offer(newItem)
+            if (isItemOverThresholdBeam()) {
+                queue.offer(item)
+            }
         }
 
         fun rankBeam() {
-            if (queue.size < rankBeam!!) {
-                queue.offer(newItem)
-            } else
-                if (isMinOfQueueLessThanNewItem()) {
-                    queue.pollFirst()
-                    queue.offer(newItem)
-                }
+            if (isQueueSizeUnderRankBeam()) queue.offer(item)
+            else if (isMinItemOfQueueLessThanSelectedItem()) {
+                queue.pollFirst()
+                queue.offer(item)
+            }
         }
 
         when {
-            queue.isEmpty() -> queue.offer(newItem) //TODO
-            thresholdBeam != null && rankBeam != null -> {
-                if (isItemOverThresholdBeam()) {
-                    rankBeam()
-                }
-            }
+            queue.isEmpty() -> queue.offer(item) //TODO
+            thresholdBeam != null && rankBeam != null -> if (isItemOverThresholdBeam()) rankBeam()
             thresholdBeam != null -> thresholdBeam()
             rankBeam != null -> rankBeam()
-            else -> queue.offer(newItem)
-
+            else -> queue.offer(item)
         }
     }
+
+    fun clearAll() {
+        queue.clear()
+        accessFoundItemsFromRight.clear()
+        accessFoundItemsFromLeft.clear()
+    }
+
 }

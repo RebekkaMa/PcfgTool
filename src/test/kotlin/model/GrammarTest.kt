@@ -150,4 +150,109 @@ class GrammarTest {
         grammar.getRulesAsStrings() shouldBe listOf("S -> NP VP 1", "VP -> V NP 1", "NP -> DET N 0.666666666666667")
     }
 
+    @Test
+    fun vit() = runTest{
+        val pRules = buildMap<Rule, Double> {
+            this[Rule(true, "NN", listOf("Fruit"))] = 1.0
+            this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
+            this[Rule(true, "NNS", listOf("bananas"))] = 2/3.toDouble()
+            this[Rule(true, "VBP", listOf("like"))] = 1.0
+            this[Rule(true, "VBZ", listOf("flies"))] = 1.0
+            this[Rule(true, "IN", listOf("like"))] = 1.0
+
+            this[Rule(false, "S", listOf("NP", "VP"))] = 1.0
+            this[Rule(false, "NP", listOf("NN", "NNS"))] = 0.25
+            this[Rule(false, "NP", listOf("NNS"))] = 0.5
+            this[Rule(false, "NP", listOf("NN"))] = 0.25
+            this[Rule(false, "VP", listOf("VBP", "NP"))] = 0.5
+            this[Rule(false, "VP", listOf("VBZ", "PP"))] = 0.5
+            this[Rule(false, "PP", listOf("IN", "NP"))] = 1.0
+
+        }
+
+        val results = buildMap {
+            this["S"] = 1.0
+            this["NP"] = 1/6.toDouble()
+            this["VP"] = 1/3.toDouble()
+            this["PP"] = 1/6.toDouble()
+            this["NN"] = 1/24.toDouble()
+            this["NNS"] = 1/12.toDouble()
+            this["VBP"] = 1/18.toDouble()
+            this["VBZ"] = 1/18.toDouble()
+            this["IN"] = 1/18.toDouble()
+
+        }
+
+        val grammar = Grammar.create("S", pRules)
+        grammar.viterbiOutsideScore() shouldBe results
+    }
+
+
+    @Test
+    fun getInsideWeights() = runTest{
+        val pRules = buildMap<Rule, Double> {
+            this[Rule(true, "NN", listOf("Fruit"))] = 1.0
+            this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
+            this[Rule(true, "NNS", listOf("bananas"))] = 2/3.toDouble()
+            this[Rule(true, "VBP", listOf("like"))] = 1.0
+            this[Rule(true, "VBZ", listOf("flies"))] = 1.0
+            this[Rule(true, "IN", listOf("like"))] = 1.0
+
+            this[Rule(false, "S", listOf("NP", "VP"))] = 1.0
+            this[Rule(false, "NP", listOf("NN", "NNS"))] = 0.25
+            this[Rule(false, "NP", listOf("NNS"))] = 0.5
+            this[Rule(false, "NP", listOf("NN"))] = 0.25
+            this[Rule(false, "VP", listOf("VBP", "NP"))] = 0.5
+            this[Rule(false, "VP", listOf("VBZ", "PP"))] = 0.5
+            this[Rule(false, "PP", listOf("IN", "NP"))] = 1.0
+
+        }
+
+        val results = buildMap {
+            this["S"] = 1/18.toDouble()
+            this["NP"] = 1/3.toDouble()
+            this["VP"] = 1/6.toDouble()
+            this["PP"] = 1/3.toDouble()
+            this["NN"] = 1.toDouble()
+            this["NNS"] = 2/3.toDouble()
+            this["VBP"] = 1.toDouble()
+            this["VBZ"] = 1.toDouble()
+            this["IN"] = 1.toDouble()
+
+        }
+
+        val grammar = Grammar.create("S", pRules)
+
+        val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+
+
+
+        pRules.forEach { (rule, ruleProbability) ->
+            if (rule.lexical) {
+                accessRulesFromLhsLexical.addTuple(rule.lhs, rule to ruleProbability)
+            } else {
+                accessRulesFromLhsNonLexical.addTuple(rule.lhs, rule to ruleProbability)
+            }
+        }
+
+
+        grammar.inside(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical) shouldBe results
+
+
+    }
+
+    fun <K, V> MutableMap<K, MutableList<V>>.addTuple(key: K, item: V) {
+        this.compute(key) { _, v ->
+            if (v != null) {
+                v.add(
+                    item
+                )
+                v
+            } else {
+                mutableListOf(item)
+            }
+        }
+    }
+
 }
