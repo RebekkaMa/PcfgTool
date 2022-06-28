@@ -22,7 +22,7 @@ class ParseTest {
     }
 
     @Test
-    fun parseGoldShortWithA(){
+    fun parseGoldShortWithAFormat(){
         val sentencesFile = File("src/main/resources/small/sentences")
         val standardOut = System.out
         val outputStreamCaptor = ByteArrayOutputStream()
@@ -31,9 +31,28 @@ class ParseTest {
         System.setIn(sentences)
 
         Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+
 
         File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
     }
+
+    @Test
+    fun parseGoldShortWithANotFormat(){
+        val sentencesFile = File("src/main/resources/small/sentences")
+        val standardOut = System.out
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setOut(PrintStream(outputStreamCaptor))
+        val sentences = sentencesFile.inputStream()
+        System.setIn(sentences)
+
+        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+        Parse().parse(listOf("-a", "src/test/resources/outsideShortNotFormat.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+
+
+        File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
+    }
+
 
     @Test
     fun parseGoldShortWithThreshold(){

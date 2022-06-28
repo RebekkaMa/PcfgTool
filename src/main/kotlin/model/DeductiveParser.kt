@@ -22,7 +22,7 @@ class DeductiveParser(
 
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
         fillQueueWithItemsFromLexicalRules(sentence)
-        var long: Long = 0
+        //var long: Long = 0
         while (queue.isNotEmpty()) {
             val selectedItem = queue.pollLast()
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
@@ -34,7 +34,7 @@ class DeductiveParser(
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
             findRulesAddItemsToQueueChain(selectedItem)
             prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
-            long++
+            //long++
         }
         return sentence to null
     }
