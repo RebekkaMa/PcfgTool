@@ -150,7 +150,6 @@ class Parse : CliktCommand() {
                     continue
                 }
 
-                val start = System.currentTimeMillis()
                 val (_, parsedTreeItem) = DeductiveParser(
                     lexiconByString[initial] ?: 0,
                     accessRulesBySecondNtOnRhs,
@@ -162,7 +161,6 @@ class Parse : CliktCommand() {
                     rankBeam = rankBeam,
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
-                //println(sentenceNumber.toString() + "--" + (System.currentTimeMillis() - start))
                 outputChannel.send(
                     sentenceNumber to (parsedTreeItem?.getParseTreeAsString(tokensAsString, lexiconByInt)
                         ?: "(NOPARSE ${sentence})")
@@ -449,7 +447,7 @@ class Outside : CliktCommand() {
                     initial,
                     (getRulesFromLexiconFile.await() + getRulesFromRulesFile.await()).toMap()
                 )
-                val outSideWeights = grammar.viterbiOutsideScore()
+                val outSideWeights = grammar.getViterbiOutsideScores()
                 if (outputFileName.isNullOrEmpty()) {
                     outSideWeights.forEach {
                         println(it.key + " " + it.value.format(15))

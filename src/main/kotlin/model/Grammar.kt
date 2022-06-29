@@ -114,7 +114,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         }
     }
 
-    fun inside(
+    fun getInsideWeights(
         accessRulesFromLhsNonLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
         accessRulesFromLhsLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>
     ): MutableMap<String, Double> {
@@ -143,7 +143,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
     }
 
 
-    fun outside(
+    fun getOutsideWeights(
         insideValues: MutableMap<String, Double>,
         accessRulesFromRhs: MutableMap<String, MutableList<Tuple3<String, List<String>, Double>>>,
         nonTerminals: MutableSet<String>
@@ -168,7 +168,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
     return outsideValues
 } //TODO Immer nur binarisierte Grammatiken?
 
-fun viterbiOutsideScore(): MutableMap<String, Double> {
+fun getViterbiOutsideScores(): MutableMap<String, Double> {
     val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
     val accessRulesFromRhs = mutableMapOf<String, MutableList<Tuple3<String,List<String>, Double>>>()
     val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
@@ -186,8 +186,8 @@ fun viterbiOutsideScore(): MutableMap<String, Double> {
         }
         nonTerminals.add(rule.lhs)
     }
-    val insideValues = inside(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
-    return outside(
+    val insideValues = getInsideWeights(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
+    return getOutsideWeights(
         insideValues,
         accessRulesFromRhs,
         nonTerminals

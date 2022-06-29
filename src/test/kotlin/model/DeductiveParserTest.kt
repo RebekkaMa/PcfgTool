@@ -115,7 +115,7 @@ class DeductiveParserTest {
     }
 
     @Test
-    fun insretItemToQueue_rankBeam() {
+    fun insertItemToQueue_rankBeam() {
         val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), rankBeam = 3, thresholdBeam = null)
 
 
@@ -141,7 +141,7 @@ class DeductiveParserTest {
     }
 
     @Test
-    fun prune_ThresHoldBeam() {
+    fun prune_thresHoldBeam() {
         val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, rankBeam = 6)
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())

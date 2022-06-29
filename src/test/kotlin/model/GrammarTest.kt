@@ -151,7 +151,7 @@ class GrammarTest {
     }
 
     @Test
-    fun vit() = runTest{
+    fun viterbiOutsideScoreTest() = runTest{
         val pRules = buildMap<Rule, Double> {
             this[Rule(true, "NN", listOf("Fruit"))] = 1.0
             this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
@@ -184,12 +184,12 @@ class GrammarTest {
         }
 
         val grammar = Grammar.create("S", pRules)
-        grammar.viterbiOutsideScore() shouldBe results
+        grammar.getViterbiOutsideScores() shouldBe results
     }
 
 
     @Test
-    fun getInsideWeights() = runTest{
+    fun getInsideWeightsTest() = runTest{
         val pRules = buildMap<Rule, Double> {
             this[Rule(true, "NN", listOf("Fruit"))] = 1.0
             this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
@@ -237,7 +237,7 @@ class GrammarTest {
         }
 
 
-        grammar.inside(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical) shouldBe results
+        grammar.getInsideWeights(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical) shouldBe results
 
 
     }
