@@ -1,0 +1,7 @@
+S -> NP VP 1
+NP -> NN NNS 0.26
+NP -> NNS 0.5
+NP -> NN 0.26
+VP -> VBP NP 0.5
+VP -> VBZ PP 0.5
+PP -> IN NP 1
