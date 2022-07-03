@@ -1,9 +1,9 @@
 package model
 
-import Util.getWindow
-import Util.joinToStringWithStartAndEnd
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
-import evaluators.MarkovizationNodeEvaluator
+import evaluators.BinarisedNodeParser
+import utils.getWindow
+import utils.joinToStringWithStartAndEnd
 
 class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) {
     fun addChild(expression: Tree) {
@@ -50,7 +50,7 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
     }
 
     fun binarise(vertical: Int, horizontal: Int): Tree {
-        val markovizationNodeEvaluator = MarkovizationNodeEvaluator()
+        val binarisedNodeParser = BinarisedNodeParser()
         val parents = ArrayDeque<String>()
 
         fun addParents(atom: String, isAddedNode: Boolean): String {
@@ -72,7 +72,7 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
 
         fun binarise(tree: Tree = this): Tree {
             val numberOfChildren = tree.children.size
-            val (label, childrenAsStrings, _) = markovizationNodeEvaluator.parseToEnd(tree.atom)
+            val (label, childrenAsStrings, _) = binarisedNodeParser.parseToEnd(tree.atom)
             val isAddedNode = childrenAsStrings.isNotEmpty()
             when {
                 tree.isPreterminal() -> return tree
@@ -114,12 +114,12 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
     }
 
     fun debinarise(tree: Tree = this): Tree {
-        val markovizationNodeEvaluator = MarkovizationNodeEvaluator()
-        tree.atom = MarkovizationNodeEvaluator().parseToEnd(tree.atom).t1
+        val binarisedNodeParser = BinarisedNodeParser()
+        tree.atom = BinarisedNodeParser().parseToEnd(tree.atom).t1
 
         if (tree.isPreterminal()) return tree
         val lastChildOfSelectedTree = tree.children.last()
-        val (_, childrenOfLastChildAsString , _) = markovizationNodeEvaluator.parseToEnd(lastChildOfSelectedTree.atom)
+        val (_, childrenOfLastChildAsString , _) = binarisedNodeParser.parseToEnd(lastChildOfSelectedTree.atom)
 
         if (childrenOfLastChildAsString.isNotEmpty()) {
             tree.children.removeLast()

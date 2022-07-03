@@ -1,22 +1,5 @@
 package model
 
-fun replaceTokensByInts(
-    lexiconByString: Map<String, Int>,
-    tokensAsString: List<String>,
-    unking: Boolean,
-    smoothing: Boolean
-): IntArray {
-    return tokensAsString.mapIndexed { index, word ->
-        val wordAsInt = lexiconByString[word]
-        return@mapIndexed when {
-            wordAsInt != null -> wordAsInt //TODO
-            smoothing -> lexiconByString[getSignature(word, index + 1)] ?: -1
-            unking -> lexiconByString["UNK"] ?: -1
-            else -> -1
-        }
-    }.toIntArray()
-}
-
 fun getTerminalCountFromCorpus(corpus: List<Tree>): MutableMap<String, Int> {
     val wordcount = mutableMapOf<String, Int>()
     corpus.forEach { tree ->

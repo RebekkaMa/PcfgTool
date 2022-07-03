@@ -1,6 +1,6 @@
 
-import Util.format
 import model.Grammar
+import utils.format
 import java.io.File
 
 fun writeGrammarToFiles(grammar: Grammar, grammarFileName: String){

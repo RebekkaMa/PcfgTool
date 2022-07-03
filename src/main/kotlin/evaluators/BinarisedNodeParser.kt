@@ -7,7 +7,7 @@ import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import com.github.h0tk3y.betterParse.utils.Tuple3
 
-class MarkovizationNodeEvaluator : Grammar<Tuple3<String, List<String>, List<String>>>() {
+class BinarisedNodeParser : Grammar<Tuple3<String, List<String>, List<String>>>() {
 
     val lab by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)\\<\\>\\^\\|]]+")
     val label by lab use { this.text}

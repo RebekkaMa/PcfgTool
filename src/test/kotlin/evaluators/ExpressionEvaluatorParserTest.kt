@@ -8,10 +8,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-class ExpressionEvaluatorTest {
+class ExpressionEvaluatorParserTest {
 
 
-    val expressionEvaluator = ExpressionEvaluator()
+    val expressionEvaluatorParser = ExpressionEvaluatorParser()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
@@ -37,7 +37,7 @@ class ExpressionEvaluatorTest {
         val tree2 = Tree("SBARQ", arrayListOf(tree3, tree5, tree12))
         val tree1 = Tree("ROOT", arrayListOf(tree2))
 
-        expressionEvaluator.parseToEnd(expression)
+        expressionEvaluatorParser.parseToEnd(expression)
             .toString() shouldBeEqualComparingTo tree1.toString()
     }
 
@@ -50,7 +50,7 @@ class ExpressionEvaluatorTest {
         val tree1 = Tree("ROOT", arrayListOf(tree2))
 
 
-        expressionEvaluator.parseToEnd(expression)
+        expressionEvaluatorParser.parseToEnd(expression)
             .toString() shouldBeEqualComparingTo tree1.toString()
     }
 
@@ -60,7 +60,7 @@ class ExpressionEvaluatorTest {
         val expression = "(ROOT ( (WH-NP (W6P Who)) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
 
         shouldThrowAny {
-            expressionEvaluator.parseToEnd(expression)
+            expressionEvaluatorParser.parseToEnd(expression)
         }
     }
 
@@ -71,7 +71,7 @@ class ExpressionEvaluatorTest {
         val expression3 = "((ROOT Who) (. ?))"
 
         shouldThrowAny {
-            expressionEvaluator.parseToEnd(expression3)
+            expressionEvaluatorParser.parseToEnd(expression3)
         }
     }
 
@@ -82,7 +82,7 @@ class ExpressionEvaluatorTest {
         val expression2 = "(ROOT (SBQR (WH-NP (W6P )) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
 
         shouldThrowAny {
-            expressionEvaluator.parseToEnd(expression2)
+            expressionEvaluatorParser.parseToEnd(expression2)
         }
     }
 
@@ -93,7 +93,7 @@ class ExpressionEvaluatorTest {
         val expression2 = "(ROOT (SBQR (WH-NP (W6P sdf ss)) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
 
         shouldThrowAny {
-            expressionEvaluator.parseToEnd(expression2)
+            expressionEvaluatorParser.parseToEnd(expression2)
         }
     }
 }

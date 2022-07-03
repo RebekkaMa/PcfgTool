@@ -6,9 +6,9 @@ import io.kotest.matchers.shouldBe
 import model.Rule
 import org.junit.jupiter.api.Test
 
-internal class LexiconExpressionEvaluatorTest {
+internal class LexiconExpressionParserTest {
 
-    val lexiconExpressionEvaluator = LexiconExpressionEvaluator()
+    val lexiconExpressionParser = LexiconExpressionParser()
 
     @Test
     fun should() {
@@ -19,15 +19,15 @@ internal class LexiconExpressionEvaluatorTest {
         val rule5 = "N fish 0,333333333"
         val rule6 = "N 0.67654 0,333333333"
 
-        lexiconExpressionEvaluator.parseToEnd(rule1) shouldBe Pair(Rule(true, "VP", listOf("eats")), 0.25)
-        lexiconExpressionEvaluator.parseToEnd(rule2) shouldBe Pair(
+        lexiconExpressionParser.parseToEnd(rule1) shouldBe Pair(Rule(true, "VP", listOf("eats")), 0.25)
+        lexiconExpressionParser.parseToEnd(rule2) shouldBe Pair(
             Rule(true, "NP", listOf("she")),
             0.6666666666666666666666666
         )
-        lexiconExpressionEvaluator.parseToEnd(rule3) shouldBe Pair(Rule(true, "V", listOf("eats")), 1.0)
-        lexiconExpressionEvaluator.parseToEnd(rule4) shouldBe Pair(Rule(true, "P", listOf("with")), 0.0)
-        lexiconExpressionEvaluator.parseToEnd(rule5) shouldBe Pair(Rule(true, "N", listOf("fish")), 0.333333333)
-        lexiconExpressionEvaluator.parseToEnd(rule6) shouldBe Pair(Rule(true, "N", listOf("0.67654")), 0.333333333)
+        lexiconExpressionParser.parseToEnd(rule3) shouldBe Pair(Rule(true, "V", listOf("eats")), 1.0)
+        lexiconExpressionParser.parseToEnd(rule4) shouldBe Pair(Rule(true, "P", listOf("with")), 0.0)
+        lexiconExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(true, "N", listOf("fish")), 0.333333333)
+        lexiconExpressionParser.parseToEnd(rule6) shouldBe Pair(Rule(true, "N", listOf("0.67654")), 0.333333333)
 
     }
 
@@ -36,7 +36,7 @@ internal class LexiconExpressionEvaluatorTest {
         val rule1 = "VP eats 5.25"
 
         shouldThrowAny {
-            lexiconExpressionEvaluator.parseToEnd(rule1)
+            lexiconExpressionParser.parseToEnd(rule1)
         }
     }
 
@@ -44,7 +44,7 @@ internal class LexiconExpressionEvaluatorTest {
     fun shouldReturnException_noNumber() {
         val rule2 = "NP she 0;6666666666666666666666666"
         shouldThrowAny {
-            lexiconExpressionEvaluator.parseToEnd(rule2)
+            lexiconExpressionParser.parseToEnd(rule2)
         }
     }
 
@@ -53,7 +53,7 @@ internal class LexiconExpressionEvaluatorTest {
         val rule4 = "P with ere"
 
         shouldThrowAny {
-            lexiconExpressionEvaluator.parseToEnd(rule4)
+            lexiconExpressionParser.parseToEnd(rule4)
         }
     }
 
@@ -63,7 +63,7 @@ internal class LexiconExpressionEvaluatorTest {
         val rule5 = "N fish  6."
 
         shouldThrowAny {
-            lexiconExpressionEvaluator.parseToEnd(rule5)
+            lexiconExpressionParser.parseToEnd(rule5)
         }
 
     }
@@ -75,7 +75,7 @@ internal class LexiconExpressionEvaluatorTest {
 
 
         shouldThrowAny {
-            lexiconExpressionEvaluator.parseToEnd(rule5)
+            lexiconExpressionParser.parseToEnd(rule5)
         }
 
     }

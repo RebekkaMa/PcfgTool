@@ -9,7 +9,7 @@ import com.github.h0tk3y.betterParse.parser.Parser
 import model.Rule
 
 
-class RulesExpressionEvaluator : Grammar<Pair<Rule, Double>>() {
+class RulesExpressionParser : Grammar<Pair<Rule, Double>>() {
 
     val arrow by literalToken("->")
     val number by regexToken("[01]([\\.\\,]\\d*)?(\\s)*$")

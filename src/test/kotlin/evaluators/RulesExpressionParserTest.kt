@@ -6,9 +6,9 @@ import io.kotest.matchers.shouldBe
 import model.Rule
 import org.junit.jupiter.api.Test
 
-class RulesExpressionEvaluatorTest {
+class RulesExpressionParserTest {
 
-    val rulesExpressionEvaluator = RulesExpressionEvaluator()
+    val rulesExpressionParser = RulesExpressionParser()
 
     @Test
     fun should() {
@@ -20,13 +20,13 @@ class RulesExpressionEvaluatorTest {
         val rule6 = "N -> 0.67654 . 0,333333333"
         val rule7 = "-> -> -> jk->jk 0,333333333"
 
-        rulesExpressionEvaluator.parseToEnd(rule1) shouldBe Pair(Rule(false, "S", listOf("NP", "VP")), 1.0)
-        rulesExpressionEvaluator.parseToEnd(rule2) shouldBe Pair(Rule(false, "VP", listOf("VP", "PP")), 0.25)
-        rulesExpressionEvaluator.parseToEnd(rule3) shouldBe Pair(Rule(false, "VP", listOf("V", "NP")), 0.5)
-        rulesExpressionEvaluator.parseToEnd(rule4) shouldBe Pair(Rule(false, "PP", listOf("P", "NP")), 1.0)
-        rulesExpressionEvaluator.parseToEnd(rule5) shouldBe Pair(Rule(false, "NP", listOf("Det", "N")), 0.33333333333333333)
-        rulesExpressionEvaluator.parseToEnd(rule6) shouldBe Pair(Rule(false, "N", listOf("0.67654", ".")), 0.333333333)
-        rulesExpressionEvaluator.parseToEnd(rule7) shouldBe Pair(Rule(false, "->", listOf("->", "jk->jk")), 0.333333333)
+        rulesExpressionParser.parseToEnd(rule1) shouldBe Pair(Rule(false, "S", listOf("NP", "VP")), 1.0)
+        rulesExpressionParser.parseToEnd(rule2) shouldBe Pair(Rule(false, "VP", listOf("VP", "PP")), 0.25)
+        rulesExpressionParser.parseToEnd(rule3) shouldBe Pair(Rule(false, "VP", listOf("V", "NP")), 0.5)
+        rulesExpressionParser.parseToEnd(rule4) shouldBe Pair(Rule(false, "PP", listOf("P", "NP")), 1.0)
+        rulesExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(false, "NP", listOf("Det", "N")), 0.33333333333333333)
+        rulesExpressionParser.parseToEnd(rule6) shouldBe Pair(Rule(false, "N", listOf("0.67654", ".")), 0.333333333)
+        rulesExpressionParser.parseToEnd(rule7) shouldBe Pair(Rule(false, "->", listOf("->", "jk->jk")), 0.333333333)
     }
 
     @Test
@@ -34,7 +34,7 @@ class RulesExpressionEvaluatorTest {
         val rule1 = "S -> NP VP 5.25"
 
         shouldThrowAny {
-            rulesExpressionEvaluator.parseToEnd(rule1)
+            rulesExpressionParser.parseToEnd(rule1)
         }
     }
 
@@ -42,7 +42,7 @@ class RulesExpressionEvaluatorTest {
     fun shouldReturnException_noNumber() {
         val rule2 = "S -> NP VP 0;6666666666666666666666666"
         shouldThrowAny {
-            rulesExpressionEvaluator.parseToEnd(rule2)
+            rulesExpressionParser.parseToEnd(rule2)
         }
     }
 
@@ -51,7 +51,7 @@ class RulesExpressionEvaluatorTest {
         val rule4 = "S -> NP VP ere"
 
         shouldThrowAny {
-            rulesExpressionEvaluator.parseToEnd(rule4)
+            rulesExpressionParser.parseToEnd(rule4)
         }
     }
 
@@ -61,7 +61,7 @@ class RulesExpressionEvaluatorTest {
         val rule5 = "S -> NP VP  6."
 
         shouldThrowAny {
-            rulesExpressionEvaluator.parseToEnd(rule5)
+            rulesExpressionParser.parseToEnd(rule5)
         }
 
     }
@@ -73,7 +73,7 @@ class RulesExpressionEvaluatorTest {
 
 
         shouldThrowAny {
-            rulesExpressionEvaluator.parseToEnd(rule5)
+            rulesExpressionParser.parseToEnd(rule5)
         }
 
     }

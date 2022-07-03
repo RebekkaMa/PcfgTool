@@ -8,7 +8,7 @@ import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import model.Tree
 
-class ExpressionEvaluator : Grammar<Tree>() {
+class ExpressionEvaluatorParser : Grammar<Tree>() {
     val lpar by literalToken("(")
     val rpar by literalToken(")")
     val lab by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)]]+")

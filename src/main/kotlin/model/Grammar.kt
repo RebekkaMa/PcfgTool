@@ -1,10 +1,10 @@
 package model
 
-import Util.format
 import com.github.h0tk3y.betterParse.utils.Tuple3
 import com.github.h0tk3y.betterParse.utils.Tuple7
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import utils.format
 
 class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
 
