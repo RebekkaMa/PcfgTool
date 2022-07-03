@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 class MarkovizationNodeEvaluatorTest {
     @Test
-    fun test(){
+    fun testAll(){
         val testString = "FRAG|<NP-TMP,.>^<ROOT>"
         MarkovizationNodeEvaluator().parseToEnd(testString) shouldBe Tuple3("FRAG", listOf("NP-TMP","."), listOf("ROOT"))
 

@@ -274,9 +274,9 @@ class DeductiveParserTest {
 
        val sentenceAsInt = intArrayOf(lexiconByString["Fruit"]!!, lexiconByString["flies"]!!,lexiconByString["like"]!!,lexiconByString["bananas"]!!,)
 
-       parser1.weightedDeductiveParsing(sentenceAsInt).second?.getParseTreeAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe  "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))"
+       parser1.weightedDeductiveParsing(sentenceAsInt).second?.getBacktraceAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe  "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))"
 
-       parser2.weightedDeductiveParsing(sentenceAsInt).second?.getParseTreeAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe "(S (NP (NN Fruit) (NNS flies)) (VP (VBP like) (NP (NNS bananas))))"
+       parser2.weightedDeductiveParsing(sentenceAsInt).second?.getBacktraceAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe "(S (NP (NN Fruit) (NNS flies)) (VP (VBP like) (NP (NNS bananas))))"
    }
 
 //    @Test

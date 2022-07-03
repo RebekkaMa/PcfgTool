@@ -18,11 +18,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         }
 
         suspend fun create(initial: String?, rules: Map<Rule, Double>): Grammar = coroutineScope {
-            if (initial == null) {
-                Grammar(pRules = rules.toMap())
-            } else {
-                Grammar(initial, rules.toMap())
-            }
+            if (initial == null) Grammar(pRules = rules.toMap()) else Grammar(initial, rules.toMap())
         }
     }
 
@@ -56,37 +52,35 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         val accessChainRulesByNtRhs = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
         val accessRulesByTerminal = mutableMapOf<Int, MutableList<Tuple3<Int, IntArray, Double>>>()
 
-
         this.pRules.forEach { (rule, ruleProbability) ->
-            val lhsHash = lexiconByString.getOrPut(rule.lhs) {
-                index += 1
-                lexiconByKey[index] = rule.lhs
+            val lhsAsInt = lexiconByString.getOrPut(rule.lhs) {
+                lexiconByKey[++index] = rule.lhs
                 index
             }
-            val rhsHashList = rule.rhs.map {
+            val rhsAsInt = rule.rhs.map {
                 lexiconByString.getOrPut(it) {
-                    index += 1
-                    lexiconByKey[index] = it
+                    lexiconByKey[++index] = it
                     index
                 }
             }.toIntArray()
 
-            val newTuple = Tuple3(lhsHash, rhsHashList, ruleProbability)
+            val newEntry = Tuple3(lhsAsInt, rhsAsInt, ruleProbability)
 
             when (rule.rhs.size) {
                 2 -> {
-                    accessRulesByFirstNtOnRhs.addTuple(rhsHashList[0], newTuple)
-                    accessRulesBySecondNtOnRhs.addTuple(rhsHashList[1], newTuple)
+                    accessRulesByFirstNtOnRhs.add(rhsAsInt[0], newEntry)
+                    accessRulesBySecondNtOnRhs.add(rhsAsInt[1], newEntry)
                 }
                 1 -> {
                     if (!rule.lexical) {
-                        accessChainRulesByNtRhs.addTuple(rhsHashList[0], newTuple)
+                        accessChainRulesByNtRhs.add(rhsAsInt[0], newEntry)
                         numberOfTerminals += 1
                     } else {
-                        accessRulesByTerminal.addTuple(rhsHashList[0], newTuple)
+                        accessRulesByTerminal.add(rhsAsInt[0], newEntry)
                     }
                 }
                 else -> {
+                    throw Exception("Grammar: getGrammarDataStructuresForParsing -> Rule rhs is empty")
                 }
             }
         }
@@ -101,19 +95,6 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         )
     }
 
-    fun <K, V> MutableMap<K, MutableList<V>>.addTuple(key: K, item: V) {
-        this.compute(key) { _, v ->
-            if (v != null) {
-                v.add(
-                    item
-                )
-                v
-            } else {
-                mutableListOf(item)
-            }
-        }
-    }
-
     fun getInsideWeights(
         accessRulesFromLhsNonLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>,
         accessRulesFromLhsLexical: MutableMap<String, MutableList<Pair<Rule, Double>>>
@@ -123,18 +104,18 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         accessRulesFromLhsLexical.forEach { (lhs, rules) ->
             insideValues[lhs] = rules.maxOf { it.second }
         }
-        var converged :Boolean
+        var converged: Boolean
         do {
             converged = true
             accessRulesFromLhsNonLexical.forEach { (lhs, rules) ->
                 insideValues.compute(lhs) { _, oldInValue ->
-                    val whk = rules.maxOf { (rule, probability) ->
-                        rule.rhs.fold(probability) { acc, s ->
+                    val whk = rules.maxOf { (rule, ruleProbability) ->
+                        rule.rhs.fold(ruleProbability) { acc, s ->
                             acc * insideValues.getOrDefault(s, 0.0)
                         }
                     }
                     val newInValue = maxOf(oldInValue ?: 0.0, whk)
-                    converged = newInValue == oldInValue  && converged
+                    converged = newInValue == oldInValue && converged
                     newInValue
                 }
             }
@@ -151,13 +132,14 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
         val outsideValues = mutableMapOf<String, Double>()
         outsideValues[initial] = 1.0
         val nonTerminalsWithoutInitial = nonTerminals.minus(initial)
-        var converged :Boolean
+        var converged: Boolean
         do {
             converged = true
             nonTerminalsWithoutInitial.forEach { nonTerminal ->
                 outsideValues.compute(nonTerminal) { _, oldOutValue ->
                     val max = accessRulesFromRhs[nonTerminal]?.maxOf { (lhs, rhs, probability) ->
-                        (outsideValues[lhs] ?: 0.0) * probability * (rhs.firstOrNull()?.let { insideValues.getOrDefault(it,0.0) } ?: 1.0)
+                        (outsideValues[lhs] ?: 0.0) * probability * (rhs.firstOrNull()
+                            ?.let { insideValues.getOrDefault(it, 0.0) } ?: 1.0)
                     }
                     val newOutValue = maxOf(oldOutValue ?: 0.0, max ?: 0.0)
                     converged = newOutValue == oldOutValue && converged
@@ -165,35 +147,47 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
                 }
             }
         } while (!converged)
-    return outsideValues
-} //TODO Immer nur binarisierte Grammatiken?
+        return outsideValues
+    } //TODO Immer nur binarisierte Grammatiken?
 
-fun getViterbiOutsideScores(): MutableMap<String, Double> {
-    val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-    val accessRulesFromRhs = mutableMapOf<String, MutableList<Tuple3<String,List<String>, Double>>>()
-    val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
-    val nonTerminals = mutableSetOf<String>()
+    fun getViterbiOutsideScores(): MutableMap<String, Double> {
+        val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val accessRulesFromRhs = mutableMapOf<String, MutableList<Tuple3<String, List<String>, Double>>>()
+        val accessRulesFromLhsLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()
+        val nonTerminals = mutableSetOf<String>()
 
-    pRules.forEach { (rule, ruleProbability) ->
-        if (rule.lexical) {
-            accessRulesFromLhsLexical.addTuple(rule.lhs, rule to ruleProbability)
-        } else {
-            accessRulesFromLhsNonLexical.addTuple(rule.lhs, rule to ruleProbability)
-            rule.rhs.forEach {
-                accessRulesFromRhs.addTuple(it, Tuple3(rule.lhs, rule.rhs.minus(it), ruleProbability))
-                nonTerminals.add(it)
+        pRules.forEach { (rule, ruleProbability) ->
+            if (rule.lexical) {
+                accessRulesFromLhsLexical.add(rule.lhs, rule to ruleProbability)
+            } else {
+                accessRulesFromLhsNonLexical.add(rule.lhs, rule to ruleProbability)
+                rule.rhs.forEach {
+                    accessRulesFromRhs.add(it, Tuple3(rule.lhs, rule.rhs.minus(it), ruleProbability))
+                    nonTerminals.add(it)
+                }
+            }
+            nonTerminals.add(rule.lhs)
+        }
+        val insideValues = getInsideWeights(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
+        return getOutsideWeights(
+            insideValues,
+            accessRulesFromRhs,
+            nonTerminals
+        )
+    }
+
+    private fun <K, V> MutableMap<K, MutableList<V>>.add(key: K, item: V) {
+        this.compute(key) { _, v ->
+            if (v != null) {
+                v.add(item)
+                v
+            } else {
+                mutableListOf(item)
             }
         }
-        nonTerminals.add(rule.lhs)
     }
-    val insideValues = getInsideWeights(accessRulesFromLhsNonLexical, accessRulesFromLhsLexical)
-    return getOutsideWeights(
-        insideValues,
-        accessRulesFromRhs,
-        nonTerminals
-    )
-}
-override fun toString(): String {
-    return pRules.map { (rule, p) -> rule.toString() + " " + p.format(15) }.joinToString("\n")
-}
+
+    override fun toString(): String {
+        return pRules.map { (rule, p) -> rule.toString() + " " + p.format(15) }.joinToString("\n")
+    }
 }

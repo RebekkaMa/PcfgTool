@@ -39,6 +39,8 @@ fun Double.format(fracDigits: Int): String {
     return df.format(this)
 }
 
+
+
 //fun <T> Iterable<T>.joinToString(separator: CharSequence = ", ", prefix: String = "", postfix: String = "", startIndex : Int = 0, limit: Int = -1, transform: ((T) -> String)? = null): String {
 //    val buffer = StringBuffer()
 //    buffer.append(prefix)

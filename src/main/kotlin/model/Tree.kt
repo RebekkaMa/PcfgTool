@@ -6,21 +6,20 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import evaluators.MarkovizationNodeEvaluator
 
 class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) {
-    fun addExpressionToList(expression: Tree) {
+    fun addChild(expression: Tree) {
         children.add(expression)
     }
 
-    fun parseToRule(tree: Tree = this): Rule {
+    fun transformToRule(tree: Tree = this): Rule {
         val childrenString = tree.children.joinToString(separator = " ") { it.atom }
         return Rule(tree.isPreterminal(), tree.atom, childrenString.split(" "))
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    fun parseToRules(): ArrayList<Rule> {
+    fun transformToRules(): ArrayList<Rule> {
         val rules: ArrayList<Rule> = ArrayList()
         val depth = DeepRecursiveFunction<Tree, Unit> {
             if (it.children.isEmpty()) return@DeepRecursiveFunction
-            rules.add(parseToRule(it))
+            rules.add(transformToRule(it))
             it.children.map { child -> callRecursive(child) }
         }
         depth(this)
@@ -29,44 +28,36 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
 
     fun getLeaves(): List<String> {
         val leaves = mutableListOf<String>()
-        when {
-            children.isEmpty() -> leaves.add(atom)
-            else -> {
-                children.forEach { leaves.addAll(it.getLeaves()) }
-            }
-        }
+        if (children.isEmpty()) leaves.add(atom) else children.forEach{leaves.addAll(it.getLeaves())}
         return leaves
     }
 
     fun setLeaves(leaves: List<String>) {
         var i = 0
-        fun setLeavesPartOfTree(tree: Tree = this) {
+        fun setLeaves(tree: Tree = this) {
             when {
                 tree.children.isEmpty() -> {
-                    tree.atom = leaves.getOrElse(i) { tree.atom }
-                    i++
+                    tree.atom = leaves.getOrElse(i++) { tree.atom }
                 }
                 else -> {
                     tree.children.forEach {
-                        setLeavesPartOfTree(it)
+                        setLeaves(it)
                     }
                 }
             }
         }
-        setLeavesPartOfTree()
+        setLeaves()
     }
 
     fun binarise(vertical: Int, horizontal: Int): Tree {
         val markovizationNodeEvaluator = MarkovizationNodeEvaluator()
         val parents = ArrayDeque<String>()
 
-        fun addParents(label: String, children: List<String>, isAddedNode: Boolean): String {
+        fun addParents(atom: String, isAddedNode: Boolean): String {
             val newParents = if (isAddedNode) parents.drop(1) else parents
-            val fullLabel =
-                if (isAddedNode) children.joinToString(prefix = "$label|<", separator = ",", postfix = ">") else label
-            return if (vertical == 1 || newParents.isEmpty()) fullLabel else {
+            return if (vertical == 1 || newParents.isEmpty()) atom else {
                 newParents.joinToStringWithStartAndEnd(
-                    prefix = "$fullLabel^<", separator = ",", postfix = ">", limit = vertical - 1
+                    prefix = "$atom^<", separator = ",", postfix = ">", limit = vertical - 1
                 )
             }
         }
@@ -85,40 +76,40 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
             val isAddedNode = childrenAsStrings.isNotEmpty()
             when {
                 tree.isPreterminal() -> return tree
-
                 numberOfChildren <= 2 -> {
                     addLableToParents(label, isAddedNode)
-                    val markovizedChildren = tree.children.map { binarise(it) }
+                    val binarisedChildren = tree.children.map { binarise(it) }
                     removeLableToParents(isAddedNode)
                     return Tree(
-                        atom = addParents(label, childrenAsStrings, isAddedNode),
-                        children = markovizedChildren as MutableList<Tree>
+                        atom = addParents(tree.atom, isAddedNode),
+                        children = binarisedChildren as MutableList<Tree>
                     )
                 }
+
                 else -> {
-                    val binarisedSecondChildChildren = tree.children.getWindow(mutableListOf(), 1, horizontal)
-                    val newNodeAtom = binarisedSecondChildChildren.joinToString(
+                    val childrenOfNewSecondChild = tree.children.getWindow(mutableListOf(), 1, horizontal)
+                    val newSecondChildAtom = childrenOfNewSecondChild.joinToString(
                         prefix = "$label|<",
                         separator = ",",
                         postfix = ">"
                     ) { child -> child.atom }
-                    val newAtomOfCurrentTree = addParents(label, childrenAsStrings, isAddedNode)
                     addLableToParents(label, isAddedNode)
                     val binarisedFirstChild = binarise(tree.children.first())
-                    val binarisedSecondChild = binarise(
+                    val binarisedNewSecondChild = binarise(
                         Tree(
-                            atom = newNodeAtom,
-                            children = binarisedSecondChildChildren
+                            atom = newSecondChildAtom,
+                            children = childrenOfNewSecondChild
                         )
                     )
                     removeLableToParents(isAddedNode)
                     return Tree(
-                        atom = newAtomOfCurrentTree,
-                        children = mutableListOf(binarisedFirstChild, binarisedSecondChild)
+                        atom = addParents(tree.atom, isAddedNode),
+                        children = mutableListOf(binarisedFirstChild, binarisedNewSecondChild)
                     )
                 }
             }
         }
+
         return binarise()
     }
 
@@ -127,12 +118,12 @@ class Tree(var atom: String, val children: MutableList<Tree> = mutableListOf()) 
         tree.atom = MarkovizationNodeEvaluator().parseToEnd(tree.atom).t1
 
         if (tree.isPreterminal()) return tree
-        val lastChild = tree.children.last()
-        val (_, childrenOfCurrentTree, _) = markovizationNodeEvaluator.parseToEnd(lastChild.atom)
+        val lastChildOfSelectedTree = tree.children.last()
+        val (_, childrenOfLastChildAsString , _) = markovizationNodeEvaluator.parseToEnd(lastChildOfSelectedTree.atom)
 
-        if (childrenOfCurrentTree.isNotEmpty()) {
+        if (childrenOfLastChildAsString.isNotEmpty()) {
             tree.children.removeLast()
-            lastChild.children.forEach {
+            lastChildOfSelectedTree.children.forEach {
                 tree.children.add(Tree(it.atom, it.children))
             }
             return debinarise(tree)

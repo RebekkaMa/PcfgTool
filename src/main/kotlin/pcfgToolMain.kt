@@ -66,7 +66,7 @@ class Induce : CliktCommand() {
         launch(context = Dispatchers.Default) {
             val expressionEvaluator = ExpressionEvaluator()
             for (expression in channel) {
-                rulesChannel.send(expressionEvaluator.parseToEnd(expression).parseToRules())
+                rulesChannel.send(expressionEvaluator.parseToEnd(expression).transformToRules())
             }
         }
 
@@ -162,7 +162,7 @@ class Parse : CliktCommand() {
                     (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                 ).weightedDeductiveParsing(tokensAsInt)
                 outputChannel.send(
-                    sentenceNumber to (parsedTreeItem?.getParseTreeAsString(tokensAsString, lexiconByInt)
+                    sentenceNumber to (parsedTreeItem?.getBacktraceAsString(tokensAsString, lexiconByInt)
                         ?: "(NOPARSE ${sentence})")
                 )
             }
@@ -308,6 +308,7 @@ class Binarise : CliktCommand() {
                 }.invokeOnCompletion {
                     outputChannel.close()
                 }
+
                 printTreesInOrder(outputChannel)
             }
         } catch (e: Exception) {
@@ -337,7 +338,7 @@ class Debinarise : CliktCommand() {
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceString() = produce(context = Dispatchers.IO, capacity = 10) {
+    fun CoroutineScope.readLinesFromInput() = produce(context = Dispatchers.IO, capacity = 10) {
         generateSequence(readNotEmptyLnOrNull).forEachIndexed { i, sentence ->
             send(Pair(i + 1, sentence))
         }
@@ -346,7 +347,7 @@ class Debinarise : CliktCommand() {
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
-                val producer = produceString()
+                val producer = readLinesFromInput()
 
                 launch {
                     repeat(numberOfParallelParsers) {
@@ -371,8 +372,6 @@ class Debinarise : CliktCommand() {
 
 class Unk : CliktCommand() {
     val threshold by option("-t", "--threshold").int().default(2).validate { it > 0 }
-    private val numberOfParallelParsers by option("-p", "--number-parallel-parsers").int().default(6)
-        .validate { it > 0 }
 
     override fun run() {
         try {

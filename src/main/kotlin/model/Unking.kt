@@ -11,7 +11,7 @@ fun replaceTokensByInts(
         return@mapIndexed when {
             wordAsInt != null -> wordAsInt //TODO
             smoothing -> lexiconByString[getSignature(word, index + 1)] ?: -1
-            unking -> lexiconByString["UNK"] ?: -1 //TODO ist UNK in Lexicon?
+            unking -> lexiconByString["UNK"] ?: -1
             else -> -1
         }
     }.toIntArray()

@@ -18,8 +18,8 @@ class ExpressionEvaluator : Grammar<Tree>() {
 
     val tree: Parser<Tree> by
     ((skip(lpar) and label and (label or (oneOrMore(parser(::tree)))) and skip(rpar))).map { (t1, t2) ->
-        if (t2 is List<*>) t2.map { t1.addExpressionToList(it as Tree) }
-        else t1.addExpressionToList(t2 as Tree)
+        if (t2 is List<*>) t2.map { t1.addChild(it as Tree) }
+        else t1.addChild(t2 as Tree)
         t1
     }
 
