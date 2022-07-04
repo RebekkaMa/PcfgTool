@@ -24,8 +24,8 @@ class Item(val i: Int, val nt: Int, val j: Int, var wt: Double, val comparisonVa
 
     override fun compareTo(other: Item): Int {
         return when {
-            this.comparisonValue > other.comparisonValue -> 1
-            this.comparisonValue < other.comparisonValue -> -1
+            this.comparisonValue < other.comparisonValue -> 1
+            this.comparisonValue > other.comparisonValue -> -1
             else -> 0
         }
     }

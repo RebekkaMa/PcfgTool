@@ -29,7 +29,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(item3, item2,  item4, item6, item5))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.pollFirst()
         }
     }
 
@@ -56,7 +56,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(item2, item3, item4, item5, item6, item1))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.pollFirst()
         }
     }
 
@@ -83,7 +83,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf( item3, item4))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.poll()
         }
     }
 
@@ -110,7 +110,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(item3, item4, item6))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.pollFirst()
         }
     }
 
@@ -136,7 +136,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(item4, item6, item3))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.poll()
         }
     }
 
@@ -158,7 +158,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(item3, item2, item4, item6))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.pollFirst()
         }
     }
 
@@ -180,7 +180,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(  item2, item3, item4, item5, item6, item7))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.pollFirst()
         }
     }
 
@@ -222,7 +222,7 @@ class DeductiveParserTest {
         val resQueue = MinMaxPriorityQueue.create(listOf(item4, item6))
         parser.queue.size shouldBe resQueue.size
         while (parser.queue.isNotEmpty()) {
-            parser.queue.pollFirst() shouldBe resQueue.pollFirst()
+            parser.queue.poll() shouldBe resQueue.pollFirst()
         }
     }
 

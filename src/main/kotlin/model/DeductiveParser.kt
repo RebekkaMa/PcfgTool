@@ -2,6 +2,7 @@ package model
 
 import com.github.h0tk3y.betterParse.utils.Tuple3
 import org.jetbrains.kotlin.com.google.common.collect.MinMaxPriorityQueue
+import java.util.*
 
 class DeductiveParser(
     private val initial: Int,
@@ -14,7 +15,12 @@ class DeductiveParser(
     val rankBeam: Int?,
     initialArraySize: Int = 100_000,
 ) {
-    var queue = MinMaxPriorityQueue.expectedSize(rankBeam ?: 100).create<Item>()
+    val queue: AbstractQueue<Item> = if (thresholdBeam == null && rankBeam == null) {
+        PriorityQueue<Item>(100)
+    } else {
+        MinMaxPriorityQueue.expectedSize(rankBeam ?: 100).create<Item>()
+    }
+
     private val accessFoundItemsFromLeft =
         HashMap<Pair<Int, Int>, MutableMap<Int, Item>>(initialArraySize)
     private val accessFoundItemsFromRight =
@@ -23,13 +29,13 @@ class DeductiveParser(
     fun weightedDeductiveParsing(sentence: IntArray): Pair<IntArray, Item?> {
         fillQueueWithItemsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
-            val selectedItem = queue.pollLast()
+            val selectedItem = queue.poll()
             if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) return sentence to selectedItem
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
             findRulesAddItemsToQueueChain(selectedItem)
-            prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
+            if (queue is MinMaxPriorityQueue<Item>) prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
         }
         return sentence to null
     }
@@ -160,53 +166,59 @@ class DeductiveParser(
     }
 
     fun prune(thresholdBeam: Double?, rankBeam: Int?) {
-        if (queue.isEmpty()) return
-        if (thresholdBeam != null) {
-            val m = queue.peekLast()!!.comparisonValue
-            while (queue.isNotEmpty() && queue.peekFirst()!!.comparisonValue <= m * thresholdBeam) {
-                queue.pollFirst()
+        if (queue is MinMaxPriorityQueue<Item>){
+            if (queue.isEmpty()) return
+            if (thresholdBeam != null) {
+                val m = queue.peekFirst()!!.comparisonValue
+                while (queue.isNotEmpty() && queue.peekLast()!!.comparisonValue <= m * thresholdBeam) {
+                    queue.pollLast()
+                }
             }
-        }
-        if (rankBeam != null) {
-            while (queue.size > rankBeam) {
-                queue.pollFirst()
+            if (rankBeam != null) {
+                while (queue.size > rankBeam) {
+                    queue.pollLast()
+                }
             }
         }
     }
 
     fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
 
-        val isItemOverThresholdBeam = {
-            item.comparisonValue > ((queue.peekLast()?.comparisonValue?.let { it * thresholdBeam!! }
-                ?: throw Exception("Internal Error: isItemOverThresholdBeam -> peekLast() -> No ComparisonValue")))
-        }
-        val isQueueSizeUnderRankBeam =
-            { queue.size < (rankBeam ?: throw Exception("Internal Error: isQueueNotFull -> rankbeam is Null")) }
-        val isMinItemOfQueueLessThanSelectedItem = {
-            (queue.peekFirst()?.comparisonValue
-                ?: throw Exception("Internal Error: isMinItemOfQueueLessThanSelectedItem -> peekFirst() -> No ComparisonValue")) < item.comparisonValue
-        }
 
-        fun thresholdBeam() {
-            if (isItemOverThresholdBeam()) {
-                queue.offer(item)
+        if (queue is MinMaxPriorityQueue<Item>){
+            val isItemOverThresholdBeam = {
+                item.comparisonValue > ((queue.peekFirst()?.comparisonValue?.let { it * thresholdBeam!! }
+                    ?: throw Exception("Internal Error: isItemOverThresholdBeam -> peekFirst() -> No ComparisonValue")))
             }
-        }
-
-        fun rankBeam() {
-            if (isQueueSizeUnderRankBeam()) queue.offer(item)
-            else if (isMinItemOfQueueLessThanSelectedItem()) {
-                queue.pollFirst()
-                queue.offer(item)
+            val isQueueSizeUnderRankBeam =
+                { queue.size < (rankBeam ?: throw Exception("Internal Error: isQueueNotFull -> rankbeam is Null")) }
+            val isMinItemOfQueueLessThanSelectedItem = {
+                (queue.peekLast()?.comparisonValue
+                    ?: throw Exception("Internal Error: isMinItemOfQueueLessThanSelectedItem -> peekFirst() -> No ComparisonValue")) < item.comparisonValue
             }
-        }
 
-        when {
-            queue.isEmpty() -> queue.offer(item) //TODO
-            thresholdBeam != null && rankBeam != null -> if (isItemOverThresholdBeam()) rankBeam()
-            thresholdBeam != null -> thresholdBeam()
-            rankBeam != null -> rankBeam()
-            else -> queue.offer(item)
+            fun thresholdBeam() {
+                if (isItemOverThresholdBeam()) {
+                    queue.offer(item)
+                }
+            }
+
+            fun rankBeam() {
+                if (isQueueSizeUnderRankBeam()) queue.offer(item)
+                else if (isMinItemOfQueueLessThanSelectedItem()) {
+                    queue.pollLast()
+                    queue.offer(item)
+                }
+            }
+            when {
+                queue.isEmpty() -> queue.offer(item) //TODO
+                thresholdBeam != null && rankBeam != null -> if (isItemOverThresholdBeam()) rankBeam()
+                thresholdBeam != null -> thresholdBeam()
+                rankBeam != null -> rankBeam()
+                else -> queue.offer(item)
+            }
+        }else {
+            queue.offer(item)
         }
     }
 
