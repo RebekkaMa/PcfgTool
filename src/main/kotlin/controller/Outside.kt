@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import model.Grammar
-import utils.format
 import writeOutsideScoreToFiles
 
 class Outside : CliktCommand() {
@@ -44,7 +43,7 @@ class Outside : CliktCommand() {
                 val outSideWeights = grammar.getViterbiOutsideScores()
                 if (outputFileName.isNullOrEmpty()) {
                     outSideWeights.forEach {(nonTerminal, value) ->
-                        println(nonTerminal + " " + value.format(15))
+                        println(nonTerminal + " " + value)
                     }
                 } else {
                     writeOutsideScoreToFiles(outSideWeights, outputFileName!!)
