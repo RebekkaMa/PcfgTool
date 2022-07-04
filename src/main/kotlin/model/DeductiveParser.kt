@@ -24,9 +24,7 @@ class DeductiveParser(
         fillQueueWithItemsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
             val selectedItem = queue.pollLast()
-            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) {
-                return sentence to selectedItem
-            }
+            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) return sentence to selectedItem
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)

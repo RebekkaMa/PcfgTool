@@ -17,7 +17,7 @@ import evaluators.RulesExpressionParser
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import model.DeductiveParser
+import model.DeductiveParser2
 import model.Grammar
 import model.getSignature
 import kotlin.system.exitProcess
@@ -159,18 +159,31 @@ class Parse : CliktCommand() {
                     continue
                 }
 
-                val (_, parsedTreeItem) = DeductiveParser(
-                    lexiconByString[initial]
-                        ?: throw Exception("Parse: produceParseTreesAsStrings -> Initial ist nicht im Lexikon"),
-                    accessRulesBySecondNtOnRhs,
-                    accessRulesByFirstNtOnRhs,
-                    accessChainRulesByNtRhs,
-                    accessRulesByTerminal,
-                    outsideScores,
-                    thresholdBeam = thresholdBeam,
-                    rankBeam = rankBeam,
-                    (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
-                ).weightedDeductiveParsing(tokensAsInt)
+                val (_, parsedTreeItem) =
+                    if (thresholdBeam == null && rankBeam == null){
+                        DeductiveParser2(
+                            lexiconByString[initial]
+                                ?: throw Exception("Parse: produceParseTreesAsStrings -> Initial ist nicht im Lexikon"),
+                            accessRulesBySecondNtOnRhs,
+                            accessRulesByFirstNtOnRhs,
+                            accessChainRulesByNtRhs,
+                            accessRulesByTerminal,
+                            outsideScores,
+                            (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
+                        ).weightedDeductiveParsing(tokensAsInt)
+                    } else {
+                        DeductiveParser2(
+                            lexiconByString[initial]
+                                ?: throw Exception("Parse: produceParseTreesAsStrings -> Initial ist nicht im Lexikon"),
+                            accessRulesBySecondNtOnRhs,
+                            accessRulesByFirstNtOnRhs,
+                            accessChainRulesByNtRhs,
+                            accessRulesByTerminal,
+                            outsideScores,
+                            (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
+                        ).weightedDeductiveParsing(tokensAsInt, thresholdBeam, rankBeam)
+                    }
+
                 outputChannel.send(
                     sentenceNumber to (parsedTreeItem?.getBacktraceAsString(tokensAsString, lexiconByInt)
                         ?: "(NOPARSE ${sentence})")

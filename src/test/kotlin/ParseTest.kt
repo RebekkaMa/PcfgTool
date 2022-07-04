@@ -21,39 +21,39 @@ class ParseTest {
         File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
     }
 
-    //    @Test
-//    fun parseGoldShortWithAFormat(){
-//        val sentencesFile = File("src/main/resources/small/sentences")
-//        val standardOut = System.out
-//        val outputStreamCaptor = ByteArrayOutputStream()
-//        System.setOut(PrintStream(outputStreamCaptor))
-//        val sentences = sentencesFile.inputStream()
-//        System.setIn(sentences)
+        @Test
+    fun parseGoldShortWithAFormat(){
+        val sentencesFile = File("src/main/resources/small/sentences")
+        val standardOut = System.out
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setOut(PrintStream(outputStreamCaptor))
+        val sentences = sentencesFile.inputStream()
+        System.setIn(sentences)
+
+        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+
+
+        File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
+    }
+
+    @Test
+    fun parseGoldShortWithANotFormat(){
+        val sentencesFile = File("src/main/resources/small/sentences")
+        val standardOut = System.out
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setOut(PrintStream(outputStreamCaptor))
+        val sentences = sentencesFile.inputStream()
+        System.setIn(sentences)
+
+        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+        Parse().parse(listOf("-a", "src/test/resources/outsideShortNotFormat.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
+
+
+        File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
+    }
+
 //
-//        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-//        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-//
-//
-//        File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
-//    }
-//
-//    @Test
-//    fun parseGoldShortWithANotFormat(){
-//        val sentencesFile = File("src/main/resources/small/sentences")
-//        val standardOut = System.out
-//        val outputStreamCaptor = ByteArrayOutputStream()
-//        System.setOut(PrintStream(outputStreamCaptor))
-//        val sentences = sentencesFile.inputStream()
-//        System.setIn(sentences)
-//
-//        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-//        Parse().parse(listOf("-a", "src/test/resources/outsideShortNotFormat.txt", "src/main/resources/small/grammar.rules", "src/main/resources/small/grammar.lexicon"))
-//
-//
-//        File("src/main/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
-//    }
-//
-////
     @Test
     fun parseGoldShortWithRank6() {
         val outputStreamCaptor = ByteArrayOutputStream()
@@ -96,7 +96,7 @@ class ParseTest {
     }
 
     @Test
-    fun parseGoldShortWithRank4() {
+    fun parseWithRank4() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
         val sentences = "Fruit flies like bananas".byteInputStream()
@@ -116,7 +116,7 @@ class ParseTest {
     }
 
     @Test
-    fun parseGoldShortWithThreshold0() {
+    fun parseWithThreshold0() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
         val sentences = "Fruit flies like bananas".byteInputStream()
@@ -135,7 +135,7 @@ class ParseTest {
         outputStreamCaptor.toString() shouldBe "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))\n"
     }
     @Test
-    fun parseGoldShortWithThreshold() {
+    fun parseWithThreshold() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
         val sentences = "Fruit flies like bananas".byteInputStream()
@@ -154,7 +154,7 @@ class ParseTest {
         outputStreamCaptor.toString() shouldBe "(NOPARSE Fruit flies like bananas)\n"
     }
     @Test
-    fun parseGoldShortWithThreshold25() {
+    fun parseWithThreshold25() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
         val sentences = "Fruit flies like bananas".byteInputStream()
@@ -172,4 +172,25 @@ class ParseTest {
         )
         outputStreamCaptor.toString() shouldBe "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))\n"
     }
+
+    @Test
+    fun parseWithA() {
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setOut(PrintStream(outputStreamCaptor))
+        val sentences = "Fruit flies like bananas".byteInputStream()
+        System.setIn(sentences)
+
+        Parse().parse(
+            listOf(
+                "-a",
+                "src/test/resources/grammarFruitFlies.outside",
+                "-i",
+                "S",
+                "src/test/resources/grammarFruitFlies.rules",
+                "src/test/resources/grammarFruitFlies.lexicon"
+            )
+        )
+        outputStreamCaptor.toString() shouldBe "(S (NP (NN Fruit) (NNS flies)) (VP (VBP like) (NP (NNS bananas))))\n"
+    }
+
 }
