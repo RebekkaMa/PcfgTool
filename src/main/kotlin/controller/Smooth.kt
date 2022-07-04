@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import com.github.h0tk3y.betterParse.parser.ParseException
 import evaluators.ExpressionEvaluatorParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -19,11 +20,14 @@ class Smooth : CliktCommand() {
             "und gibt die durch Smoothing erhaltenen Bäume auf der " +
             "Standardausgabe aus."
 
-    val threshold by option("-t", "--threshold", help = "Schwellwert der absoluten Häufigkeit für das Unking.").int().default(3)
+    val threshold by option("-t", "--threshold", help = "Schwellwert der absoluten Häufigkeit für das Unking.").int()
+        .default(3)
 
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
+                val start = System.currentTimeMillis()
+
                 val expressionEvaluatorParser = ExpressionEvaluatorParser()
                 val trees = generateSequence(readNotEmptyLnOrNull).map { sentence ->
                     expressionEvaluatorParser.parseToEnd(sentence)
@@ -40,7 +44,12 @@ class Smooth : CliktCommand() {
                     println(it.await())
                 }
 
+                println(System.currentTimeMillis() - start)
+
             }
+        } catch (e: ParseException) {
+            System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
+            throw ProgramResult(5)
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
             System.err.println(e.message)

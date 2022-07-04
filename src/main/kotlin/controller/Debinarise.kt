@@ -54,7 +54,7 @@ class Debinarise : CliktCommand() {
                 printTreesInOrder(outputChannel)
             }
         } catch (e: ParseException) {
-            System.err.println("Ungültiger Baumkorpus! Bitte geben Sie den Baumkorpus im Penn Treebank Format ein!")  //TODO
+            System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")  //TODO
             throw ProgramResult(5)
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")

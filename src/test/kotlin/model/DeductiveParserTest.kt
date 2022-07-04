@@ -279,47 +279,4 @@ class DeductiveParserTest {
        parser2.weightedDeductiveParsing(sentenceAsInt).second?.getBacktraceAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe "(S (NP (NN Fruit) (NNS flies)) (VP (VBP like) (NP (NNS bananas))))"
    }
 
-//    @Test
-//    fun parse_withThreshold() {
-//        val pRules = buildMap<Rule, Double> {
-//            this[Rule(true, "NN", listOf("Fruit"))] = 1.0
-//            this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
-//            this[Rule(true, "NNS", listOf("bananas"))] = 2/3.toDouble()
-//            this[Rule(true, "VBP", listOf("like"))] = 1.0
-//            this[Rule(true, "VBZ", listOf("flies"))] = 1.0
-//            this[Rule(true, "IN", listOf("like"))] = 1.0
-//            this[Rule(true, "S", listOf("bananas"))] = 0.6
-//
-//            this[Rule(false, "S", listOf("NP", "VP"))] = 1.0
-//            this[Rule(false, "NP", listOf("NN", "NNS"))] = 0.25
-//            this[Rule(false, "NP", listOf("NNS"))] = 0.5
-//            this[Rule(false, "NP", listOf("NN"))] = 0.25
-//            this[Rule(false, "VP", listOf("VBP", "NP"))] = 0.5
-//            this[Rule(false, "VP", listOf("VBZ", "PP"))] = 0.5
-//            this[Rule(false, "PP", listOf("IN", "NP"))] = 1.0
-//            this[Rule(false, "VP", listOf("IN", "NNS"))] = 1.0
-//
-//        }
-//        val grammar = Grammar("S", pRules)
-//        val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString, numberNonTerminals) = grammar.getGrammarDataStructuresForParsing()
-//        val outsideScores = buildMap {
-//            this[lexiconByString["NN"]!!] = 1.0
-//            this[lexiconByString["NNS"]!!] = 1.0
-//            this[lexiconByString["VBP"]!!] = 1.0
-//            this[lexiconByString["VBZ"]!!] = 0.013 //Schranke -> 0.013888888888888
-//            this[lexiconByString["IN"]!!] = 1.0
-//            this[lexiconByString["S"]!!] = 1.0
-//            this[lexiconByString["NP"]!!] = 1.0
-//            this[lexiconByString["VP"]!!] = 1.0
-//            this[lexiconByString["PP"]!!] = 1.0
-//        }
-//        val parser1 = DeductiveParser(lexiconByString["S"]!!, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal,null,null, null)
-//        val parser2 = DeductiveParser(lexiconByString["S"]!!, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal,outsideScores,null, null)
-//
-//        val sentenceAsInt = intArrayOf(lexiconByString["Fruit"]!!, lexiconByString["flies"]!!,lexiconByString["like"]!!,lexiconByString["bananas"]!!,)
-//
-//        parser1.weightedDeductiveParsing(sentenceAsInt).second?.getParseTreeAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))"
-//
-//        parser2.weightedDeductiveParsing(sentenceAsInt).second?.getParseTreeAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe "(S (NP (NN Fruit) (NNS flies)) (VP (VBP like) (NP (NNS bananas))))"
-//    }
 }

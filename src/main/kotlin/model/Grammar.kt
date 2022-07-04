@@ -148,7 +148,7 @@ class Grammar(val initial: String = "ROOT", val pRules: Map<Rule, Double>) {
             }
         } while (!converged)
         return outsideValues
-    } //TODO Immer nur binarisierte Grammatiken?
+    }
 
     fun getViterbiOutsideScores(): MutableMap<String, Double> {
         val accessRulesFromLhsNonLexical = mutableMapOf<String, MutableList<Pair<Rule, Double>>>()

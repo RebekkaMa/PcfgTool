@@ -130,7 +130,7 @@ class Parse : CliktCommand() {
         } catch (e: ParseException) {
             System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
             throw ProgramResult(5)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")
             System.err.println(e.message)
             throw ProgramResult(1)
