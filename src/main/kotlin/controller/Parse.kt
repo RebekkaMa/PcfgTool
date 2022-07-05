@@ -173,7 +173,6 @@ class Parse : CliktCommand() {
                             (numberNonTerminals * tokensAsInt.size * 0.21).toInt(),
                         ).weightedDeductiveParsing(tokensAsInt)
 
-
                 outputChannel.send(
                     sentenceNumber to (parsedTreeItem?.getBacktraceAsString(tokensAsString, lexiconByInt)
                         ?: "(NOPARSE ${sentence})")

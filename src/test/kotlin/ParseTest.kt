@@ -55,7 +55,7 @@ class ParseTest {
 
 //
     @Test
-    fun parseGoldShortWithRank6() {
+    fun parsetWithRank6() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
         val sentences = "Fruit flies like bananas".byteInputStream()
@@ -74,7 +74,7 @@ class ParseTest {
         outputStreamCaptor.toString() shouldBe "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))\n"
     }
     @Test
-    fun parseGoldShortWithRank5() {
+    fun parseWithRank5() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
         val sentences = "Fruit flies like bananas".byteInputStream()
@@ -192,5 +192,4 @@ class ParseTest {
         )
         outputStreamCaptor.toString() shouldBe "(S (NP (NN Fruit) (NNS flies)) (VP (VBP like) (NP (NNS bananas))))\n"
     }
-
 }

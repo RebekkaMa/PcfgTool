@@ -33,7 +33,7 @@ fun CoroutineScope.printTreesInOrder(outputChannel: ReceiveChannel<Pair<Int, Str
             queue.add(lineNumber to treeAsString)
         }
     }
-    println(System.currentTimeMillis() - start)
+    //println(System.currentTimeMillis() - start)
 }
 
 fun getRulesFromFile(

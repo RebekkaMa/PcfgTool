@@ -26,8 +26,6 @@ class Smooth : CliktCommand() {
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
-                val start = System.currentTimeMillis()
-
                 val expressionEvaluatorParser = ExpressionEvaluatorParser()
                 val trees = generateSequence(readNotEmptyLnOrNull).map { sentence ->
                     expressionEvaluatorParser.parseToEnd(sentence)
@@ -43,9 +41,6 @@ class Smooth : CliktCommand() {
                 smoothedTree.forEach {
                     println(it.await())
                 }
-
-                println(System.currentTimeMillis() - start)
-
             }
         } catch (e: ParseException) {
             System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")

@@ -16,9 +16,9 @@ class DeductiveParser(
     initialArraySize: Int = 100_000,
 ) {
     val queue: AbstractQueue<Item> = if (thresholdBeam == null && rankBeam == null) {
-        PriorityQueue<Item>(100)
+        PriorityQueue(100)
     } else {
-        MinMaxPriorityQueue.expectedSize(rankBeam ?: 100).create<Item>()
+        MinMaxPriorityQueue.expectedSize(rankBeam ?: 100).create()
     }
 
     private val accessFoundItemsFromLeft =
@@ -30,12 +30,14 @@ class DeductiveParser(
         fillQueueWithItemsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
             val selectedItem = queue.poll()
-            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) return sentence to selectedItem
+            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size){
+                return sentence to selectedItem
+            }
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
             findRulesAddItemsToQueueChain(selectedItem)
-            if (queue is MinMaxPriorityQueue<Item>) prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
+            prune(thresholdBeam = thresholdBeam, rankBeam = rankBeam)
         }
         return sentence to null
     }
