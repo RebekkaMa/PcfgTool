@@ -22,21 +22,6 @@ class ParseTest {
     }
 
     @Test
-    fun parseGoldShortWithAFormat(){
-        val sentencesFile = File("src/test/resources/small/sentences")
-        val standardOut = System.out
-        val outputStreamCaptor = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStreamCaptor))
-        val sentences = sentencesFile.inputStream()
-        System.setIn(sentences)
-
-        Parse().parse(listOf("-a", "src/test/resources/outsideShort.txt", "src/test/resources/small/grammar.rules", "src/test/resources/small/grammar.lexicon"))
-
-
-        File("src/test/resources/small/gold_b.mrg").readText() shouldBe outputStreamCaptor.toString()
-    }
-
-    @Test
     fun parseWithRank6() {
         val outputStreamCaptor = ByteArrayOutputStream()
         System.setOut(PrintStream(outputStreamCaptor))
