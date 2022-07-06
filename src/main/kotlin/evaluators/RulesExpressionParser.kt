@@ -12,7 +12,7 @@ import model.Rule
 class RulesExpressionParser : Grammar<Pair<Rule, Double>>() {
 
     val arrow by literalToken("->")
-    val number by regexToken("[01]([\\.\\,]\\d*)?(\\s)*$")
+    val number by regexToken("[0-9]([\\.\\,]\\d*(E\\-\\d*)?)?(\\s)*$")
     val nonlexical by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)]]+")
     val space by literalToken(" ", ignore = true)
 

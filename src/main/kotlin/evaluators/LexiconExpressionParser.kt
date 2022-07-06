@@ -12,7 +12,7 @@ import model.Rule
 
 class LexiconExpressionParser : Grammar<Pair<Rule, Double>>() {
 
-    val number by regexToken("[01]([\\.\\,]\\d*)?(\\s)*$")
+    val number by regexToken("[0-9]([\\.\\,]\\d*(E\\-\\d*)?)?(\\s)*$")
     val text by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)]]+")
     val space by literalToken(" ", ignore = true)
 

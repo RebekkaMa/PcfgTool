@@ -118,7 +118,7 @@ class Parse : CliktCommand() {
                             lexiconByInt,
                             lexiconByString,
                             numberNonTerminals,
-                            outsideScores
+                            outsideScores,
                         )
 
                     }
@@ -128,7 +128,7 @@ class Parse : CliktCommand() {
                 printTreesInOrder(outputChannel)
             }
         } catch (e: ParseException) {
-            System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!")
+            System.err.println("Ungültige Grammatik! Bitte verwenden Sie eine binarisierte PCFG!" )
             throw ProgramResult(5)
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")

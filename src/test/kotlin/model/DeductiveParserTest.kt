@@ -8,7 +8,16 @@ class DeductiveParserTest {
 
     @Test
     fun insertItem_thresHoldBeam() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, null)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.4,
+            null,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -35,7 +44,16 @@ class DeductiveParserTest {
 
     @Test
     fun insertItem_ThresHoldBeam_zero() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.0, rankBeam = 6)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.0,
+            rankBeam = 6,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -62,7 +80,16 @@ class DeductiveParserTest {
 
     @Test
     fun insertItem_thresHoldBeam_one() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 1.0, rankBeam = 6)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 1.0,
+            rankBeam = 6,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -89,7 +116,16 @@ class DeductiveParserTest {
 
     @Test
     fun insertItem_thresHoldBeam_and_rankBeam() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, rankBeam = 3)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.4,
+            rankBeam = 3,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -116,7 +152,16 @@ class DeductiveParserTest {
 
     @Test
     fun insertItemToQueue_rankBeam() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), rankBeam = 3, thresholdBeam = null)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = null,
+            rankBeam = 3,
+        )
 
 
         val item1 = Item(1, 2, 3, 0.3, 0.3, listOf())
@@ -142,7 +187,16 @@ class DeductiveParserTest {
 
     @Test
     fun prune_thresHoldBeam() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, rankBeam = 6)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.4,
+            rankBeam = 6,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -164,7 +218,16 @@ class DeductiveParserTest {
 
     @Test
     fun prune_thresHoldBeam_Zero() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.0, rankBeam = 6)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.0,
+            rankBeam = 6,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -186,7 +249,16 @@ class DeductiveParserTest {
 
     @Test
     fun prune_thresHoldBeam_One() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 1.0, rankBeam = 6)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 1.0,
+            rankBeam = 6,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -206,7 +278,16 @@ class DeductiveParserTest {
 
     @Test
     fun prune_rankBeam() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, rankBeam = 2)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.4,
+            rankBeam = 2,
+        )
 
         val item1 = Item(1, 2, 3, 0.3, 0.24, listOf())
         val item2 = Item(2, 3, 4, 0.5, 0.5, listOf())
@@ -228,7 +309,16 @@ class DeductiveParserTest {
 
     @Test
     fun prune_emptyQueue() {
-        val parser = DeductiveParser(1, mapOf(), mapOf(), mapOf(), mapOf(), mapOf(), thresholdBeam = 0.4, rankBeam = 2)
+        val parser = DeductiveParser(
+            1,
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            mapOf(),
+            thresholdBeam = 0.4,
+            rankBeam = 2,
+        )
         parser.prune(thresholdBeam = 0.4, rankBeam = 2)
         parser.queue.size shouldBe 0
 
@@ -269,8 +359,26 @@ class DeductiveParserTest {
            this[lexiconByString["VP"]!!] = 1.0
            this[lexiconByString["PP"]!!] = 1.0
        }
-       val parser1 = DeductiveParser(lexiconByString["S"]!!, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal,null,null, null)
-       val parser2 = DeductiveParser(lexiconByString["S"]!!, accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal,outsideScores,null, null)
+       val parser1 = DeductiveParser(
+           lexiconByString["S"]!!,
+           accessRulesBySecondNtOnRhs,
+           accessRulesByFirstNtOnRhs,
+           accessChainRulesByNtRhs,
+           accessRulesByTerminal,
+           null,
+           null,
+           null,
+       )
+       val parser2 = DeductiveParser(
+           lexiconByString["S"]!!,
+           accessRulesBySecondNtOnRhs,
+           accessRulesByFirstNtOnRhs,
+           accessChainRulesByNtRhs,
+           accessRulesByTerminal,
+           outsideScores,
+           null,
+           null,
+       )
 
        val sentenceAsInt = intArrayOf(lexiconByString["Fruit"]!!, lexiconByString["flies"]!!,lexiconByString["like"]!!,lexiconByString["bananas"]!!,)
 

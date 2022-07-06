@@ -9,7 +9,6 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import evaluators.ExpressionEvaluatorParser
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import model.getTerminalCountFromCorpus
 import model.replaceRareWordsInTree
@@ -33,13 +32,11 @@ class Smooth : CliktCommand() {
                 val wordCount = getTerminalCountFromCorpus(trees)
 
                 val smoothedTree = trees.map {
-                    async { //TODO
                         replaceRareWordsInTree(smooth = true, wordCount, threshold, it)
-                    }
                 }
 
                 smoothedTree.forEach {
-                    println(it.await())
+                    println(it)
                 }
             }
         } catch (e: ParseException) {

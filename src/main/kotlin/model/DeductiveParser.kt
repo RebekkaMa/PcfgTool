@@ -30,9 +30,7 @@ class DeductiveParser(
         fillQueueWithItemsFromLexicalRules(sentence)
         while (queue.isNotEmpty()) {
             val selectedItem = queue.poll()
-            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size){
-                return sentence to selectedItem
-            }
+            if (selectedItem.i == 0 && selectedItem.nt == initial && selectedItem.j == sentence.size) return sentence to selectedItem
             if (addSelectedItemProbabilityToSavedItems(selectedItem)) continue
             findRulesAddItemsToQueueSecondNtOnRhs(selectedItem)
             findRulesAddItemsToQueueFirstNtOnRhs(selectedItem)
@@ -65,7 +63,7 @@ class DeductiveParser(
             } else {
                 v.compute(selectedItem.j) { _, presentItem ->
                     when {
-                        (presentItem?.wt ?: 0.0) >= selectedItem.wt -> {
+                        (presentItem?.wt ?: 0.0) != 0.0 -> {
                             notNullProbabilityEntryLhs = true
                             return@compute presentItem
                         }
@@ -82,7 +80,7 @@ class DeductiveParser(
             } else {
                 v.compute(selectedItem.i) { _, presentItem ->
                     when {
-                        (presentItem?.wt ?: 0.0) >= selectedItem.wt -> {
+                        (presentItem?.wt ?: 0.0) != 0.0 -> {
                             notNullProbabilityEntryRhs = true
                             return@compute presentItem
                         }
@@ -168,7 +166,7 @@ class DeductiveParser(
     }
 
     fun prune(thresholdBeam: Double?, rankBeam: Int?) {
-        if (queue is MinMaxPriorityQueue<Item>){
+        if (queue is MinMaxPriorityQueue<Item>) {
             if (queue.isEmpty()) return
             if (thresholdBeam != null) {
                 val m = queue.peekFirst()!!.comparisonValue
@@ -187,7 +185,7 @@ class DeductiveParser(
     fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
 
 
-        if (queue is MinMaxPriorityQueue<Item>){
+        if (queue is MinMaxPriorityQueue<Item>) {
             val isItemOverThresholdBeam = {
                 item.comparisonValue > ((queue.peekFirst()?.comparisonValue?.let { it * thresholdBeam!! }
                     ?: throw Exception("Internal Error: isItemOverThresholdBeam -> peekFirst() -> No ComparisonValue")))
@@ -219,7 +217,7 @@ class DeductiveParser(
                 rankBeam != null -> rankBeam()
                 else -> queue.offer(item)
             }
-        }else {
+        } else {
             queue.offer(item)
         }
     }

@@ -43,7 +43,7 @@ class Outside : CliktCommand() {
                 val outSideWeights = grammar.getViterbiOutsideScores()
                 if (outputFileName.isNullOrEmpty()) {
                     outSideWeights.forEach {(nonTerminal, value) ->
-                        println(nonTerminal + " " + value)
+                        println("$nonTerminal $value")
                     }
                 } else {
                     writeOutsideScoreToFiles(outSideWeights, outputFileName!!)
