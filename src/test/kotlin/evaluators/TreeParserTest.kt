@@ -8,10 +8,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-class ExpressionEvaluatorParserTest {
+class TreeParserTest {
 
 
-    val expressionEvaluatorParser = ExpressionEvaluatorParser()
+    val treeParser = TreeParser()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
@@ -37,7 +37,7 @@ class ExpressionEvaluatorParserTest {
         val tree2 = Tree("SBARQ", arrayListOf(tree3, tree5, tree12))
         val tree1 = Tree("ROOT", arrayListOf(tree2))
 
-        expressionEvaluatorParser.parseToEnd(expression)
+        treeParser.parseToEnd(expression)
             .toString() shouldBeEqualComparingTo tree1.toString()
     }
 
@@ -50,7 +50,7 @@ class ExpressionEvaluatorParserTest {
         val tree1 = Tree("ROOT", arrayListOf(tree2))
 
 
-        expressionEvaluatorParser.parseToEnd(expression)
+        treeParser.parseToEnd(expression)
             .toString() shouldBeEqualComparingTo tree1.toString()
     }
 
@@ -60,7 +60,7 @@ class ExpressionEvaluatorParserTest {
         val expression = "(ROOT ( (WH-NP (W6P Who)) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
 
         shouldThrowAny {
-            expressionEvaluatorParser.parseToEnd(expression)
+            treeParser.parseToEnd(expression)
         }
     }
 
@@ -71,7 +71,7 @@ class ExpressionEvaluatorParserTest {
         val expression3 = "((ROOT Who) (. ?))"
 
         shouldThrowAny {
-            expressionEvaluatorParser.parseToEnd(expression3)
+            treeParser.parseToEnd(expression3)
         }
     }
 
@@ -82,7 +82,7 @@ class ExpressionEvaluatorParserTest {
         val expression2 = "(ROOT (SBQR (WH-NP (W6P )) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
 
         shouldThrowAny {
-            expressionEvaluatorParser.parseToEnd(expression2)
+            treeParser.parseToEnd(expression2)
         }
     }
 
@@ -93,7 +93,7 @@ class ExpressionEvaluatorParserTest {
         val expression2 = "(ROOT (SBQR (WH-NP (W6P sdf ss)) (SQ (VBZ 's) (VP (VBG :) (NP (DT the) (NN ;)))) (. ?)))"
 
         shouldThrowAny {
-            expressionEvaluatorParser.parseToEnd(expression2)
+            treeParser.parseToEnd(expression2)
         }
     }
 }

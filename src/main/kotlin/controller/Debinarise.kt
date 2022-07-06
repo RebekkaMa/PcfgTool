@@ -8,7 +8,7 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.ExpressionEvaluatorParser
+import evaluators.TreeParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -30,9 +30,9 @@ class Debinarise : CliktCommand() {
         channel: ReceiveChannel<Pair<Int, String>>
     ) =
         launch {
-            val expressionEvaluatorParser = ExpressionEvaluatorParser()
+            val treeParser = TreeParser()
             for ((lineNumber, binarisedTreeAsString) in channel) {
-                outputChannel.send(lineNumber to expressionEvaluatorParser.parseToEnd(binarisedTreeAsString).debinarise().toString())
+                outputChannel.send(lineNumber to treeParser.parseToEnd(binarisedTreeAsString).debinarise().toString())
             }
         }
 
@@ -54,7 +54,7 @@ class Debinarise : CliktCommand() {
                 printTreesInOrder(outputChannel)
             }
         } catch (e: ParseException) {
-            System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")  //TODO
+            System.err.println("Ungültige Eingabe! Bitte geben Sie Bäume im Penn Treebank Format ein!")
             throw ProgramResult(5)
         } catch (e: Exception) {
             System.err.println("Ein Fehler ist aufgetreten!")

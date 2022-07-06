@@ -271,7 +271,7 @@ class DeductiveParserTest {
         parser.queue.addAll(listOf(item1, item2, item3, item4, item5, item6, item7))
         parser.prune(thresholdBeam = 1.0, rankBeam = 6)
 
-        parser.queue.size shouldBe 0 //TODO
+        parser.queue.size shouldBe 0
 
     }
 

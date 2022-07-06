@@ -183,8 +183,6 @@ class DeductiveParser(
     }
 
     fun insertItemToQueue(item: Item, thresholdBeam: Double?, rankBeam: Int?) {
-
-
         if (queue is MinMaxPriorityQueue<Item>) {
             val isItemOverThresholdBeam = {
                 item.comparisonValue > ((queue.peekFirst()?.comparisonValue?.let { it * thresholdBeam!! }
@@ -211,7 +209,7 @@ class DeductiveParser(
                 }
             }
             when {
-                queue.isEmpty() -> queue.offer(item) //TODO
+                queue.isEmpty() -> queue.offer(item)
                 thresholdBeam != null && rankBeam != null -> if (isItemOverThresholdBeam()) rankBeam()
                 thresholdBeam != null -> thresholdBeam()
                 rankBeam != null -> rankBeam()
@@ -221,11 +219,4 @@ class DeductiveParser(
             queue.offer(item)
         }
     }
-
-    fun clearAll() {
-        queue.clear()
-        accessFoundItemsFromRight.clear()
-        accessFoundItemsFromLeft.clear()
-    }
-
 }

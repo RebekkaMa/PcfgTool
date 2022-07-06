@@ -9,7 +9,7 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.ExpressionEvaluatorParser
+import evaluators.TreeParser
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -32,10 +32,10 @@ class Binarise : CliktCommand() {
         channel: ReceiveChannel<Pair<Int, String>>
     ) =
         launch {
-            val expressionEvaluatorParser = ExpressionEvaluatorParser()
+            val treeParser = TreeParser()
             for ((lineNumber, unbinarisedTreeAsString) in channel) {
                 outputChannel.send(
-                    lineNumber to expressionEvaluatorParser.parseToEnd(unbinarisedTreeAsString)
+                    lineNumber to treeParser.parseToEnd(unbinarisedTreeAsString)
                         .binarise(vertical, horizontal)
                         .toString()
                 )

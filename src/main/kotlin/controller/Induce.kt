@@ -6,7 +6,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.ExpressionEvaluatorParser
+import evaluators.TreeParser
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -41,9 +41,9 @@ class Induce : CliktCommand() {
 
     private fun CoroutineScope.produceRulesFromStrings(channel: ReceiveChannel<String>) =
         launch(context = Dispatchers.Default) {
-            val expressionEvaluatorParser = ExpressionEvaluatorParser()
+            val treeParser = TreeParser()
             for (sentence in channel) {
-                rulesChannel.send(expressionEvaluatorParser.parseToEnd(sentence).transformToRules())
+                rulesChannel.send(treeParser.parseToEnd(sentence).transformToRules())
             }
         }
 

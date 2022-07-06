@@ -101,7 +101,7 @@ class Parse : CliktCommand() {
                         }
                     }
                 } catch (e: ParseException) {
-                    System.err.println("Ungültige Eingabe! Bitte geben Sie Outside Scores im richtigen Format ein!")
+                    System.err.println("Ungültige Eingabe! Bitte geben Sie die Outside Scores im richtigen Format ein!")
                     exitProcess(5)
                 }
                 val producer = produceStringsFromInput()
@@ -190,7 +190,7 @@ class Parse : CliktCommand() {
             return tokensAsString.mapIndexed { index, word ->
                 val wordAsInt = lexiconByString[word]
                 return@mapIndexed when {
-                    wordAsInt != null -> wordAsInt //TODO
+                    wordAsInt != null -> wordAsInt
                     smoothing -> lexiconByString[getSignature(word, index + 1)] ?: -1
                     unking -> lexiconByString["UNK"] ?: -1
                     else -> -1

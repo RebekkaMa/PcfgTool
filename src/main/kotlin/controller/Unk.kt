@@ -8,7 +8,7 @@ import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.ExpressionEvaluatorParser
+import evaluators.TreeParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import model.getTerminalCountFromCorpus
@@ -25,9 +25,9 @@ class Unk : CliktCommand() {
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
-                val expressionEvaluatorParser = ExpressionEvaluatorParser()
+                val treeParser = TreeParser()
                 val trees = generateSequence(readNotEmptyLnOrNull).map { notUnkedTreeAsString ->
-                    expressionEvaluatorParser.parseToEnd(notUnkedTreeAsString)
+                    treeParser.parseToEnd(notUnkedTreeAsString)
                 }.toList()
 
                 val wordcount = getTerminalCountFromCorpus(trees)

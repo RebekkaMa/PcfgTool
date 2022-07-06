@@ -7,7 +7,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.ExpressionEvaluatorParser
+import evaluators.TreeParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import model.getTerminalCountFromCorpus
@@ -25,9 +25,9 @@ class Smooth : CliktCommand() {
     override fun run() {
         try {
             runBlocking(Dispatchers.Default) {
-                val expressionEvaluatorParser = ExpressionEvaluatorParser()
+                val treeParser = TreeParser()
                 val trees = generateSequence(readNotEmptyLnOrNull).map { sentence ->
-                    expressionEvaluatorParser.parseToEnd(sentence)
+                    treeParser.parseToEnd(sentence)
                 }.toList()
                 val wordCount = getTerminalCountFromCorpus(trees)
 

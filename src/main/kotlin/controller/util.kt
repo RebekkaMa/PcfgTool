@@ -1,10 +1,12 @@
 package controller
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.launch
 import model.Rule
 import readNotEmptyLnOrNull
 import java.io.File
@@ -20,7 +22,6 @@ fun CoroutineScope.produceStringsFromInput() = produce(context = Dispatchers.IO,
 fun CoroutineScope.printTreesInOrder(outputChannel: ReceiveChannel<Pair<Int, String>>) = launch {
     val queue = PriorityQueue(10, compareBy<Pair<Int, String>> { it.first })
     var i = 1
-    val start = System.currentTimeMillis()
     for ((lineNumber, treeAsString) in outputChannel) {
         if (lineNumber == i) {
             println(treeAsString)
@@ -33,7 +34,6 @@ fun CoroutineScope.printTreesInOrder(outputChannel: ReceiveChannel<Pair<Int, Str
             queue.add(lineNumber to treeAsString)
         }
     }
-    //println(System.currentTimeMillis() - start)
 }
 
 fun getRulesFromFile(
@@ -47,14 +47,3 @@ fun getRulesFromFile(
         )
     }
 }
-
-
-fun CoroutineScope.startProcessor(
-    numberOfParallelParsers: Int,
-    outputChannel: Channel<Pair<Int, String>>,
-    processor: () -> Job
-) = launch {
-    repeat(numberOfParallelParsers) {
-        processor()
-    }
-}.invokeOnCompletion { outputChannel.close() }
