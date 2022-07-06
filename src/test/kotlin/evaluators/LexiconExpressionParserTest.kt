@@ -32,15 +32,6 @@ internal class LexiconExpressionParserTest {
     }
 
     @Test
-    fun shouldReturnException_falseNumber() {
-        val rule1 = "VP eats 5.25"
-
-        shouldThrowAny {
-            lexiconExpressionParser.parseToEnd(rule1)
-        }
-    }
-
-    @Test
     fun shouldReturnException_noNumber() {
         val rule2 = "NP she 0;6666666666666666666666666"
         shouldThrowAny {
@@ -58,25 +49,11 @@ internal class LexiconExpressionParserTest {
     }
 
     @Test
-    fun shouldReturnException_pointNumber() {
+    fun shouldReturnNull_pointNumber() {
 
-        val rule5 = "N fish  6."
+        val rule5 = "N fish  0."
 
-        shouldThrowAny {
-            lexiconExpressionParser.parseToEnd(rule5)
-        }
-
-    }
-
-    @Test
-    fun shouldReturnException_StringAsNumber() {
-
-        val rule5 = "N fish  6."
-
-
-        shouldThrowAny {
-            lexiconExpressionParser.parseToEnd(rule5)
-        }
+            lexiconExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(true, "N", listOf("fish")), 0.0)
 
     }
 }

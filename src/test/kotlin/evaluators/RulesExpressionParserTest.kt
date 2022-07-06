@@ -30,15 +30,6 @@ class RulesExpressionParserTest {
     }
 
     @Test
-    fun shouldReturnException_falseNumber() {
-        val rule1 = "S -> NP VP 5.25"
-
-        shouldThrowAny {
-            rulesExpressionParser.parseToEnd(rule1)
-        }
-    }
-
-    @Test
     fun shouldReturnException_noNumber() {
         val rule2 = "S -> NP VP 0;6666666666666666666666666"
         shouldThrowAny {
@@ -58,10 +49,10 @@ class RulesExpressionParserTest {
     @Test
     fun shouldReturnException_pointNumber() {
 
-        val rule5 = "S -> NP VP  6."
+        val rule5 = "S -> NP VP  0."
 
         shouldThrowAny {
-            rulesExpressionParser.parseToEnd(rule5)
+            rulesExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(false, "S", listOf("NP", "VP")), 0.0)
         }
 
     }
