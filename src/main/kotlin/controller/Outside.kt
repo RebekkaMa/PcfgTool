@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import model.Grammar
-import writeOutsideScoreToFiles
 
 class Outside : CliktCommand() {
     override val commandHelp = "Berechnet Viterbi Outside weights für jedes Nichtterminal " +

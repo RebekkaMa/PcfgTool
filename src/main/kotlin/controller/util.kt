@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
 import model.Rule
-import readNotEmptyLnOrNull
 import java.io.File
 import java.util.*
 

@@ -1,4 +1,4 @@
-
+package controller
 import model.Grammar
 import java.io.File
 

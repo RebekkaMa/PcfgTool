@@ -8,7 +8,7 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 
-class OutsideScoreParser() : Grammar<Pair<String,Double>>() {
+class OutsideScoreParser : Grammar<Pair<String,Double>>() {
 
     val number by regexToken("[0-9]([\\.\\,]\\d*(E\\-\\d*)?)?(\\s)*$")
     val text by regexToken("[\\w\\p{Punct}ε&&[^\\s\\(\\)]]+")

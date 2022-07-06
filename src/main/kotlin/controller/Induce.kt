@@ -17,8 +17,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.toList
 import model.Grammar
 import model.Rule
-import readNotEmptyLnOrNull
-import writeGrammarToFiles
 import kotlin.system.exitProcess
 
 class Induce : CliktCommand() {

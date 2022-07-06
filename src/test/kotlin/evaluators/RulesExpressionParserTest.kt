@@ -24,7 +24,7 @@ class RulesExpressionParserTest {
         rulesExpressionParser.parseToEnd(rule2) shouldBe Pair(Rule(false, "VP", listOf("VP", "PP")), 0.25)
         rulesExpressionParser.parseToEnd(rule3) shouldBe Pair(Rule(false, "VP", listOf("V", "NP")), 0.5)
         rulesExpressionParser.parseToEnd(rule4) shouldBe Pair(Rule(false, "PP", listOf("P", "NP")), 1.0)
-        rulesExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(false, "NP", listOf("Det", "N")), 0.33333333333333333)
+        rulesExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(false, "NP", listOf("Det", "N")), 0.3333333333333333)
         rulesExpressionParser.parseToEnd(rule6) shouldBe Pair(Rule(false, "N", listOf("0.67654", ".")), 0.333333333)
         rulesExpressionParser.parseToEnd(rule7) shouldBe Pair(Rule(false, "->", listOf("->", "jk->jk")), 0.333333333)
     }

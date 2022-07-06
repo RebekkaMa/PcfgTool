@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import model.getTerminalCountFromCorpus
 import model.replaceRareWordsInTree
-import readNotEmptyLnOrNull
 
 class Unk : CliktCommand() {
     override val commandHelp = "Liest eine Sequenz Konstituentenbäume von der Standardeingabe " +

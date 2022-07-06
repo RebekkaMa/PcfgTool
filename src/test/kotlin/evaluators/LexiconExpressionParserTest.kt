@@ -22,7 +22,7 @@ internal class LexiconExpressionParserTest {
         lexiconExpressionParser.parseToEnd(rule1) shouldBe Pair(Rule(true, "VP", listOf("eats")), 0.25)
         lexiconExpressionParser.parseToEnd(rule2) shouldBe Pair(
             Rule(true, "NP", listOf("she")),
-            0.6666666666666666666666666
+            0.6666666666666666
         )
         lexiconExpressionParser.parseToEnd(rule3) shouldBe Pair(Rule(true, "V", listOf("eats")), 1.0)
         lexiconExpressionParser.parseToEnd(rule4) shouldBe Pair(Rule(true, "P", listOf("with")), 0.0)

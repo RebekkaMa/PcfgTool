@@ -328,7 +328,7 @@ class DeductiveParserTest {
 
    @Test
    fun parse_withA() {
-       val pRules = buildMap<Rule, Double> {
+       val pRules = buildMap {
            this[Rule(true, "NN", listOf("Fruit"))] = 1.0
            this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
            this[Rule(true, "NNS", listOf("bananas"))] = 2/3.toDouble()
@@ -347,7 +347,7 @@ class DeductiveParserTest {
 
        }
        val grammar = Grammar("S", pRules)
-       val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString, numberNonTerminals) = grammar.getGrammarDataStructuresForParsing()
+       val (accessRulesBySecondNtOnRhs, accessRulesByFirstNtOnRhs, accessChainRulesByNtRhs, accessRulesByTerminal, lexiconByInt, lexiconByString, _) = grammar.getGrammarDataStructuresForParsing()
        val outsideScores = buildMap {
            this[lexiconByString["NN"]!!] = 1.0
            this[lexiconByString["NNS"]!!] = 1.0
@@ -380,7 +380,12 @@ class DeductiveParserTest {
            null,
        )
 
-       val sentenceAsInt = intArrayOf(lexiconByString["Fruit"]!!, lexiconByString["flies"]!!,lexiconByString["like"]!!,lexiconByString["bananas"]!!,)
+       val sentenceAsInt = intArrayOf(
+           lexiconByString["Fruit"]!!,
+           lexiconByString["flies"]!!,
+           lexiconByString["like"]!!,
+           lexiconByString["bananas"]!!,
+       )
 
        parser1.weightedDeductiveParsing(sentenceAsInt).second?.getBacktraceAsString(listOf("Fruit","flies", "like", "bananas"),lexiconByInt).toString() shouldBe  "(S (NP (NN Fruit)) (VP (VBZ flies) (PP (IN like) (NP (NNS bananas)))))"
 

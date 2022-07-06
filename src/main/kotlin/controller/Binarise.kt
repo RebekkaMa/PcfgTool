@@ -14,7 +14,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import readNotEmptyLnOrNull
 
 class Binarise : CliktCommand() {
     override val commandHelp = "Liest eine Sequenz Konstituentenbäume von der Standardeingabe " +

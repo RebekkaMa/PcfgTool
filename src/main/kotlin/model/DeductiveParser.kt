@@ -42,7 +42,7 @@ class DeductiveParser(
 
     fun fillQueueWithItemsFromLexicalRules(sentence: IntArray) {
         sentence.forEachIndexed { index, word ->
-            accessRulesByTerminal[word]?.forEach { (lhs, rhs, ruleProbability) ->
+            accessRulesByTerminal[word]?.forEach { (lhs, _, ruleProbability) ->
                 val comparisonValue =
                     (outsideScores?.let { ruleProbability * (it[lhs] ?: throw Exception()) } ?: ruleProbability)
                 queue.offer(
@@ -104,7 +104,7 @@ class DeductiveParser(
                 if (rhs.component2() == combinationItem.nt && selectedItem.j < combinationItem.j && combinationItem.wt > 0.0) {
                     val newProbability = ruleProbability * selectedItem.wt * combinationItem.wt
                     val comparisonValue =
-                        (outsideScores?.let { newProbability * (it[lhs] ?: throw Exception()) } ?: newProbability)
+                        (outsideScores?.let { newProbability * (it[lhs] ?: throw Exception("Deductive Parser -> Nonterminal ist nicht im Lexikon")) } ?: newProbability)
                     insertItemToQueue(
                         Item(
                             selectedItem.i,
@@ -130,7 +130,7 @@ class DeductiveParser(
                 if (rhs.component1() == combinationItem.nt && combinationItem.i < selectedItem.i && combinationItem.wt > 0.0) {
                     val newProbability = ruleProbability * combinationItem.wt * selectedItem.wt
                     val comparisonValue =
-                        (outsideScores?.let { newProbability * (it[lhs] ?: throw Exception()) } ?: newProbability)
+                        (outsideScores?.let { newProbability * (it[lhs] ?: throw Exception("Deductive Parser -> Nonterminal ist nicht im Lexikon")) } ?: newProbability)
                     insertItemToQueue(
                         Item(
                             combinationItem.i,
@@ -148,10 +148,10 @@ class DeductiveParser(
 
     //Zeile 11
     private fun findRulesAddItemsToQueueChain(selectedItem: Item) {
-        accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, rhs, ruleProbability) ->
+        accessChainRulesByNtRhs[selectedItem.nt]?.forEach { (lhs, _, ruleProbability) ->
             val newProbability = ruleProbability * selectedItem.wt
             val comparisonValue =
-                (outsideScores?.let { newProbability * (it[lhs] ?: throw Exception()) } ?: newProbability)
+                (outsideScores?.let { newProbability * (it[lhs] ?: throw Exception("Deductive Parser -> Nonterminal ist nicht im Lexikon")) } ?: newProbability)
             insertItemToQueue(
                 Item(
                     selectedItem.i,

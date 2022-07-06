@@ -13,14 +13,14 @@ class UnkingTest : ShouldSpec({
             context("lexicon contains all tokens") {
                 should("return an Intarray with the corresponding values") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("the", 6)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("telescope", 30)
-                        this.put("blue", 44)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["the"] = 6
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["telescope"] = 30
+                        this["blue"] = 44
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
 
@@ -59,14 +59,14 @@ class UnkingTest : ShouldSpec({
             context("lexicon contains all tokens") {
                 should("return an Intarray with the corresponding values") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("the", 6)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("UNK-Le", 30)
-                        this.put("blue", 44)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["the"] = 6
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["UNK-Le"] = 30
+                        this["blue"] = 44
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
 
@@ -81,13 +81,13 @@ class UnkingTest : ShouldSpec({
             context("lexicon does not contain all tokens") {
                 should("return an Intarray with the corresponding values or -1") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("the", 6)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("blue", 44)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["the"] = 6
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["blue"] = 44
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
                     replaceTokensByInts(
@@ -105,15 +105,15 @@ class UnkingTest : ShouldSpec({
             context("lexicon contains all tokens") {
                 should("return an Intarray with the corresponding values") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("the", 6)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("telescope", 30)
-                        this.put("blue", 44)
-                        this.put("UNK", 55)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["the"] = 6
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["telescope"] = 30
+                        this["blue"] = 44
+                        this["UNK"] = 55
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
 
@@ -129,14 +129,14 @@ class UnkingTest : ShouldSpec({
             context("lexicon does not contain all tokens") {
                 should("return an Intarray with the corresponding values or -1") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("telescope", 30)
-                        this.put("blue", 44)
-                        this.put("UNK", 55)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["telescope"] = 30
+                        this["blue"] = 44
+                        this["UNK"] = 55
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
                     replaceTokensByInts(
@@ -152,14 +152,14 @@ class UnkingTest : ShouldSpec({
             context("lexicon contains all signature tokens") {
                 should("return an Intarray with the corresponding values") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("the", 6)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("UNK-Le", 30)
-                        this.put("blue", 44)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["the"] = 6
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["UNK-Le"] = 30
+                        this["blue"] = 44
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
 
@@ -174,13 +174,13 @@ class UnkingTest : ShouldSpec({
             context("lexicon does not contain all signature tokens") {
                 should("return an Intarray with the corresponding values or -1") {
                     val lexiconByString = buildMap {
-                        this.put("He", 3)
-                        this.put("saw", 4)
-                        this.put("the", 6)
-                        this.put("red", 33)
-                        this.put("man", 7)
-                        this.put("with", 8)
-                        this.put("blue", 44)
+                        this["He"] = 3
+                        this["saw"] = 4
+                        this["the"] = 6
+                        this["red"] = 33
+                        this["man"] = 7
+                        this["with"] = 8
+                        this["blue"] = 44
                     }
                     val tokensAsString = listOf("He", "saw", "the", "man", "with", "the", "telescope")
                     replaceTokensByInts(

@@ -152,7 +152,7 @@ class GrammarTest {
 
     @Test
     fun viterbiOutsideScoreTest() = runTest{
-        val pRules = buildMap<Rule, Double> {
+        val pRules = buildMap {
             this[Rule(true, "NN", listOf("Fruit"))] = 1.0
             this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
             this[Rule(true, "NNS", listOf("bananas"))] = 2/3.toDouble()
@@ -190,7 +190,7 @@ class GrammarTest {
 
     @Test
     fun getInsideWeightsTest() = runTest{
-        val pRules = buildMap<Rule, Double> {
+        val pRules = buildMap {
             this[Rule(true, "NN", listOf("Fruit"))] = 1.0
             this[Rule(true, "NNS", listOf("flies"))] = 1/3.toDouble()
             this[Rule(true, "NNS", listOf("bananas"))] = 2/3.toDouble()
