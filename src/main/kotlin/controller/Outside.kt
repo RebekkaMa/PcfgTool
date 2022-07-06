@@ -8,8 +8,8 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.LexiconExpressionParser
-import evaluators.RulesExpressionParser
+import expressionParser.LexiconExpressionParser
+import expressionParser.RulesExpressionParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking

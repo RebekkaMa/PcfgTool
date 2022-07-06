@@ -1,4 +1,4 @@
-package evaluators
+package expressionParser
 
 import model.Tree
 import com.github.h0tk3y.betterParse.grammar.parseToEnd

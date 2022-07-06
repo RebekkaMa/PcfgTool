@@ -1,4 +1,4 @@
-package evaluators
+package expressionParser
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.utils.Tuple3

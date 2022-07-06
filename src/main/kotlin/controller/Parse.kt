@@ -11,9 +11,9 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.h0tk3y.betterParse.utils.Tuple3
-import evaluators.LexiconExpressionParser
-import evaluators.OutsideScoreParser
-import evaluators.RulesExpressionParser
+import expressionParser.LexiconExpressionParser
+import expressionParser.OutsideScoreParser
+import expressionParser.RulesExpressionParser
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel

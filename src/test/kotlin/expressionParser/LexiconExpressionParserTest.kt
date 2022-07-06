@@ -1,4 +1,4 @@
-package evaluators
+package expressionParser
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import io.kotest.assertions.throwables.shouldThrowAny

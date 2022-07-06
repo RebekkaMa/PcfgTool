@@ -7,7 +7,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
-import evaluators.TreeParser
+import expressionParser.TreeParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import model.getTerminalCountFromCorpus
@@ -30,12 +30,9 @@ class Smooth : CliktCommand() {
                 }.toList()
                 val wordCount = getTerminalCountFromCorpus(trees)
 
-                val smoothedTree = trees.map {
-                        replaceRareWordsInTree(smooth = true, wordCount, threshold, it)
-                }
-
-                smoothedTree.forEach {
-                    println(it)
+                trees.onEach {tree ->
+                    replaceRareWordsInTree(smooth = true, wordCount, threshold, tree)
+                    println(tree)
                 }
             }
         } catch (e: ParseException) {

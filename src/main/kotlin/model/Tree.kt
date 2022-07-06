@@ -1,7 +1,7 @@
 package model
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
-import evaluators.BinarisedNodeParser
+import expressionParser.BinarisedNodeParser
 import utils.getWindow
 import utils.joinToStringWithStartAndEnd
 

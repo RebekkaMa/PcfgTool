@@ -1,4 +1,4 @@
-package evaluators
+package expressionParser
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import io.kotest.assertions.throwables.shouldThrowAny
@@ -50,10 +50,7 @@ class RulesExpressionParserTest {
     fun shouldReturnException_pointNumber() {
 
         val rule5 = "S -> NP VP  0."
-
-        shouldThrowAny {
             rulesExpressionParser.parseToEnd(rule5) shouldBe Pair(Rule(false, "S", listOf("NP", "VP")), 0.0)
-        }
 
     }
 
@@ -61,7 +58,6 @@ class RulesExpressionParserTest {
     fun shouldReturnException_StringAsNumber() {
 
         val rule5 = "S -> 6."
-
 
         shouldThrowAny {
             rulesExpressionParser.parseToEnd(rule5)

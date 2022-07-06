@@ -1,4 +1,4 @@
-package evaluators
+package expressionParser
 
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
